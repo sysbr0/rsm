@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Temporary files
+*.tmp
+*.temp
+
+# Testing / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# OS / editor
+*.swp
+*.swo
