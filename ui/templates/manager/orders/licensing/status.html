@@ -1,0 +1,228 @@
+{% extends "ui/admin_base.html" %} {% block title %}License Status{% endblock %}
+{% block mobile_title %}License Status{% endblock %} {% block extra_styles %}
+<style>
+  .license-page {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .license-card {
+    width: 100%;
+    max-width: 560px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+  }
+
+  .license-success {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ecfdf5;
+    color: #15803d;
+    font-size: 30px;
+    font-weight: 700;
+  }
+
+  .license-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .license-header h1 {
+    margin: 0;
+    color: #111827;
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  .license-header p {
+    margin: 10px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .license-info {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .license-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 15px 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .license-row:last-child {
+    border-bottom: 0;
+  }
+
+  .license-label {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .license-value {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  .license-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .license-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .license-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #8b1e1e, #641414);
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 600px) {
+    .license-page {
+      padding: 25px 15px;
+    }
+
+    .license-card {
+      padding: 28px 20px;
+    }
+
+    .license-row {
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .license-value {
+      text-align: left;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+
+<div class="license-page">
+  <div class="license-card">
+    {% if license %}
+
+    <div class="license-success">✓</div>
+
+    <div class="license-header">
+      <h1>License Activated</h1>
+      <p>Your Restaurant Management System license is active.</p>
+    </div>
+
+    <div class="license-info">
+      <div class="license-row">
+        <span class="license-label"> License Key </span>
+
+        <span class="license-value"> {{ license.license_key }} </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Customer </span>
+
+        <span class="license-value"> {{ license.customer_name }} </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Product </span>
+
+        <span class="license-value"> {{ license.product }} </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Plan </span>
+
+        <span class="license-value"> {{ license.plan }} </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Status </span>
+
+        <span class="license-value">
+          <span class="license-status"> {{ license.status }} </span>
+        </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Expires </span>
+
+        <span class="license-value">
+          {{ license.expires_at|date:"Y-m-d H:i" }}
+        </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Installation ID </span>
+
+        <span class="license-value"> {{ license.installation_id }} </span>
+      </div>
+
+      <div class="license-row">
+        <span class="license-label"> Last Verified </span>
+
+        <span class="license-value">
+          {{ license.last_verified_at|date:"Y-m-d H:i" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="license-actions">
+      <a href="/manager/" class="license-button"> Continue to Dashboard </a>
+    </div>
+
+    {% else %}
+
+    <div class="license-header">
+      <h1>No Active License</h1>
+
+      <p>This installation does not currently have an active license.</p>
+    </div>
+
+    <div class="license-actions">
+      <a href="{% url 'license_activate' %}" class="license-button">
+        Activate License
+      </a>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

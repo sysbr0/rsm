@@ -1,0 +1,1296 @@
+{% extends "ui/admin_base.html" %} {% block title %}Admin Dashboard{% endblock
+%} {% block mobile_title %}Admin Dashboard{% endblock %} {% block extra_styles
+%} {% endblock %} {% block hero %}
+<style>
+  /* =========================================================
+   RESTAURANT ADMIN DASHBOARD
+   Premium SaaS / POS-inspired UI
+   ========================================================= */
+
+  .db-dashboard {
+    --db-primary: #8b1e1e;
+    --db-primary-dark: #641414;
+    --db-primary-soft: rgba(139, 30, 30, 0.08);
+    --db-purple: #5b21b6;
+    --db-text: #111827;
+    --db-text-soft: #475569;
+    --db-muted: #64748b;
+    --db-border: #e5e7eb;
+    --db-border-soft: #eef2f7;
+    --db-surface: #ffffff;
+    --db-surface-soft: #f8fafc;
+    --db-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.05);
+    --db-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+    --db-shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.1);
+
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    color: var(--db-text);
+  }
+
+  /* =========================================================
+   HERO
+   ========================================================= */
+
+  .db-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 32px;
+    border-radius: 26px;
+    color: #fff;
+    background:
+      radial-gradient(
+        circle at 90% 15%,
+        rgba(255, 255, 255, 0.16),
+        transparent 32%
+      ),
+      radial-gradient(
+        circle at 10% 100%,
+        rgba(255, 255, 255, 0.08),
+        transparent 35%
+      ),
+      linear-gradient(135deg, #7f1d1d 0%, #641414 48%, #4c1d95 100%);
+    box-shadow:
+      0 18px 45px rgba(79, 18, 18, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .db-hero::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    right: -100px;
+    top: -130px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    pointer-events: none;
+  }
+
+  .db-hero::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: 160px;
+    bottom: -120px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+  }
+
+  .db-hero-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .db-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    backdrop-filter: blur(10px);
+  }
+
+  .db-eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #86efac;
+    box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.12);
+  }
+
+  .db-title {
+    margin: 14px 0 8px;
+    color: #fff;
+    font-size: clamp(30px, 4vw, 44px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+  }
+
+  .db-subtitle {
+    max-width: 700px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .db-hero-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .db-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.09);
+    color: rgba(255, 255, 255, 0.94);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+  }
+
+  /* =========================================================
+   SUMMARY CARDS
+   ========================================================= */
+
+  .db-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .db-summary-card {
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    border: 1px solid var(--db-border);
+    border-radius: 18px;
+    background: var(--db-surface);
+    box-shadow: var(--db-shadow-sm);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .db-summary-card:hover {
+    transform: translateY(-2px);
+    border-color: #d7dce4;
+    box-shadow: var(--db-shadow);
+  }
+
+  .db-summary-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--db-primary), var(--db-purple));
+    opacity: 0.9;
+  }
+
+  .db-summary-label {
+    margin-bottom: 9px;
+    color: var(--db-muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .db-summary-value {
+    color: #0f172a;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .db-summary-note {
+    margin-top: 9px;
+    color: #94a3b8;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+  .db-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .db-panel {
+    border: 1px solid var(--db-border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--db-shadow-sm);
+  }
+
+  /* =========================================================
+   FILTER SIDEBAR
+   ========================================================= */
+
+  .db-filters {
+    position: sticky;
+    top: 20px;
+    padding: 16px;
+    border-top: 3px solid var(--db-primary);
+  }
+
+  .db-filters-head {
+    margin-bottom: 18px;
+    padding: 17px;
+    border: 1px solid rgba(139, 30, 30, 0.09);
+    border-radius: 15px;
+    background: linear-gradient(
+      135deg,
+      rgba(139, 30, 30, 0.055),
+      rgba(91, 33, 182, 0.055)
+    );
+  }
+
+  .db-filters-head h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .db-filters-head p {
+    margin: 7px 0 0;
+    color: var(--db-muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .db-filter-group + .db-filter-group {
+    margin-top: 22px;
+  }
+
+  .db-filter-title {
+    margin: 0 0 9px 3px;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+  }
+
+  .db-filter-stack {
+    display: grid;
+    gap: 7px;
+  }
+
+  .db-filter-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: #334155;
+    text-decoration: none;
+    transition:
+      background 0.18s ease,
+      color 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .db-filter-link:hover {
+    transform: translateX(2px);
+    border-color: #e5e7eb;
+    background: #f8fafc;
+  }
+
+  .db-filter-link.db-active {
+    border-color: rgba(139, 30, 30, 0.12);
+    background: linear-gradient(
+      135deg,
+      rgba(139, 30, 30, 0.1),
+      rgba(91, 33, 182, 0.07)
+    );
+    color: var(--db-primary);
+    box-shadow: none;
+  }
+
+  .db-filter-link.db-active::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 4px;
+    background: var(--db-primary);
+  }
+
+  .db-filter-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .db-filter-label {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .db-filter-subtitle {
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .db-filter-link.db-active .db-filter-subtitle {
+    color: #9f6a6a;
+  }
+
+  .db-filter-link > span:last-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 27px;
+    height: 27px;
+    padding: 0 7px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .db-filter-link.db-active > span:last-child {
+    border-color: rgba(139, 30, 30, 0.12);
+    color: var(--db-primary);
+  }
+
+  /* =========================================================
+   CONTENT HEADERS
+   ========================================================= */
+
+  .db-layout > .db-panel:not(.db-filters) {
+    padding: 20px;
+  }
+
+  .db-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 15px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--db-border-soft);
+  }
+
+  .db-head h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+
+  .db-head p {
+    margin: 6px 0 0;
+    color: var(--db-muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  /* =========================================================
+   TABLE CARDS
+   ========================================================= */
+
+  .db-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 13px;
+  }
+
+  .db-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .db-card-link[hidden] {
+    display: none;
+  }
+
+  .db-table-card {
+    position: relative;
+    min-height: 172px;
+    overflow: hidden;
+    padding: 17px;
+    border: 1px solid rgba(203, 213, 225, 0.7);
+    border-radius: 16px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.055);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .db-table-card::after {
+    content: "";
+    position: absolute;
+    right: -35px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+  }
+
+  .db-card-link:hover .db-table-card {
+    transform: translateY(-3px);
+    border-color: rgba(139, 30, 30, 0.2);
+    box-shadow: 0 15px 30px rgba(15, 23, 42, 0.11);
+  }
+
+  .db-card-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+
+  .db-table-name {
+    margin: 0 0 5px;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .db-meta {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .db-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 30px;
+    padding: 0 9px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #334155;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 2px 7px rgba(15, 23, 42, 0.04);
+  }
+
+  .db-section-label {
+    position: relative;
+    z-index: 1;
+    margin-top: 13px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.28);
+    color: #334155;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .db-detail-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 58px 1fr;
+    gap: 8px;
+    margin-top: 8px;
+    color: #334155;
+    font-size: 11px;
+  }
+
+  .db-detail-label {
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  /* =========================================================
+   INSIGHTS
+   ========================================================= */
+
+  .db-insights {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .db-insights .db-panel {
+    padding: 20px;
+  }
+
+  .db-insights .db-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .db-insights .db-summary-card {
+    padding: 15px;
+    border-radius: 14px;
+    box-shadow: none;
+    background: #fafbfc;
+  }
+
+  .db-insights .db-summary-card:hover {
+    transform: none;
+    box-shadow: var(--db-shadow-sm);
+  }
+
+  .db-insights .db-summary-value {
+    font-size: 23px;
+  }
+
+  .db-insights .db-summary-note {
+    font-size: 11px;
+  }
+
+  /* =========================================================
+   SECTION BLOCKS
+   ========================================================= */
+
+  .db-section-panel {
+    padding: 20px;
+  }
+
+  .db-section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 13px;
+  }
+
+  .db-section-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 160px;
+  }
+
+  .db-section-card .db-summary-value {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .db-chip {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    padding: 6px 9px;
+    border: 1px solid rgba(139, 30, 30, 0.1);
+    border-radius: 999px;
+    background: var(--db-primary-soft);
+    color: var(--db-primary);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  /* =========================================================
+   EMPTY STATES
+   ========================================================= */
+
+  .db-empty {
+    padding: 28px 18px;
+    border: 1px dashed #d8dee8;
+    border-radius: 14px;
+    background: #fafbfc;
+    color: #94a3b8;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  /* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+  @media (max-width: 1150px) {
+    .db-layout {
+      grid-template-columns: 240px minmax(0, 1fr);
+    }
+
+    .db-insights {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* =========================================================
+   RESPONSIVE — SMALL TABLET
+   ========================================================= */
+
+  @media (max-width: 900px) {
+    .db-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .db-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .db-filters {
+      position: static;
+    }
+
+    .db-filter-stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .db-insights .db-summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+  @media (max-width: 640px) {
+    .db-dashboard {
+      margin-top: 15px;
+      gap: 15px;
+    }
+
+    .db-hero {
+      padding: 22px;
+      border-radius: 20px;
+    }
+
+    .db-title {
+      font-size: 30px;
+    }
+
+    .db-subtitle {
+      font-size: 13px;
+    }
+
+    .db-hero-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .db-hero-badge {
+      flex: 1;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .db-summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .db-summary-card {
+      padding: 17px;
+    }
+
+    .db-layout > .db-panel:not(.db-filters),
+    .db-section-panel,
+    .db-insights .db-panel {
+      padding: 15px;
+    }
+
+    .db-filter-stack {
+      grid-template-columns: 1fr;
+    }
+
+    .db-tables-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .db-table-card {
+      min-height: 155px;
+    }
+
+    .db-insights .db-summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .db-section-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .db-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  /* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+  @media (prefers-reduced-motion: reduce) {
+    .db-summary-card,
+    .db-table-card,
+    .db-card-link,
+    .db-filter-link {
+      transition: none;
+    }
+
+    .db-summary-card:hover,
+    .db-card-link:hover .db-table-card,
+    .db-filter-link:hover {
+      transform: none;
+    }
+  }
+</style>
+<section class="db-hero">
+  <div class="db-hero-top">
+    <div>
+      <div class="db-eyebrow">Restaurant Operations</div>
+
+      <h1 class="db-title">Admin Dashboard</h1>
+
+      <p class="db-subtitle">
+        Monitor tables, products, orders, and section blocks from one clean and
+        responsive admin workspace.
+      </p>
+    </div>
+
+    <div class="db-hero-actions">
+      <div class="db-hero-badge">Total tables: {{ summary.total_tables }}</div>
+
+      <div class="db-hero-badge">Occupied: {{ summary.occupied_tables }}</div>
+
+      <div class="db-hero-badge">Available: {{ summary.available_tables }}</div>
+    </div>
+  </div>
+</section>
+
+{% endblock %} {% block content %}
+
+<div class="db-dashboard">
+  <!-- =========================
+       SUMMARY
+  ========================== -->
+
+  <div class="db-summary-grid">
+    <div class="db-summary-card">
+      <div class="db-summary-label">Total tables</div>
+
+      <div class="db-summary-value">{{ summary.total_tables }}</div>
+
+      <div class="db-summary-note">All active restaurant tables.</div>
+    </div>
+
+    <div class="db-summary-card">
+      <div class="db-summary-label">Occupied tables</div>
+
+      <div class="db-summary-value">{{ summary.occupied_tables }}</div>
+
+      <div class="db-summary-note">Tables currently in service.</div>
+    </div>
+
+    <div class="db-summary-card">
+      <div class="db-summary-label">Available tables</div>
+
+      <div class="db-summary-value">{{ summary.available_tables }}</div>
+
+      <div class="db-summary-note">Tables ready for new guests.</div>
+    </div>
+  </div>
+
+  <!-- =========================
+       TABLES AREA
+  ========================== -->
+
+  <div class="db-layout" id="tables">
+    <!-- =========================
+         FILTER SIDEBAR
+    ========================== -->
+
+    <aside class="db-panel db-filters">
+      <div class="db-filters-head">
+        <h2>Table Filters</h2>
+
+        <p>Filter tables by status or section block.</p>
+      </div>
+
+      <!-- STATUS FILTER -->
+
+      <div class="db-filter-group">
+        <div class="db-filter-title">Status</div>
+
+        <div class="db-filter-stack">
+          <!-- ALL -->
+
+          <a
+            class="db-filter-link {% if not active_filter or active_filter == 'all' %} db-active {% endif %}"
+            href="?filter=all"
+            data-filter="all"
+          >
+            <div class="db-filter-main">
+              <span class="db-filter-label"> All tables </span>
+
+              <span class="db-filter-subtitle"> Show every active table </span>
+            </div>
+
+            <span> → </span>
+          </a>
+
+          <!-- OCCUPIED -->
+
+          <a
+            class="db-filter-link {% if active_filter == 'occupied' %} db-active {% endif %}"
+            href="?filter=occupied"
+            data-filter="occupied"
+          >
+            <div class="db-filter-main">
+              <span class="db-filter-label"> Occupied tables </span>
+
+              <span class="db-filter-subtitle">
+                Only tables currently in service
+              </span>
+            </div>
+
+            <span> → </span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SECTION FILTER -->
+
+      <div class="db-filter-group">
+        <div class="db-filter-title">Section blocks</div>
+
+        <div class="db-filter-stack">
+          {% for block in section_blocks %}
+
+          <a
+            class="db-filter-link {% if active_section_id == block.id|stringformat:'s' %} db-active {% endif %}"
+            href="?section={{ block.id }}"
+            data-section="{{ block.id }}"
+          >
+            <div class="db-filter-main">
+              <span class="db-filter-label"> {{ block.name }} </span>
+
+              <span class="db-filter-subtitle"> {{ block.location }} </span>
+            </div>
+
+            <span> {{ block.tables.count }} </span>
+          </a>
+
+          {% empty %}
+
+          <div class="db-empty">No active section blocks</div>
+
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+    <!-- =========================
+         TABLES
+    ========================== -->
+
+    <section class="db-panel">
+      <div class="db-head">
+        <div>
+          <h2>Tables</h2>
+
+          <p>
+            Click a table card to open the detail page and review service
+            details.
+          </p>
+        </div>
+      </div>
+
+      <div class="db-tables-grid">
+        {% for table in tables %}
+
+        <a
+          class="db-card-link"
+          href="{{ table.detail_url }}"
+          data-status="{{ table.status|default:''|upper }}"
+          data-section-id="{{ table.section_block_id|default:'' }}"
+          data-has-order="{% if table.has_active_order %}true{% else %}false{% endif %}"
+        >
+          <article
+            class="db-table-card"
+            style="background: {{ table.background_color }}"
+          >
+            <!-- CARD HEADER -->
+
+            <div class="db-card-top">
+              <div>
+                <h3 class="db-table-name">{{ table.name }}</h3>
+
+                <p class="db-meta">Status: {{ table.status_label }}</p>
+              </div>
+
+              <span class="db-badge"> #{{ table.table_number }} </span>
+            </div>
+
+            <!-- SECTION -->
+
+            <div class="db-section-label">
+              Section: {{ table.section_block_name|default:"No section" }}
+            </div>
+
+            <!-- WAITER -->
+
+            <div class="db-detail-row">
+              <div class="db-detail-label">Waiter</div>
+
+              <div>{{ table.waiter_name|default:"N/A" }}</div>
+            </div>
+
+            <!-- TOTAL -->
+
+            <div class="db-detail-row">
+              <div class="db-detail-label">Total</div>
+
+              <div>{{ table.order_total_display|default:"0.00" }}</div>
+            </div>
+          </article>
+        </a>
+
+        {% empty %}
+
+        <div class="db-empty">No tables available.</div>
+
+        {% endfor %}
+
+        <!-- JS INSERTS THIS WHEN NO FILTER MATCHES -->
+
+        <div
+          class="db-empty db-filter-empty"
+          id="db-filter-empty"
+          style="display: none"
+        >
+          No tables match the selected filter.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- =========================
+       SECTION BLOCKS
+  ========================== -->
+
+  <section id="sections" class="db-panel db-section-panel">
+    <div class="db-head">
+      <div>
+        <h2>Section blocks</h2>
+
+        <p>Kitchen and service zones configured for the floor plan.</p>
+      </div>
+    </div>
+
+    <div class="db-section-grid">
+      {% for block in section_blocks %}
+
+      <article class="db-summary-card db-section-card">
+        <div class="db-summary-label">Section block</div>
+
+        <div class="db-summary-value">{{ block.name }}</div>
+
+        <div class="db-summary-note">{{ block.location }}</div>
+
+        <div class="db-chip">{{ block.tables.count }} tables</div>
+      </article>
+
+      {% empty %}
+
+      <div class="db-empty">No active section blocks.</div>
+
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{% endblock %} {% block extra_scripts %}
+
+<script>
+  (function () {
+    "use strict";
+
+    /*
+     * ==========================================
+     * ELEMENTS
+     * ==========================================
+     */
+
+    const filterLinks = document.querySelectorAll(
+      ".db-filter-link[data-filter], " + ".db-filter-link[data-section]",
+    );
+
+    const cards = Array.from(document.querySelectorAll(".db-card-link"));
+
+    const emptyMessage = document.getElementById("db-filter-empty");
+
+    /*
+     * ==========================================
+     * ACTIVE FILTER
+     * ==========================================
+     */
+
+    function setActive(link) {
+      filterLinks.forEach(function (item) {
+        item.classList.remove("db-active");
+      });
+
+      if (link) {
+        link.classList.add("db-active");
+      }
+    }
+
+    /*
+     * ==========================================
+     * FILTER TABLES
+     * ==========================================
+     */
+
+    function filterCards(filter, sectionId) {
+      let visibleCount = 0;
+
+      cards.forEach(function (card) {
+        /*
+         * Get table status.
+         */
+
+        const status = (card.dataset.status || "").trim().toUpperCase();
+
+        /*
+         * Get section ID.
+         */
+
+        const cardSectionId = (card.dataset.sectionId || "").trim();
+
+        /*
+         * Get active-order information.
+         */
+
+        const hasActiveOrder =
+          (card.dataset.hasOrder || "").toLowerCase() === "true";
+
+        /*
+         * Start visible.
+         */
+
+        let visible = true;
+
+        /*
+         * --------------------------------------
+         * STATUS FILTER
+         * --------------------------------------
+         */
+
+        if (filter === "occupied") {
+          /*
+           * OCCUPIED table OR table with
+           * an active order.
+           */
+
+          visible = status === "OCCUPIED" || hasActiveOrder;
+        }
+
+        /*
+         * --------------------------------------
+         * SECTION FILTER
+         * --------------------------------------
+         */
+
+        if (sectionId) {
+          visible = visible && cardSectionId === sectionId;
+        }
+
+        /*
+         * --------------------------------------
+         * DISPLAY
+         * --------------------------------------
+         */
+
+        if (visible) {
+          card.hidden = false;
+
+          card.style.display = "";
+
+          visibleCount++;
+        } else {
+          card.hidden = true;
+
+          card.style.display = "none";
+        }
+      });
+
+      /*
+       * --------------------------------------
+       * EMPTY MESSAGE
+       * --------------------------------------
+       */
+
+      if (emptyMessage) {
+        if (visibleCount === 0) {
+          emptyMessage.style.display = "block";
+        } else {
+          emptyMessage.style.display = "none";
+        }
+      }
+    }
+
+    /*
+     * ==========================================
+     * READ URL
+     * ==========================================
+     */
+
+    function applyFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+
+      const filter = params.get("filter") || "all";
+
+      const sectionId = params.get("section") || "";
+
+      let activeLink = null;
+
+      /*
+       * Section filter has priority.
+       */
+
+      if (sectionId) {
+        filterLinks.forEach(function (link) {
+          if (String(link.dataset.section || "") === String(sectionId)) {
+            activeLink = link;
+          }
+        });
+      } else {
+        /*
+         * Otherwise use status filter.
+         */
+        filterLinks.forEach(function (link) {
+          if (String(link.dataset.filter || "") === String(filter)) {
+            activeLink = link;
+          }
+        });
+      }
+
+      setActive(activeLink);
+
+      filterCards(filter, sectionId);
+    }
+
+    /*
+     * ==========================================
+     * CLICK EVENTS
+     * ==========================================
+     */
+
+    filterLinks.forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        /*
+         * Read clicked filter.
+         */
+
+        const filter = this.dataset.filter || "";
+
+        const sectionId = this.dataset.section || "";
+
+        /*
+         * Current URL.
+         */
+
+        const url = new URL(window.location.href);
+
+        /*
+         * Remove old filters.
+         */
+
+        url.searchParams.delete("filter");
+
+        url.searchParams.delete("section");
+
+        /*
+         * Add status filter.
+         */
+
+        if (filter && filter !== "all") {
+          url.searchParams.set("filter", filter);
+        }
+
+        /*
+         * Add section filter.
+         */
+
+        if (sectionId) {
+          url.searchParams.set("section", sectionId);
+        }
+
+        /*
+         * Update browser URL
+         * without reloading.
+         */
+
+        window.history.pushState({}, "", url);
+
+        /*
+         * Active button.
+         */
+
+        setActive(this);
+
+        /*
+         * Apply filter.
+         */
+
+        filterCards(filter || "all", sectionId);
+      });
+    });
+
+    /*
+     * ==========================================
+     * BACK / FORWARD
+     * ==========================================
+     */
+
+    window.addEventListener("popstate", function () {
+      applyFromUrl();
+    });
+
+    /*
+     * ==========================================
+     * INITIAL LOAD
+     * ==========================================
+     */
+
+    applyFromUrl();
+  })();
+</script>
+
+{% endblock %}

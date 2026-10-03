@@ -1,0 +1,71 @@
+```html
+<script>
+(function () {
+
+    const currentPath = window.location.pathname;
+
+    const licensePages = [
+        "{% url 'license_activate' %}",
+        "{% url 'license_check' %}",
+        "{% url 'license_expired' %}",
+    ];
+
+    /*
+     * Do NOT automatically check the license
+     * while already inside the licensing pages.
+     */
+    if (licensePages.includes(currentPath)) {
+        console.log("License page detected. Automatic check skipped.");
+        return;
+    }
+
+    const LICENSE_CHECK_URL = "{% url 'license_check' %}";
+    const LICENSE_EXPIRED_URL = "{% url 'license_expired' %}";
+    const LICENSE_ACTIVATE_URL = "{% url 'license_activate' %}";
+
+    fetch(LICENSE_CHECK_URL, {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+    })
+
+    .then(function (response) {
+
+        if (!response.ok) {
+            throw new Error("License check failed");
+        }
+
+        return response.json();
+    })
+
+    .then(function (data) {
+
+        console.log("License check:", data);
+
+        if (data.valid) {
+            return;
+        }
+
+        if (
+            data.reason === "EXPIRED" ||
+            data.status === "EXPIRED"
+        ) {
+            window.location.href = LICENSE_EXPIRED_URL;
+            return;
+        }
+
+        window.location.href = LICENSE_ACTIVATE_URL;
+    })
+
+    .catch(function (error) {
+
+        console.error(
+            "License verification error:",
+            error
+        );
+
+    });
+
+})();
+</script>
+```

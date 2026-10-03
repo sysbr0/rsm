@@ -1,0 +1,121 @@
+{% extends "ui/admin_base.html" %} {% block title %}HTML Component Test Page{%
+endblock %} {% block mobile_title %}Test Page{% endblock %} {% block
+nav_dashboard %}active{% endblock %} {% block extra_css %}
+<style>
+  .test-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .counter-display {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 12px;
+  }
+</style>
+{% endblock %} {% block hero %}
+<div class="db-hero">
+  <div class="db-hero-top">
+    <div>
+      <div class="db-eyebrow">System Test</div>
+      <h1 class="db-title">Standard HTML Test Page</h1>
+      <p class="db-description">
+        A simple, self-contained layout to test UI components, forms, tables,
+        and scripts within the base template.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block content %}
+<div class="test-grid">
+  <!-- Interactive Form Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Interactive Form</h2>
+    </div>
+    <div class="card-body">
+      <form
+        onsubmit="
+          event.preventDefault();
+          alert('Form submitted successfully!');
+        "
+      >
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            class="form-control"
+            placeholder="Enter username..."
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="role">Select Role</label>
+          <select id="role" class="form-control">
+            <option value="admin">Administrator</option>
+            <option value="manager">Manager</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Data</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS Counter Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">JavaScript Counter Test</h2>
+    </div>
+    <div class="card-body">
+      <div class="counter-display" id="counter">0</div>
+      <button class="btn btn-light" onclick="incrementCounter()">
+        Increment Counter
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Data Table Card -->
+<div class="card" style="margin-top: 24px">
+  <div class="card-header">
+    <h2 class="card-title">Data Table Test</h2>
+    <span class="badge badge-primary">2 Records</span>
+  </div>
+  <div class="card-body" style="padding: 0">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Response Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>#001</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>12 ms</td>
+          </tr>
+          <tr>
+            <td>#002</td>
+            <td><span class="badge badge-warning">Pending</span></td>
+            <td>45 ms</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  let count = 0;
+  function incrementCounter() {
+    count++;
+    document.getElementById("counter").innerText = count;
+  }
+</script>
+{% endblock %}

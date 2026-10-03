@@ -1,0 +1,400 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %} Settings {% endblock
+%} {% block content %}
+<style>
+  .settings-page {
+    display: grid;
+    gap: 18px;
+    padding: 20px 0;
+  }
+
+  .settings-header {
+    padding: 26px;
+    border-radius: 22px;
+    color: #ffffff;
+
+    background:
+      radial-gradient(
+        circle at 90% 10%,
+        rgba(255, 255, 255, 0.15),
+        transparent 30%
+      ),
+      linear-gradient(135deg, #7f1d1d, #4c1d95);
+
+    box-shadow: var(--shadow);
+  }
+
+  .settings-eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    opacity: 0.75;
+  }
+
+  .settings-header h1 {
+    margin: 8px 0 6px;
+    font-size: 32px;
+    font-weight: 800;
+  }
+
+  .settings-header p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+  }
+
+  .settings-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .settings-card-header {
+    margin-bottom: 18px;
+  }
+
+  .settings-card-header h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .settings-card-header p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  .settings-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .settings-avatar {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #7f1d1d, #4c1d95);
+
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 800;
+  }
+
+  .settings-profile h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .settings-profile p {
+    margin: 4px 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+  .settings-status {
+    color: #15803d;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .settings-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .settings-field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .settings-field input {
+    height: 42px;
+    padding: 0 12px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    outline: none;
+
+    font-size: 13px;
+    color: #111827;
+
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .settings-field input:focus {
+    border-color: #7f1d1d;
+
+    box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.08);
+  }
+
+  .settings-field input:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+  }
+
+  .settings-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .settings-option:last-child {
+    border-bottom: none;
+  }
+
+  .settings-option strong {
+    display: block;
+    font-size: 13px;
+  }
+
+  .settings-option p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .settings-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .settings-switch input {
+    display: none;
+  }
+
+  .settings-switch span {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 999px;
+
+    background: #cbd5e1;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+  }
+
+  .settings-switch span::before {
+    content: "";
+
+    position: absolute;
+
+    width: 18px;
+    height: 18px;
+
+    top: 3px;
+    left: 3px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    transition: 0.2s ease;
+  }
+
+  .settings-switch input:checked + span {
+    background: #7f1d1d;
+  }
+
+  .settings-switch input:checked + span::before {
+    transform: translateX(20px);
+  }
+
+  .settings-security-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .settings-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px 15px;
+
+    border-radius: 10px;
+
+    background: #f1f5f9;
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .settings-button:hover {
+    background: #e2e8f0;
+  }
+
+  .settings-button.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .settings-button.danger:hover {
+    background: #fee2e2;
+  }
+
+  @media (max-width: 700px) {
+    .settings-header {
+      padding: 20px;
+    }
+
+    .settings-header h1 {
+      font-size: 27px;
+    }
+
+    .settings-form {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<div class="settings-page">
+  <div class="settings-header">
+    <div>
+      <div class="settings-eyebrow">ACCOUNT</div>
+
+      <h1>Settings</h1>
+
+      <p>Manage your account and restaurant system preferences.</p>
+    </div>
+  </div>
+
+  <!-- USER PROFILE -->
+
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div>
+        <h2>Profile</h2>
+        <p>Your personal account information.</p>
+      </div>
+    </div>
+
+    <div class="settings-profile">
+      <div class="settings-avatar">{{ request.user.username|first|upper }}</div>
+
+      <div>
+        <h3>{{ request.user.get_full_name|default:request.user.username }}</h3>
+
+        <p>{{ request.user.email }}</p>
+
+        <span class="settings-status"> ● Logged in </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT SETTINGS -->
+
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div>
+        <h2>Account</h2>
+        <p>Manage your account information.</p>
+      </div>
+    </div>
+
+    <div class="settings-form">
+      <div class="settings-field">
+        <label> Username </label>
+
+        <input type="text" value="{{ request.user.username }}" disabled />
+      </div>
+
+      <div class="settings-field">
+        <label> Full Name </label>
+
+        <input type="text" value="{{ request.user.get_full_name }}" />
+      </div>
+
+      <div class="settings-field">
+        <label> Email </label>
+
+        <input type="email" value="{{ request.user.email }}" />
+      </div>
+    </div>
+  </div>
+
+  <!-- PREFERENCES -->
+
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div>
+        <h2>Preferences</h2>
+        <p>Customize your dashboard experience.</p>
+      </div>
+    </div>
+
+    <div class="settings-option">
+      <div>
+        <strong>Dark Mode</strong>
+
+        <p>Use a darker interface throughout the dashboard.</p>
+      </div>
+
+      <label class="settings-switch">
+        <input type="checkbox" />
+        <span></span>
+      </label>
+    </div>
+
+    <div class="settings-option">
+      <div>
+        <strong>Email Notifications</strong>
+
+        <p>Receive notifications about restaurant activity.</p>
+      </div>
+
+      <label class="settings-switch">
+        <input type="checkbox" checked />
+        <span></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div>
+        <h2>Security</h2>
+        <p>Manage your account security.</p>
+      </div>
+    </div>
+
+    <div class="settings-security-actions">
+      <a href="#" class="settings-button"> Change Password </a>
+
+      <a href="#" class="settings-button danger"> Logout </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

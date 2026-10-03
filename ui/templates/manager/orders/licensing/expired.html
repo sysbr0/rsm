@@ -1,0 +1,222 @@
+{% extends "ui/admin_base.html" %} {% block title %} License Expired {% endblock
+%} {% block mobile_title %} License Expired {% endblock %} {% block extra_styles
+%}
+
+<style>
+  .license-expired-wrapper {
+    min-height: calc(100vh - 120px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px 20px;
+  }
+
+  .license-panel {
+    width: min(520px, 100%);
+
+    background: #ffffff;
+
+    border-radius: 18px;
+
+    padding: 40px;
+
+    text-align: center;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  }
+
+  .license-icon {
+    width: 72px;
+    height: 72px;
+
+    margin: 0 auto 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #fff1f1;
+
+    font-size: 34px;
+  }
+
+  .license-panel h1 {
+    margin: 0 0 14px;
+
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .license-message {
+    margin: 0 auto 24px;
+
+    max-width: 420px;
+
+    color: #666;
+
+    line-height: 1.6;
+  }
+
+  .license-info {
+    padding: 18px;
+
+    margin-bottom: 24px;
+
+    background: #f7f7f8;
+
+    border-radius: 12px;
+
+    text-align: left;
+  }
+
+  .license-info-row {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 9px 0;
+
+    border-bottom: 1px solid #e9e9eb;
+  }
+
+  .license-info-row:last-child {
+    border-bottom: none;
+  }
+
+  .license-info-row span:first-child {
+    color: #777;
+  }
+
+  .license-info-row span:last-child {
+    font-weight: 600;
+
+    text-align: right;
+
+    word-break: break-word;
+  }
+
+  .license-contact-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 12px 22px;
+
+    border-radius: 10px;
+
+    background: #8b1e1e;
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-weight: 600;
+
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .license-contact-button:hover {
+    background: #641414;
+
+    transform: translateY(-1px);
+
+    color: #ffffff;
+  }
+
+  @media (max-width: 600px) {
+    .license-expired-wrapper {
+      padding: 20px 15px;
+    }
+
+    .license-panel {
+      padding: 28px 20px;
+    }
+
+    .license-panel h1 {
+      font-size: 24px;
+    }
+
+    .license-info-row {
+      flex-direction: column;
+
+      align-items: flex-start;
+
+      gap: 3px;
+    }
+
+    .license-info-row span:last-child {
+      text-align: left;
+    }
+  }
+</style>
+
+{% endblock %} {% block content %}
+
+<div class="license-expired-wrapper">
+  <div class="license-panel">
+    <div class="license-icon">🔒</div>
+
+    <h1>License Expired</h1>
+
+    <p class="license-message">
+      Your Restaurant Management System license has expired. Please contact us
+      to activate your license and get additional time.
+    </p>
+
+    {% if license %}
+
+    <div class="license-info">
+      <div class="license-info-row">
+        <span> License </span>
+
+        <span> {{ license.license_key }} </span>
+      </div>
+
+      <div class="license-info-row">
+        <span> Customer </span>
+
+        <span> {{ license.customer_name }} </span>
+      </div>
+
+      <div class="license-info-row">
+        <span> Product </span>
+
+        <span> {{ license.product }} </span>
+      </div>
+
+      <div class="license-info-row">
+        <span> Plan </span>
+
+        <span> {{ license.plan }} </span>
+      </div>
+
+      {% if license.expires_at %}
+
+      <div class="license-info-row">
+        <span> Expired </span>
+
+        <span> {{ license.expires_at|date:"Y-m-d H:i" }} </span>
+      </div>
+
+      {% endif %}
+    </div>
+
+    {% endif %}
+
+    <a href="mailto:support@sysbr.net" class="license-contact-button">
+      Contact Us
+    </a>
+  </div>
+</div>
+
+{% endblock %}

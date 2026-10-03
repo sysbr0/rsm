@@ -1,0 +1,769 @@
+# Task: Make Existing Django API Reachable via Public HTTPS Using Cloudflare Tunnel
+
+## Objective
+
+I already have a working Django + Django REST Framework restaurant management system.
+
+The Django application currently runs on a local restaurant laptop and can be accessed by devices connected to the same Wi-Fi/LAN.
+
+I want to add secure public HTTPS access without:
+
+* Port forwarding
+* Opening inbound ports on the router
+* Exposing the restaurant laptop's local IP
+* Changing the existing LAN functionality
+
+Use **Cloudflare Tunnel (`cloudflared`)** for the public connection.
+
+The final architecture should be:
+
+```text
+                         INTERNET
+                            │
+                            ▼
+                    https://api.example.com
+                            │
+                       Cloudflare
+                            │
+                    Cloudflare Tunnel
+                            │
+                            ▼
+                  Restaurant Laptop
+                            │
+                     Django API
+                       :8000
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+        Local Restaurant LAN         Local Database
+              │
+       ┌──────┴──────┐
+       │             │
+     Phones        Printers
+```
+
+The same Django API must remain accessible locally.
+
+---
+
+# 1. Important Requirements
+
+Do NOT redesign or rewrite the existing Django application.
+
+Inspect the existing project first.
+
+Before changing anything:
+
+1. Detect the existing Django project name.
+2. Detect the existing settings module.
+3. Detect the existing API structure.
+4. Detect the existing authentication system.
+5. Detect the existing database configuration.
+6. Detect whether the project already has CORS configuration.
+7. Detect the existing frontend/API URL configuration.
+8. Detect the operating system.
+9. Preserve all existing functionality.
+
+Make the smallest clean changes necessary.
+
+---
+
+# 2. Local Django Server
+
+Django must continue to run on the local network.
+
+The development/local command should be equivalent to:
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+Do NOT bind Django only to:
+
+```text
+127.0.0.1
+```
+
+because other devices on the restaurant LAN need to access it.
+
+The local API should therefore remain accessible using something like:
+
+```text
+http://192.168.1.100:8000
+```
+
+where the actual IP address depends on the restaurant laptop.
+
+Do not hard-code `192.168.1.100`.
+
+---
+
+# 3. Cloudflare Tunnel
+
+Add complete project documentation and configuration for:
+
+```text
+cloudflared
+```
+
+The tunnel must connect:
+
+```text
+Public HTTPS
+    ↓
+Cloudflare
+    ↓
+Cloudflare Tunnel
+    ↓
+localhost:8000
+    ↓
+Django
+```
+
+The tunnel must use an outbound connection.
+
+Do NOT implement:
+
+* Router port forwarding
+* NAT configuration
+* Public inbound port 8000
+* Exposing the laptop directly to the internet
+
+---
+
+# 4. Domain
+
+Support a custom API domain such as:
+
+```text
+https://api.example.com
+```
+
+Do not assume that `example.com` is the user's actual domain.
+
+Create configuration using environment variables/documentation such as:
+
+```env
+PUBLIC_API_URL=https://api.example.com
+LOCAL_API_URL=http://192.168.1.100:8000
+```
+
+Do not hard-code the production domain.
+
+Explain in the documentation that the domain must be configured in Cloudflare.
+
+---
+
+# 5. Cloudflare Tunnel Configuration
+
+Create a documented example `cloudflared` configuration:
+
+```yaml
+tunnel: YOUR_TUNNEL_ID
+credentials-file: /path/to/YOUR_TUNNEL.json
+
+ingress:
+  - hostname: api.example.com
+    service: http://localhost:8000
+
+  - service: http_status:404
+```
+
+Do not put real credentials into Git.
+
+The following must be ignored by Git:
+
+```text
+*.json
+.env
+.env.*
+```
+
+except for safe example files such as:
+
+```text
+.env.example
+```
+
+---
+
+# 6. Django ALLOWED_HOSTS
+
+Update Django configuration so the API accepts:
+
+1. localhost
+2. 127.0.0.1
+3. local LAN access
+4. the configured public API hostname
+
+Use environment variables.
+
+Example:
+
+```env
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,api.example.com
+```
+
+Do NOT use:
+
+```python
+ALLOWED_HOSTS = ["*"]
+```
+
+for production configuration.
+
+---
+
+# 7. CSRF Configuration
+
+If Django uses session authentication or Django admin, configure trusted origins correctly.
+
+Use an environment variable such as:
+
+```env
+DJANGO_CSRF_TRUSTED_ORIGINS=https://api.example.com
+```
+
+Do not blindly allow every origin.
+
+---
+
+# 8. CORS
+
+If the project already uses `django-cors-headers`, update it correctly.
+
+Support:
+
+```env
+CORS_ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
+```
+
+and allow the local frontend when necessary.
+
+Do NOT use:
+
+```python
+CORS_ALLOW_ALL_ORIGINS = True
+```
+
+in production.
+
+Make the configuration environment-based.
+
+Example:
+
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://your-vercel-app.vercel.app
+```
+
+The actual Vercel URL must be configurable.
+
+---
+
+# 9. Environment Configuration
+
+Create or update:
+
+```text
+.env.example
+```
+
+Include variables such as:
+
+```env
+DEBUG=False
+
+DJANGO_SECRET_KEY=change-me
+
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,api.example.com
+
+DJANGO_CSRF_TRUSTED_ORIGINS=https://api.example.com
+
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://your-vercel-app.vercel.app
+
+PUBLIC_API_URL=https://api.example.com
+
+LOCAL_API_URL=http://192.168.1.100:8000
+```
+
+Do not place actual secrets in the repository.
+
+---
+
+# 10. Next.js Compatibility
+
+The Next.js frontend will eventually be hosted on Vercel.
+
+Prepare the Django API configuration for:
+
+```text
+Next.js on Vercel
+        ↓
+https://api.example.com
+        ↓
+Cloudflare Tunnel
+        ↓
+Restaurant Django
+```
+
+The frontend must NOT use:
+
+```text
+localhost
+```
+
+when deployed to Vercel.
+
+Create a frontend environment variable:
+
+```env
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
+
+For local development:
+
+```env
+NEXT_PUBLIC_API_URL=http://192.168.1.100:8000
+```
+
+Do not hard-code either URL into React/Next.js components.
+
+---
+
+# 11. Health Check
+
+Create or verify a simple API health endpoint:
+
+```text
+GET /api/health/
+```
+
+It should return something similar to:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Do not expose sensitive information.
+
+This endpoint will be used to test:
+
+### Local:
+
+```text
+http://192.168.1.100:8000/api/health/
+```
+
+### Public:
+
+```text
+https://api.example.com/api/health/
+```
+
+Both should work.
+
+---
+
+# 12. Security
+
+Do NOT expose Django development tools publicly.
+
+The public tunnel must not expose:
+
+```text
+.env
+database files
+private files
+Django debug pages
+Python source files
+cloudflared credentials
+```
+
+Production configuration must use:
+
+```env
+DEBUG=False
+```
+
+Do not expose Django's debug error pages through the public tunnel.
+
+If DEBUG is required for local development, use separate environment configuration.
+
+---
+
+# 13. HTTPS
+
+The public URL must be HTTPS:
+
+```text
+https://api.example.com
+```
+
+Do not configure the application to require the user to access:
+
+```text
+http://api.example.com
+```
+
+Cloudflare should terminate the public HTTPS connection and securely tunnel the request to the local Django service.
+
+---
+
+# 14. Local LAN Must Continue Working
+
+After implementing the tunnel, verify that this still works:
+
+```text
+Phone
+ ↓
+Restaurant Wi-Fi
+ ↓
+192.168.x.x:8000
+ ↓
+Django
+```
+
+The Cloudflare tunnel must NOT replace local LAN access.
+
+Both paths must work:
+
+```text
+LOCAL:
+
+Phone
+ ↓
+Wi-Fi
+ ↓
+Django :8000
+```
+
+and:
+
+```text
+REMOTE:
+
+Phone
+ ↓
+Internet
+ ↓
+Cloudflare
+ ↓
+Tunnel
+ ↓
+Django :8000
+```
+
+---
+
+# 15. Startup Scripts
+
+Create convenient scripts for development.
+
+For example:
+
+```text
+scripts/
+    start_django.sh
+    start_tunnel.sh
+```
+
+The Django script should start:
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+The tunnel script should start the configured Cloudflare tunnel.
+
+Do not store Cloudflare secrets inside the scripts.
+
+If the project supports Windows and macOS/Linux, provide appropriate instructions for both.
+
+---
+
+# 16. Documentation
+
+Create/update:
+
+```text
+CLOUDFLARE_TUNNEL.md
+```
+
+It must explain the complete setup from zero.
+
+Include:
+
+## Step 1 — Install cloudflared
+
+Explain installation for:
+
+* macOS
+* Windows
+* Linux
+
+## Step 2 — Authenticate
+
+Explain how to authenticate `cloudflared`.
+
+## Step 3 — Create the tunnel
+
+Explain how to create a named Cloudflare tunnel.
+
+## Step 4 — Configure hostname
+
+Explain how to connect:
+
+```text
+api.example.com
+```
+
+to:
+
+```text
+http://localhost:8000
+```
+
+## Step 5 — Start Django
+
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+## Step 6 — Start Cloudflare Tunnel
+
+Show the correct command for the created tunnel.
+
+## Step 7 — Test local access
+
+```text
+http://LOCAL_IP:8000/api/health/
+```
+
+## Step 8 — Test public access
+
+```text
+https://api.example.com/api/health/
+```
+
+## Step 9 — Connect Next.js
+
+Configure:
+
+```env
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
+
+---
+
+# 17. Troubleshooting Documentation
+
+Document solutions for:
+
+### Django 400 Bad Request
+
+Check:
+
+```text
+ALLOWED_HOSTS
+```
+
+### CSRF errors
+
+Check:
+
+```text
+CSRF_TRUSTED_ORIGINS
+```
+
+### CORS errors
+
+Check:
+
+```text
+CORS_ALLOWED_ORIGINS
+```
+
+### Tunnel cannot connect
+
+Check:
+
+```text
+cloudflared tunnel info
+```
+
+and verify Django is actually running on:
+
+```text
+localhost:8000
+```
+
+### Local phone cannot connect
+
+Check:
+
+* Phone and laptop are on the same Wi-Fi.
+* Django is bound to `0.0.0.0`.
+* Laptop firewall allows local traffic to port 8000.
+* Correct local IP address is being used.
+
+### Public URL unavailable
+
+Check:
+
+* Laptop has internet.
+* Django is running.
+* cloudflared is running.
+* Tunnel is connected.
+* DNS/hostname configuration is correct.
+
+---
+
+# 18. Do Not Use Port Forwarding
+
+The documentation must clearly state:
+
+```text
+NO ROUTER PORT FORWARDING IS REQUIRED.
+```
+
+Do not instruct the user to open:
+
+```text
+8000
+80
+443
+```
+
+on the restaurant router.
+
+The tunnel should establish the connection outbound.
+
+---
+
+# 19. Production Architecture
+
+Document the intended architecture as:
+
+```text
+                         INTERNET
+                            │
+                            ▼
+                    Next.js / Vercel
+                            │
+                            │ HTTPS
+                            ▼
+                  https://api.example.com
+                            │
+                            ▼
+                       Cloudflare
+                            │
+                     Tunnel (outbound)
+                            │
+                            ▼
+                  Restaurant Laptop
+                            │
+                       Django API
+                       localhost:8000
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+        Local Database              Printer Manager
+              │                           │
+              └─────────────┬─────────────┘
+                            │
+                       Restaurant LAN
+                            │
+                     Waiter Devices
+```
+
+---
+
+# 20. Important Operational Requirement
+
+The system must understand that:
+
+### Local operation
+
+Does NOT require the internet.
+
+```text
+Phone → Wi-Fi → Django
+```
+
+### Remote operation
+
+Requires internet.
+
+```text
+Phone → Internet → Cloudflare → Laptop
+```
+
+If the restaurant internet fails:
+
+```text
+Remote access = unavailable
+Local restaurant operation = continues
+```
+
+Do not modify the local system in a way that makes restaurant operations dependent on Cloudflare or the internet.
+
+---
+
+# 21. Acceptance Criteria
+
+The implementation is complete only when all of these are true:
+
+* [ ] Django works locally.
+* [ ] Phone can access Django over restaurant Wi-Fi.
+* [ ] Cloudflare Tunnel connects successfully.
+* [ ] No router port forwarding is required.
+* [ ] Public HTTPS hostname works.
+* [ ] `/api/health/` works publicly.
+* [ ] `ALLOWED_HOSTS` is correctly configured.
+* [ ] CSRF is correctly configured.
+* [ ] CORS is correctly configured.
+* [ ] Secrets are not committed.
+* [ ] DEBUG is disabled for public deployment.
+* [ ] Next.js can use the public API URL.
+* [ ] Local LAN access continues working.
+* [ ] The application remains usable locally if the restaurant internet goes offline.
+
+---
+
+# 22. Implementation Instructions for Copilot
+
+First inspect the entire existing project.
+
+Do not immediately create duplicate files or rewrite existing applications.
+
+Before modifying anything, provide a short summary of:
+
+1. Current Django project structure.
+2. Existing settings location.
+3. Existing API entry point.
+4. Existing authentication.
+5. Existing CORS configuration.
+6. Existing database.
+7. Existing frontend configuration.
+8. Current operating system.
+
+Then implement the required changes.
+
+After implementation, show:
+
+```text
+Files created
+Files modified
+Environment variables added
+Commands to run
+Cloudflare setup commands
+Local test URL
+Public test URL
+Next.js configuration
+```
+
+Do not claim that the public URL works until the user has actually configured their Cloudflare account, domain, and tunnel credentials.
+
+The implementation must remain compatible with the existing Restaurant Management System.

@@ -1,0 +1,1375 @@
+{% extends "manager/base.html" %} {% block title %} Order Dashboard {% endblock
+%} {% block content %}
+
+<style>
+  .order-dashboard {
+    --primary: #8b1e1e;
+    --primary-dark: #641414;
+    --primary-soft: rgba(139, 30, 30, 0.08);
+
+    padding: 24px;
+  }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-title h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .dashboard-title p {
+    margin: 5px 0 0;
+    color: #777;
+  }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-control {
+    height: 42px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0 13px;
+    background: #fff;
+    min-width: 150px;
+  }
+
+  .filter-button {
+    height: 42px;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 18px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .filter-button:hover {
+    background: var(--primary-dark);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #222;
+  }
+
+  .stat-extra {
+    margin-top: 7px;
+    font-size: 12px;
+    color: #888;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 350px;
+  }
+
+  .table-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .table-status {
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8f8f8;
+  }
+
+  .table-status-name {
+    color: #777;
+    font-size: 13px;
+  }
+
+  .table-status-number {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 5px;
+  }
+
+  .waiter-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .waiter-table th {
+    text-align: left;
+    padding: 13px 10px;
+    font-size: 12px;
+    color: #777;
+    border-bottom: 1px solid #eee;
+  }
+
+  .waiter-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+
+  .waiter-name {
+    font-weight: 700;
+  }
+
+  .money {
+    font-weight: 800;
+  }
+
+  .orders-card {
+    margin-top: 20px;
+  }
+
+  .orders-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+  }
+
+  .orders-table th {
+    text-align: left;
+    padding: 14px 12px;
+    color: #777;
+    font-size: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .orders-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+
+  .order-number {
+    font-weight: 800;
+  }
+
+  .status {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-open {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-confirmed {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-preparing {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-ready {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-served {
+    background: #ede9fe;
+    color: #5b21b6;
+  }
+
+  .status-paid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+  }
+
+  @media (max-width: 1100px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .order-dashboard {
+      padding: 15px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filters {
+      width: 100%;
+    }
+
+    .filter-control,
+    .filter-button {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="order-dashboard">
+  <!-- HEADER -->
+
+  <div class="dashboard-header">
+    <div class="dashboard-title">
+      <h1>Order Dashboard</h1>
+
+      <p>{{ dashboard_date|date:"l, d F Y" }}</p>
+    </div>
+
+    <!-- FILTERS -->
+
+    <form method="get" class="filters">
+      <input
+        type="date"
+        name="date"
+        value="{{ selected_date }}"
+        class="filter-control"
+      />
+
+      <select name="waiter" class="filter-control">
+        <option value="">All Waiters</option>
+
+        {% for waiter in waiters %}
+
+        <option
+          value="{{ waiter.id }}"
+          {%
+          if
+          selected_waiter=""
+          ="waiter.id"
+          %}
+          selected
+          {%
+          endif
+          %}
+        >
+          {{ waiter.full_name }}
+        </option>
+
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="filter-button">Filter</button>
+    </form>
+  </div>
+
+  <!-- STATISTICS -->
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Orders</div>
+
+      <div class="stat-value">{{ total_orders }}</div>
+
+      <div class="stat-extra">{{ total_paid_orders }} paid</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Revenue</div>
+
+      <div class="stat-value">{{ total_revenue|floatformat:2 }} TL</div>
+
+      <div class="stat-extra">
+        Average {{ average_order_value|floatformat:2 }} TL / order
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Active Tables</div>
+
+      <div class="stat-value">{{ active_tables }}</div>
+
+      <div class="stat-extra">{{ available_tables }} available</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Cancelled Orders</div>
+
+      <div class="stat-value">{{ total_cancelled_orders }}</div>
+
+      <div class="stat-extra">{{ active_order_count }} active orders</div>
+    </div>
+  </div>
+
+  <!-- CHART + TABLE STATUS -->
+
+  <div class="dashboard-grid">
+    <!-- CHART -->
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Orders & Revenue</h2>
+
+        <span> Last 7 days </span>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+
+    <!-- TABLE STATUS -->
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Table Status</h2>
+      </div>
+
+      <div class="table-status-grid">
+        <div class="table-status">
+          <div class="table-status-name">Total</div>
+
+          <div class="table-status-number">{{ total_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Available</div>
+
+          <div class="table-status-number">{{ available_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Occupied</div>
+
+          <div class="table-status-number">{{ occupied_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Reserved</div>
+
+          <div class="table-status-number">{{ reserved_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">On Payment</div>
+
+          <div class="table-status-number">{{ on_payment_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Closed</div>
+
+          <div class="table-status-number">{{ closed_tables }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAITER PERFORMANCE -->
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Waiter Performance</h2>
+
+      <span> {{ dashboard_date|date:"d M Y" }} </span>
+    </div>
+
+    <div class="orders-table-wrapper">
+      <table class="waiter-table">
+        <thead>
+          <tr>
+            <th>Waiter</th>
+
+            <th>Paid Orders</th>
+
+            <th>Tables Served</th>
+
+            <th>Revenue</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for waiter in waiter_stats %}
+
+          <tr>
+            <td>
+              <span class="waiter-name"> {{ waiter.full_name }} </span>
+            </td>
+
+            <td>{{ waiter.order_count }}</td>
+
+            <td>{{ waiter.table_count }}</td>
+
+            <td>
+              <span class="money"> {{ waiter.revenue|floatformat:2 }} TL </span>
+            </td>
+          </tr>
+
+          {% empty %}
+
+          <tr>
+            <td colspan="4" class="empty-state">
+              No waiter data for this date.
+            </td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+
+  <div class="card orders-card">
+    <div class="card-header">
+      <h2>Orders</h2>
+
+      <span> {{ total_orders }} orders </span>
+    </div>
+
+    <div class="orders-table-wrapper">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+
+            <th>Table</th>
+
+            <th>Waiter</th>
+
+            <th>Status</th>
+
+            <th>Subtotal</th>
+
+            <th>Tax</th>
+
+            <th>Discount</th>
+
+            <th>Total</th>
+
+            <th>Time</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for order in orders %}
+
+          <tr>
+            <td>
+              <span class="order-number"> #{{ order.id }} </span>
+            </td>
+
+            <td>
+              {% if order.table.name %} {{ order.table.name }} {% else %} Table
+              {{ order.table.table_number }} {% endif %}
+            </td>
+
+            <td>{{ order.waiter.full_name }}</td>
+
+            <td>
+              <span class="status status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+
+            <td>{{ order.subtotal|floatformat:2 }}</td>
+
+            <td>{{ order.tax|floatformat:2 }}</td>
+
+            <td>{{ order.discount|floatformat:2 }}</td>
+
+            <td>
+              <strong> {{ order.total|floatformat:2 }} TL </strong>
+            </td>
+
+            <td>{{ order.created_at|date:"H:i" }}</td>
+          </tr>
+
+          {% empty %}
+
+          <tr>
+            <td colspan="9" class="empty-state">No orders found.</td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CHART.JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+  const graphLabels = {{ graph_labels|safe }};
+  const graphOrders = {{ graph_order_values|safe }};
+  const graphRevenue = {{ graph_revenue_values|safe }};
+
+
+  const chartElement = document.getElementById(
+      "ordersChart"
+  );
+
+
+  new Chart(
+      chartElement,
+      {
+          type: "line",
+
+          data: {
+
+              labels: graphLabels,
+
+              datasets: [
+
+                  {
+                      label: "Orders",
+
+                      data: graphOrders,
+
+                      tension: 0.35,
+
+                      borderWidth: 2,
+
+                      yAxisID: "orders",
+
+                      fill: false,
+                  },
+
+                  {
+                      label: "Revenue",
+
+                      data: graphRevenue,
+
+                      tension: 0.35,
+
+                      borderWidth: 2,
+
+                      yAxisID: "revenue",
+
+                      fill: false,
+                  }
+
+              ]
+
+          },
+
+          options: {
+
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+              interaction: {
+                  mode: "index",
+                  intersect: false,
+              },
+
+              scales: {
+
+                  orders: {
+
+                      type: "linear",
+
+                      position: "left",
+
+                      beginAtZero: true,
+
+                      title: {
+                          display: true,
+                          text: "Orders",
+                      }
+
+                  },
+
+                  revenue: {
+
+                      type: "linear",
+
+                      position: "right",
+
+                      beginAtZero: true,
+
+                      title: {
+                          display: true,
+                          text: "Revenue (TL)",
+                      },
+
+                      grid: {
+                          drawOnChartArea: false,
+                      }
+
+                  }
+
+              }
+
+          }
+
+      }
+  );
+</script>
+
+{% endblock %} {% extends "manager/base.html" %} {% block title %} Order
+Dashboard {% endblock %} {% block content %}
+
+<style>
+  .order-dashboard {
+    --primary: #8b1e1e;
+    --primary-dark: #641414;
+    --primary-soft: rgba(139, 30, 30, 0.08);
+
+    padding: 24px;
+  }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-title h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+  }
+
+  .dashboard-title p {
+    margin: 5px 0 0;
+    color: #777;
+  }
+
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-control {
+    height: 42px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0 13px;
+    background: #fff;
+    min-width: 150px;
+  }
+
+  .filter-button {
+    height: 42px;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 18px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .filter-button:hover {
+    background: var(--primary-dark);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #222;
+  }
+
+  .stat-extra {
+    margin-top: 7px;
+    font-size: 12px;
+    color: #888;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 350px;
+  }
+
+  .table-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .table-status {
+    padding: 16px;
+    border-radius: 12px;
+    background: #f8f8f8;
+  }
+
+  .table-status-name {
+    color: #777;
+    font-size: 13px;
+  }
+
+  .table-status-number {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 5px;
+  }
+
+  .waiter-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .waiter-table th {
+    text-align: left;
+    padding: 13px 10px;
+    font-size: 12px;
+    color: #777;
+    border-bottom: 1px solid #eee;
+  }
+
+  .waiter-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+
+  .waiter-name {
+    font-weight: 700;
+  }
+
+  .money {
+    font-weight: 800;
+  }
+
+  .orders-card {
+    margin-top: 20px;
+  }
+
+  .orders-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+  }
+
+  .orders-table th {
+    text-align: left;
+    padding: 14px 12px;
+    color: #777;
+    font-size: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .orders-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+
+  .order-number {
+    font-weight: 800;
+  }
+
+  .status {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-open {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-confirmed {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-preparing {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-ready {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-served {
+    background: #ede9fe;
+    color: #5b21b6;
+  }
+
+  .status-paid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+  }
+
+  @media (max-width: 1100px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .order-dashboard {
+      padding: 15px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filters {
+      width: 100%;
+    }
+
+    .filter-control,
+    .filter-button {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="order-dashboard">
+  <!-- HEADER -->
+
+  <div class="dashboard-header">
+    <div class="dashboard-title">
+      <h1>Order Dashboard</h1>
+
+      <p>{{ dashboard_date|date:"l, d F Y" }}</p>
+    </div>
+
+    <!-- FILTERS -->
+
+    <form method="get" class="filters">
+      <input
+        type="date"
+        name="date"
+        value="{{ selected_date }}"
+        class="filter-control"
+      />
+
+      <select name="waiter" class="filter-control">
+        <option value="">All Waiters</option>
+
+        {% for waiter in waiters %}
+
+        <option
+          value="{{ waiter.id }}"
+          {%
+          if
+          selected_waiter=""
+          ="waiter.id"
+          %}
+          selected
+          {%
+          endif
+          %}
+        >
+          {{ waiter.full_name }}
+        </option>
+
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="filter-button">Filter</button>
+    </form>
+  </div>
+
+  <!-- STATISTICS -->
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Orders</div>
+
+      <div class="stat-value">{{ total_orders }}</div>
+
+      <div class="stat-extra">{{ total_paid_orders }} paid</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Revenue</div>
+
+      <div class="stat-value">{{ total_revenue|floatformat:2 }} TL</div>
+
+      <div class="stat-extra">
+        Average {{ average_order_value|floatformat:2 }} TL / order
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Active Tables</div>
+
+      <div class="stat-value">{{ active_tables }}</div>
+
+      <div class="stat-extra">{{ available_tables }} available</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Cancelled Orders</div>
+
+      <div class="stat-value">{{ total_cancelled_orders }}</div>
+
+      <div class="stat-extra">{{ active_order_count }} active orders</div>
+    </div>
+  </div>
+
+  <!-- CHART + TABLE STATUS -->
+
+  <div class="dashboard-grid">
+    <!-- CHART -->
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Orders & Revenue</h2>
+
+        <span> Last 7 days </span>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+
+    <!-- TABLE STATUS -->
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Table Status</h2>
+      </div>
+
+      <div class="table-status-grid">
+        <div class="table-status">
+          <div class="table-status-name">Total</div>
+
+          <div class="table-status-number">{{ total_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Available</div>
+
+          <div class="table-status-number">{{ available_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Occupied</div>
+
+          <div class="table-status-number">{{ occupied_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Reserved</div>
+
+          <div class="table-status-number">{{ reserved_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">On Payment</div>
+
+          <div class="table-status-number">{{ on_payment_tables }}</div>
+        </div>
+
+        <div class="table-status">
+          <div class="table-status-name">Closed</div>
+
+          <div class="table-status-number">{{ closed_tables }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAITER PERFORMANCE -->
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Waiter Performance</h2>
+
+      <span> {{ dashboard_date|date:"d M Y" }} </span>
+    </div>
+
+    <div class="orders-table-wrapper">
+      <table class="waiter-table">
+        <thead>
+          <tr>
+            <th>Waiter</th>
+
+            <th>Paid Orders</th>
+
+            <th>Tables Served</th>
+
+            <th>Revenue</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for waiter in waiter_stats %}
+
+          <tr>
+            <td>
+              <span class="waiter-name"> {{ waiter.full_name }} </span>
+            </td>
+
+            <td>{{ waiter.order_count }}</td>
+
+            <td>{{ waiter.table_count }}</td>
+
+            <td>
+              <span class="money"> {{ waiter.revenue|floatformat:2 }} TL </span>
+            </td>
+          </tr>
+
+          {% empty %}
+
+          <tr>
+            <td colspan="4" class="empty-state">
+              No waiter data for this date.
+            </td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+
+  <div class="card orders-card">
+    <div class="card-header">
+      <h2>Orders</h2>
+
+      <span> {{ total_orders }} orders </span>
+    </div>
+
+    <div class="orders-table-wrapper">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+
+            <th>Table</th>
+
+            <th>Waiter</th>
+
+            <th>Status</th>
+
+            <th>Subtotal</th>
+
+            <th>Tax</th>
+
+            <th>Discount</th>
+
+            <th>Total</th>
+
+            <th>Time</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for order in orders %}
+
+          <tr>
+            <td>
+              <span class="order-number"> #{{ order.id }} </span>
+            </td>
+
+            <td>
+              {% if order.table.name %} {{ order.table.name }} {% else %} Table
+              {{ order.table.table_number }} {% endif %}
+            </td>
+
+            <td>{{ order.waiter.full_name }}</td>
+
+            <td>
+              <span class="status status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+
+            <td>{{ order.subtotal|floatformat:2 }}</td>
+
+            <td>{{ order.tax|floatformat:2 }}</td>
+
+            <td>{{ order.discount|floatformat:2 }}</td>
+
+            <td>
+              <strong> {{ order.total|floatformat:2 }} TL </strong>
+            </td>
+
+            <td>{{ order.created_at|date:"H:i" }}</td>
+          </tr>
+
+          {% empty %}
+
+          <tr>
+            <td colspan="9" class="empty-state">No orders found.</td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CHART.JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+  const graphLabels = {{ graph_labels|safe }};
+  const graphOrders = {{ graph_order_values|safe }};
+  const graphRevenue = {{ graph_revenue_values|safe }};
+
+
+  const chartElement = document.getElementById(
+      "ordersChart"
+  );
+
+
+  new Chart(
+      chartElement,
+      {
+          type: "line",
+
+          data: {
+
+              labels: graphLabels,
+
+              datasets: [
+
+                  {
+                      label: "Orders",
+
+                      data: graphOrders,
+
+                      tension: 0.35,
+
+                      borderWidth: 2,
+
+                      yAxisID: "orders",
+
+                      fill: false,
+                  },
+
+                  {
+                      label: "Revenue",
+
+                      data: graphRevenue,
+
+                      tension: 0.35,
+
+                      borderWidth: 2,
+
+                      yAxisID: "revenue",
+
+                      fill: false,
+                  }
+
+              ]
+
+          },
+
+          options: {
+
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+              interaction: {
+                  mode: "index",
+                  intersect: false,
+              },
+
+              scales: {
+
+                  orders: {
+
+                      type: "linear",
+
+                      position: "left",
+
+                      beginAtZero: true,
+
+                      title: {
+                          display: true,
+                          text: "Orders",
+                      }
+
+                  },
+
+                  revenue: {
+
+                      type: "linear",
+
+                      position: "right",
+
+                      beginAtZero: true,
+
+                      title: {
+                          display: true,
+                          text: "Revenue (TL)",
+                      },
+
+                      grid: {
+                          drawOnChartArea: false,
+                      }
+
+                  }
+
+              }
+
+          }
+
+      }
+  );
+</script>
+
+{% endblock %}

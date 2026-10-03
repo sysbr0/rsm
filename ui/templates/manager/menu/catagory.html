@@ -1,0 +1,650 @@
+{% extends "ui/admin_base.html" %} {% block title %}Manage Categories{% endblock
+%} {% block mobile_title %}Categories{% endblock %} {% block content %}
+
+<style>
+  :root {
+    --primary: #6d28d9;
+    --primary-hover: #5b21b6;
+    --primary-light: #f3e8ff;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
+  }
+
+  .category-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 0;
+    color: var(--text-main);
+  }
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-card);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+  }
+
+  .header-section h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .header-section p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-hover);
+  }
+
+  .messages {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .message.success {
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+
+  .message.error {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+  }
+
+  .message.warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .message.info {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .category-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  th,
+  td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+  }
+
+  th {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: #f8fafc;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .order-number {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .status-active {
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+
+  .status-inactive {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .action-btn {
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    background: #fff;
+    transition: 0.15s;
+  }
+
+  .action-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .action-btn.toggle-btn:hover {
+    color: var(--danger-text);
+    border-color: var(--danger-text);
+    background: var(--danger-bg);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-muted);
+  }
+
+  .empty-state h3 {
+    margin: 0 0 8px;
+    color: var(--text-main);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* Modal */
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .form-input,
+  .form-textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+
+  .form-input:focus,
+  .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.08);
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .checkbox-group input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .btn-secondary {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text-main);
+  }
+
+  .btn-secondary:hover {
+    background: #f8fafc;
+  }
+
+  @media (max-width: 768px) {
+    .category-container {
+      padding: 16px 0;
+    }
+
+    .header-section {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 20px;
+    }
+
+    .header-section h1 {
+      font-size: 21px;
+    }
+
+    .header-section .btn-primary {
+      width: 100%;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+    }
+
+    .actions {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .modal-card {
+      padding: 22px;
+    }
+  }
+</style>
+
+<div class="category-container">
+  <!-- Header -->
+
+  <div class="header-section">
+    <div>
+      <h1>Category Management</h1>
+
+      <p>Organize menu items into structured product categories.</p>
+    </div>
+
+    <button type="button" class="btn-primary" onclick="openModal()">
+      + Add Category
+    </button>
+  </div>
+
+  <!-- Messages -->
+
+  {% if messages %}
+
+  <div class="messages">
+    {% for message in messages %}
+
+    <div class="message {{ message.tags }}">{{ message }}</div>
+
+    {% endfor %}
+  </div>
+
+  {% endif %}
+
+  <!-- Categories -->
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>All Categories</h2>
+
+      <span class="category-count"> {{ categories|length }} </span>
+    </div>
+
+    {% if categories %}
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Products</th>
+            <th>Status</th>
+            <th style="text-align: right">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for category in categories %}
+
+          <tr>
+            <td>
+              <span class="order-number"> {{ category.display_order }} </span>
+            </td>
+
+            <td>
+              <strong> {{ category.name }} </strong>
+            </td>
+
+            <td>
+              {% if category.description %} {{ category.description }} {% else
+              %}
+              <span style="color: #aaa"> No description </span>
+              {% endif %}
+            </td>
+
+            <td>{{ category.product_count }}</td>
+
+            <td>
+              {% if category.is_active %}
+
+              <span class="status status-active"> Active </span>
+
+              {% else %}
+
+              <span class="status status-inactive"> Inactive </span>
+
+              {% endif %}
+            </td>
+
+            <td style="text-align: right">
+              <div class="actions">
+                <a
+                  href="{% url 'category_edit' category.pk %}"
+                  class="action-btn"
+                >
+                  Edit
+                </a>
+
+                {% if category.is_active %}
+
+                <a
+                  href="{% url 'category_toggle' category.pk %}"
+                  class="action-btn toggle-btn"
+                >
+                  Deactivate
+                </a>
+
+                {% else %}
+
+                <a
+                  href="{% url 'category_toggle' category.pk %}"
+                  class="action-btn"
+                >
+                  Activate
+                </a>
+
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+      <h3>No categories found</h3>
+
+      <p>Click the button above to add your first menu category.</p>
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+<!-- Create Category Modal -->
+
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Category</h3>
+
+      <button type="button" class="close-btn" onclick="closeModal()">
+        &times;
+      </button>
+    </div>
+
+    <form method="POST" action="{% url 'category_list' %}">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="name"> Category Name * </label>
+
+        <input
+          type="text"
+          id="name"
+          name="name"
+          class="form-input"
+          placeholder="e.g. Beverages, Main Course"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="display_order"> Display Order </label>
+
+        <input
+          type="number"
+          id="display_order"
+          name="display_order"
+          class="form-input"
+          value="0"
+          min="0"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="description"> Description </label>
+
+        <textarea
+          id="description"
+          name="description"
+          class="form-textarea"
+          rows="3"
+          placeholder="Optional category description..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-group">
+          <input type="checkbox" name="is_active" checked />
+
+          <span> Set as active </span>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal()">
+          Cancel
+        </button>
+
+        <button type="submit" class="btn-primary">Create Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    const modal = document.getElementById("categoryModal");
+
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.add("active");
+
+    const nameInput = document.getElementById("name");
+
+    if (nameInput) {
+      setTimeout(function () {
+        nameInput.focus();
+      }, 100);
+    }
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("categoryModal");
+
+    if (!modal) {
+      return;
+    }
+
+    modal.classList.remove("active");
+  }
+
+  window.addEventListener("click", function (event) {
+    const modal = document.getElementById("categoryModal");
+
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+  });
+</script>
+
+{% endblock %}
