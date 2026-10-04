@@ -1,33 +1,22 @@
 {% extends "ui/admin_base.html" %} {% block title %} Table Detail - Admin {%
 endblock %} {% block mobile_title %} Table Detail {% endblock %} {% block
-extra_styles %}
-
-
-{% endblock %} {% block sidebar_extra %}
-
+sidebar_extra %}
 <div class="nav-group">
   <div class="nav-title">Current table</div>
-
   <div class="nav-stack">
     <div class="section-block">
       <div class="section-block-name">{{ table.name }}</div>
-
       <div class="section-block-location">Table #{{ table.table_number }}</div>
-
       <div class="section-block-count">{{ status_label }}</div>
     </div>
   </div>
 </div>
-
 {% endblock %} {% block hero %}
-
 <section class="hero">
   <div class="hero-top">
     <div>
       <div class="eyebrow">Table Management</div>
-
       <h1 class="title">Table #{{ table.table_number }}</h1>
-
       <p class="subtitle">
         Pick a category, add products, review the order, and save.
       </p>
@@ -35,14 +24,11 @@ extra_styles %}
 
     <div class="hero-actions">
       <div class="hero-badge">{{ status_label }}</div>
-
       <div class="hero-badge">Capacity: {{ table.capacity }}</div>
-
       <div class="hero-badge">Location: {{ table.location }}</div>
     </div>
   </div>
 </section>
-
 {% endblock %} {% block content %}
 <style>
   /* =========================================================
@@ -237,14 +223,11 @@ extra_styles %}
     font-weight: 800;
   }
 
-  .td-current-meta {
-    margin: 5px 0 0;
-    color: #64748b;
-    font-size: 13px;
-  }
-
   .td-current-list {
     margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .td-current-sub {
@@ -253,22 +236,23 @@ extra_styles %}
     color: #64748b;
   }
 
+  /* Item Cards: Default White / Printed White-Green */
   .td-current-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 15px;
-    padding: 13px 0;
-    border-top: 1px solid #e5e7eb;
-  }
-    .td-current-item {
-    background: #fff;
-    transition: background 0.2s ease;
+    padding: 14px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    transition: all 0.2s ease;
   }
 
   .td-current-item.td-item-printed {
-    background: #f0fdf4;
+    background: #9ab5a3;
+    border-color: #5df100;
   }
-
 
   .td-current-info {
     min-width: 0;
@@ -276,30 +260,64 @@ extra_styles %}
 
   .td-current-name {
     margin: 0;
+    font-size: 14px;
     font-weight: 700;
+    color: #0f172a;
   }
 
   .td-current-info .td-current-sub {
-    margin: 4px 0 0;
+    margin: 3px 0 0;
   }
 
+  /* Organized Action Controls */
   .td-current-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: nowrap;
   }
 
   .td-current-update {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .td-current-delete {
     display: flex;
+    margin: 0;
+  }
+
+  .td-btn-update {
+    border: 0;
+    background: #3b82f6;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .td-btn-update:hover {
+    background: #2563eb;
+  }
+
+  .td-btn-delete {
+    border: 0;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .td-btn-delete:hover {
+    background: #fecaca;
   }
 
   .td-delete-order {
@@ -315,21 +333,6 @@ extra_styles %}
 
   .td-delete-order:hover {
     background: #fecaca;
-  }
-
-  .td-delete-item {
-    border: 0;
-    background: #f3f4f6;
-    color: #374151;
-    border-radius: 8px;
-    padding: 8px 11px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .td-delete-item:hover {
-    background: #e5e7eb;
   }
 
   /* =========================================================
@@ -361,7 +364,11 @@ extra_styles %}
     border: 1px solid transparent;
     font-family: inherit;
     cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease,
+      background 0.18s ease;
     text-align: left;
     user-select: none;
   }
@@ -444,12 +451,25 @@ extra_styles %}
     padding-left: 8px;
     font-size: 18px;
     opacity: 0.7;
-    transition: transform 0.18s ease, opacity 0.18s ease;
+    transition:
+      transform 0.18s ease,
+      opacity 0.18s ease;
   }
 
   .order-btn--paid:hover .order-btn__arrow {
     transform: translateX(3px);
     opacity: 1;
+  }
+
+  .order-btn--print-items {
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+  }
+
+  .order-btn--print-items:hover {
+    background: #dcfce7;
+    border-color: #15803d;
   }
 
   /* =========================================================
@@ -586,16 +606,17 @@ extra_styles %}
 
   .td-qty-input {
     width: 55px;
-    height: 32px;
+    height: 34px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     padding: 0 5px;
     text-align: center;
     font-size: 13px;
+    font-weight: 600;
   }
 
   .td-note-input {
-    width: 100%;
+    width: 140px;
     height: 34px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
@@ -736,7 +757,7 @@ extra_styles %}
 
   .td-modal-card {
     position: relative !important;
-    width: min(500px, 100%);
+    width: min(480px, 100%);
     max-height: min(90vh, 720px);
     overflow-y: auto;
     background: #ffffff;
@@ -744,7 +765,9 @@ extra_styles %}
     border-radius: 20px;
     padding: 28px;
     box-sizing: border-box;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    box-shadow:
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(0, 0, 0, 0.03);
     z-index: 2;
     animation: modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -805,6 +828,7 @@ extra_styles %}
     border-radius: 8px;
     background: #f1f5f9;
     color: #64748b;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.15s ease;
   }
@@ -814,152 +838,62 @@ extra_styles %}
     color: #0f172a;
   }
 
-  .td-payment-summary-box {
+  .td-payment-order-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 16px 18px;
+    border-radius: 12px;
+    padding: 14px 18px;
     margin-bottom: 20px;
   }
 
-  .td-summary-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 6px;
-  }
-
-  .td-summary-row:last-child {
-    margin-bottom: 0;
-  }
-
-  .td-summary-value {
-    font-weight: 700;
-    color: #1e293b;
-  }
-
-  .td-summary-divider {
-    height: 1px;
-    background: #e2e8f0;
-    margin: 10px 0;
-  }
-
-  .td-summary-total {
-    font-size: 15px;
-    color: #0f172a;
-  }
-
-  .td-total-label {
-    font-weight: 700;
-  }
-
-  .td-total-amount {
-    font-size: 22px;
-    font-weight: 900;
-    color: #16a34a;
-  }
-
-  .td-field-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: #334155;
-    margin-bottom: 10px;
-  }
-
-  .td-payment-grid {
+  .td-payment-order-info div {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: 220px;
-    overflow-y: auto;
-    padding-right: 2px;
-    margin-bottom: 24px;
+    gap: 2px;
   }
 
-  .td-source-card {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    background: #ffffff;
-  }
-
-  .td-source-card input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .td-source-card:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-  }
-
-  .td-source-card.selected {
-    border-color: #16a34a;
-    background: #f0fdf4;
-    box-shadow: 0 0 0 1px #16a34a;
-  }
-
-  .td-source-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .td-source-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: #f1f5f9;
-    color: #475569;
-  }
-
-  .td-source-card.selected .td-source-icon {
-    background: #dcfce7;
-    color: #15803d;
-  }
-
-  .td-source-info {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .td-source-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  .td-source-type {
+  .td-payment-order-info span {
     font-size: 12px;
     color: #64748b;
   }
 
-  .td-source-radio-indicator {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid #cbd5e1;
-    transition: all 0.15s ease;
+  .td-payment-order-info strong {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
   }
 
+  .td-payment-field {
+    margin-bottom: 24px;
+  }
 
+  .td-payment-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 8px;
+  }
 
-  .td-source-card.selected .td-source-radio-indicator {
+  .td-payment-select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #0f172a;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .td-payment-select:focus {
     border-color: #16a34a;
-    border-width: 5px;
   }
 
   .td-payment-no-source {
@@ -973,7 +907,6 @@ extra_styles %}
     color: #991b1b;
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 24px;
   }
 
   .td-payment-actions {
@@ -1060,10 +993,13 @@ extra_styles %}
 
     .td-current-item {
       flex-direction: column;
+      align-items: flex-start;
     }
 
     .td-current-actions {
-      justify-content: flex-start;
+      width: 100%;
+      justify-content: flex-between;
+      margin-top: 8px;
     }
 
     .td-order-head {
@@ -1104,41 +1040,24 @@ extra_styles %}
       width: 100%;
     }
   }
-
-  .order-btn--print-items {
-  border: 1px solid #16a34a;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.order-btn--print-items:hover {
-  background: #dcfce7;
-  border-color: #15803d;
-}
 </style>
 
 <div class="td-summary-grid">
   <div class="td-summary-card">
     <div class="td-summary-label">Table ID</div>
-
     <div class="td-summary-value">{{ table.id }}</div>
-
     <div class="td-summary-note">Internal record identifier.</div>
   </div>
 
   <div class="td-summary-card">
     <div class="td-summary-label">Status</div>
-
     <div class="td-summary-value">{{ status_label }}</div>
-
     <div class="td-summary-note">Current table state.</div>
   </div>
 
   <div class="td-summary-card">
     <div class="td-summary-label">Current order total</div>
-
     <div class="td-summary-value">{{ order_total_display }}</div>
-
     <div class="td-summary-note">Latest active order value.</div>
   </div>
 </div>
@@ -1147,7 +1066,6 @@ extra_styles %}
   <div class="panel-card">
     <div class="content-head">
       <h2>Table details</h2>
-
       <p>Operational snapshot for the selected table.</p>
     </div>
 
@@ -1155,10 +1073,8 @@ extra_styles %}
       <div class="td-card-top">
         <div>
           <h3 class="td-name">{{ table.name }}</h3>
-
           <p class="td-meta">Table number: {{ table.table_number }}</p>
         </div>
-
         <span class="td-badge"> #{{ table.table_number }} </span>
       </div>
 
@@ -1166,25 +1082,21 @@ extra_styles %}
 
       <div class="td-row">
         <div class="td-label">Waiter</div>
-
         <div>{{ waiter_name|default:"N/A" }}</div>
       </div>
 
       <div class="td-row">
         <div class="td-label">Total</div>
-
         <div>{{ order_total_display }}</div>
       </div>
 
       <div class="td-row">
         <div class="td-label">Capacity</div>
-
         <div>{{ table.capacity }}</div>
       </div>
 
       <div class="td-row">
         <div class="td-label">Location</div>
-
         <div>{{ table.location }}</div>
       </div>
     </article>
@@ -1193,76 +1105,54 @@ extra_styles %}
       <div class="td-order-head">
         <div>
           <h3>Create New Order</h3>
-
           <p>Select products and quantities.</p>
         </div>
-
         <div class="td-pill" id="tdSelectedCount">Selected items: 0</div>
       </div>
 
       {% if form_success %}
-
       <p class="td-message td-message-success">
         Order created successfully for this table.
       </p>
-
       {% endif %} {% if form_error %}
-
       <p class="td-message td-message-error">{{ form_error }}</p>
-
       {% endif %} {% if delete_item_success %}
-
       <p class="td-message td-message-success">
         Order item deleted successfully.
       </p>
-
       {% endif %} {% if update_item_success %}
-
       <p class="td-message td-message-success">
         Order item updated successfully.
       </p>
-
       {% endif %} {% if delete_order_success %}
-
       <p class="td-message td-message-success">
         Current order deleted successfully.
       </p>
-
       {% endif %} {% if invoice_printed %}
-
       <p class="td-message td-message-success">
         Invoice marked as printed for the customer.
       </p>
-
       {% endif %} {% if order_paid %}
-
       <p class="td-message td-message-success">
         Order marked as paid successfully.
       </p>
-
       {% endif %}
 
       <!-- ===================================================
            CURRENT ORDER
            =================================================== -->
-
       {% if current_order %}
-
       <div class="td-current-order">
         <div class="td-current-top">
           <div>
             <p class="td-current-title">
               Current Active Order #{{ current_order.id }}
             </p>
-
-       
           </div>
 
           <form method="post">
             {% csrf_token %}
-
             <input type="hidden" name="action" value="delete_order" />
-
             <button class="td-delete-order" type="submit">
               Delete Current Order
             </button>
@@ -1270,125 +1160,126 @@ extra_styles %}
         </div>
 
         <!-- ORDER ACTIONS -->
+        <div class="order-actions">
+          <!-- Print Invoice -->
+          <form method="post" id="printInvoiceForm" class="order-actions__form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="print_invoice" />
+            <button type="submit" class="order-btn order-btn--print">
+              <span class="order-btn__icon">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path
+                    d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                  ></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+              </span>
+              <span class="order-btn__content">
+                <strong>Print Invoice</strong>
+                <small>Print customer receipt</small>
+              </span>
+            </button>
+          </form>
 
+          <!-- Payment Status -->
+          {% if current_order.status != "PAID" %}
+          <button
+            type="button"
+            class="order-btn order-btn--paid"
+            data-open-payment-modal
+            aria-label="Set order as paid"
+          >
+            <span class="order-btn__icon">
+              <svg
+                width="19"
+                height="19"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span class="order-btn__content">
+              <strong>Mark as Paid</strong>
+              <small>Complete this order</small>
+            </span>
+            <span class="order-btn__arrow">→</span>
+          </button>
+          {% endif %}
 
-<!-- ORDER ACTIONS -->
-<div class="order-actions">
-
-  <!-- Print Invoice -->
-  <form method="post" id="printInvoiceForm" class="order-actions__form">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="print_invoice" />
-
-    <button type="submit" class="order-btn order-btn--print">
-      <span class="order-btn__icon">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 6 2 18 2 18 9"></polyline>
-          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-          <rect x="6" y="14" width="12" height="8"></rect>
-        </svg>
-      </span>
-
-      <span class="order-btn__content">
-        <strong>Print Invoice</strong>
-        <small>Print customer receipt</small>
-      </span>
-    </button>
-  </form>
-
-
-  <!-- Payment Status -->
-  {% if current_order.status != "PAID" %}
-    <button
-      type="button"
-      class="order-btn order-btn--paid"
-      data-open-payment-modal
-      aria-label="Set order as paid"
-    >
-      <span class="order-btn__icon">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      </span>
-
-      <span class="order-btn__content">
-        <strong>Mark as Paid</strong>
-        <small>Complete this order</small>
-      </span>
-
-      <span class="order-btn__arrow">→</span>
-    </button>
-  {% endif %}
-
-  <!-- Print Unprinted Order Items -->
-<form method="post" id="printPendingItemsForm" class="order-actions__form">
-  {% csrf_token %}
-  <input type="hidden" name="action" value="print_pending_items" />
-
-  <button type="submit" class="order-btn order-btn--print-items">
-    <span class="order-btn__icon">
-      <svg
-        width="19"
-        height="19"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-        <path
-          d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-        ></path>
-        <rect x="6" y="14" width="12" height="8"></rect>
-      </svg>
-    </span>
-
-    <span class="order-btn__content">
-      <strong>Print Order Items</strong>
-      <small>Print unprinted items</small>
-    </span>
-  </button>
-</form>
-
-</div>
-
-
+          <!-- Print Unprinted Order Items -->
+          <form
+            method="post"
+            id="printPendingItemsForm"
+            class="order-actions__form"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="action" value="print_pending_items" />
+            <button type="submit" class="order-btn order-btn--print-items">
+              <span class="order-btn__icon">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                  <path
+                    d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                  ></path>
+                  <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+              </span>
+              <span class="order-btn__content">
+                <strong>Print Order Items</strong>
+                <small>Print unprinted items</small>
+              </span>
+            </button>
+          </form>
+        </div>
 
         <!-- ORDER ITEMS -->
-
         <div class="td-current-list">
           <p class="td-current-sub">
             <strong> No Notes </strong>
           </p>
 
           {% for item in current_order_item_rows_without_notes %}
-
-          <div class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}">
+          <div
+            class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}"
+          >
             <div class="td-current-info">
               <p class="td-current-name">{{ item.name }}</p>
-
               <p class="td-current-sub">{{ item.summary_display }}</p>
-              <p class="td-current-sub">Note: {{ item.has_print_job }}</p>
             </div>
 
             <div class="td-current-actions">
               <form method="post" class="td-current-update">
                 {% csrf_token %}
-
                 <input type="hidden" name="action" value="update_item" />
-
                 <input
                   type="hidden"
                   name="order_item_id"
                   value="{{ item.id }}"
                 />
-
                 <input
                   type="number"
                   min="0.5"
@@ -1397,7 +1288,6 @@ extra_styles %}
                   name="quantity"
                   value="{{ item.quantity_input }}"
                 />
-
                 <input
                   type="text"
                   class="td-note-input"
@@ -1405,30 +1295,23 @@ extra_styles %}
                   value="{{ item.notes }}"
                   placeholder="Note"
                 />
-
-                <button class="td-delete-item" type="submit">Update</button>
+                <button class="td-btn-update" type="submit">Update</button>
               </form>
 
               <form method="post" class="td-current-delete">
                 {% csrf_token %}
-
                 <input type="hidden" name="action" value="delete_item" />
-
                 <input
                   type="hidden"
                   name="order_item_id"
                   value="{{ item.id }}"
                 />
-
-                <button class="td-delete-item" type="submit">Delete</button>
+                <button class="td-btn-delete" type="submit">Delete</button>
               </form>
             </div>
           </div>
-
           {% empty %}
-
           <div class="td-current-sub">No items without notes.</div>
-
           {% endfor %}
 
           <p class="td-current-sub">
@@ -1436,28 +1319,24 @@ extra_styles %}
           </p>
 
           {% for item in current_order_item_rows_with_notes %}
-
-          <div class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}">
+          <div
+            class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}"
+          >
             <div class="td-current-info">
               <p class="td-current-name">{{ item.name }}</p>
-
               <p class="td-current-sub">{{ item.summary_display }}</p>
-
               <p class="td-current-sub">Note: {{ item.notes }}</p>
             </div>
 
             <div class="td-current-actions">
               <form method="post" class="td-current-update">
                 {% csrf_token %}
-
                 <input type="hidden" name="action" value="update_item" />
-
                 <input
                   type="hidden"
                   name="order_item_id"
                   value="{{ item.id }}"
                 />
-
                 <input
                   type="number"
                   min="0.5"
@@ -1466,7 +1345,6 @@ extra_styles %}
                   name="quantity"
                   value="{{ item.quantity_input }}"
                 />
-
                 <input
                   type="text"
                   class="td-note-input"
@@ -1474,53 +1352,40 @@ extra_styles %}
                   value="{{ item.notes }}"
                   placeholder="Note"
                 />
-
-                <button class="td-delete-item" type="submit">Update</button>
+                <button class="td-btn-update" type="submit">Update</button>
               </form>
 
               <form method="post" class="td-current-delete">
                 {% csrf_token %}
-
                 <input type="hidden" name="action" value="delete_item" />
-
                 <input
                   type="hidden"
                   name="order_item_id"
                   value="{{ item.id }}"
                 />
-
-                <button class="td-delete-item" type="submit">Delete</button>
+                <button class="td-btn-delete" type="submit">Delete</button>
               </form>
             </div>
           </div>
-
           {% empty %}
-
           <div class="td-current-sub">No items with notes.</div>
-
           {% endfor %}
         </div>
       </div>
-
       {% endif %}
 
       <!-- ===================================================
            CREATE ORDER
            =================================================== -->
-
       <form method="post" id="tdCreateForm">
         {% csrf_token %}
-
         <input type="hidden" name="action" value="create_order" />
 
         {% if products_by_category %}
-
         <div class="td-builder">
           <!-- CATEGORY SIDEBAR -->
-
           <aside class="td-category-sidebar">
             <p class="td-category-sidebar-title">Categories</p>
-
             <div class="td-category-nav">
               <button
                 type="button"
@@ -1529,9 +1394,7 @@ extra_styles %}
               >
                 All
               </button>
-
               {% for entry in products_by_category %}
-
               <button
                 type="button"
                 class="td-category-btn"
@@ -1539,79 +1402,75 @@ extra_styles %}
               >
                 {{ entry.category.name }}
               </button>
-
               {% endfor %}
             </div>
           </aside>
 
           <!-- PRODUCTS -->
+          <section class="td-products-panel">
+            <div class="td-products-grid">
+              {% for product in products_flat %}
+              <div
+                class="td-product-card"
+                data-product-item
+                data-category-id="{{ product.category_id }}"
+                data-product-name="{{ product.name }}"
+                data-product-price="{{ product.current_price }}"
+                data-product-id="{{ product.id }}"
+              >
+                <div class="td-product-card-body">
+                  <div class="td-product-card-header">
+                    <p class="td-product-name">{{ product.name }}</p>
+                    <p class="td-product-meta">{{ product.meta_text }}</p>
+                  </div>
 
- <section class="td-products-panel">
-  <div class="td-products-grid">
-    {% for product in products_flat %}
+                  <input
+                    type="text"
+                    class="td-note-input"
+                    style="width: 100%"
+                    name="note_{{ product.id }}"
+                    placeholder="Add note (optional)"
+                  />
+                </div>
 
-    <div
-      class="td-product-card"
-      data-product-item
-      data-category-id="{{ product.category_id }}"
-      data-product-name="{{ product.name }}"
-      data-product-price="{{ product.current_price }}"
-      data-product-id="{{ product.id }}"
-    >
-      <div class="td-product-card-body">
-        <div class="td-product-card-header">
-          <p class="td-product-name">{{ product.name }}</p>
-          <p class="td-product-meta">{{ product.meta_text }}</p>
-        </div>
+                <div class="td-product-card-footer">
+                  <div class="td-pick">
+                    <button type="button" class="td-minus" data-qty-minus>
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="td-qty-input"
+                      name="qty_{{ product.id }}"
+                      value="0"
+                      data-qty-input
+                    />
+                    <button type="button" class="td-plus" data-qty-plus>
+                      +
+                    </button>
+                  </div>
 
-        <input
-          type="text"
-          class="td-note-input"
-          name="note_{{ product.id }}"
-          placeholder="Add note (optional)"
-        />
-      </div>
-
-      <div class="td-product-card-footer">
-        <div class="td-pick">
-          <button type="button" class="td-minus" data-qty-minus>-</button>
-
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="td-qty-input"
-            name="qty_{{ product.id }}"
-            value="0"
-            data-qty-input
-          />
-
-          <button type="button" class="td-plus" data-qty-plus>+</button>
-        </div>
-
-        <label class="td-send-toggle">
-          <input
-            type="checkbox"
-            name="send_{{ product.id }}"
-            value="1"
-            data-send-check
-          />
-          <span>Send</span>
-        </label>
-      </div>
-    </div>
-
-    {% empty %}
-
-    <div class="td-empty-products">No products found.</div>
-
-    {% endfor %}
-  </div>
-</section>
+                  <label class="td-send-toggle">
+                    <input
+                      type="checkbox"
+                      name="send_{{ product.id }}"
+                      value="1"
+                      data-send-check
+                    />
+                    <span>Send</span>
+                  </label>
+                </div>
+              </div>
+              {% empty %}
+              <div class="td-empty-products">No products found.</div>
+              {% endfor %}
+            </div>
+          </section>
         </div>
 
         <!-- PENDING ORDER -->
-
         <section class="td-pending" id="tdPendingOrder">
           <div class="td-pending-head">
             <p class="td-pending-title">Wanting Order</p>
@@ -1620,13 +1479,11 @@ extra_styles %}
           <p class="td-current-sub">
             <strong> Without Note </strong>
           </p>
-
           <div class="td-pending-list" id="tdPendingListNoNote"></div>
 
           <p class="td-current-sub">
             <strong> With Note </strong>
           </p>
-
           <div class="td-pending-list" id="tdPendingListWithNote"></div>
 
           <div class="td-pending-empty" id="tdPendingEmpty">
@@ -1635,23 +1492,17 @@ extra_styles %}
         </section>
 
         <!-- SAVE -->
-
         <div class="td-actions">
           <a class="td-back" href="/manager/tables/"> Back </a>
-
           <button class="td-save" type="submit">Save and Create Order</button>
         </div>
-
         {% else %}
-
         <div class="td-empty-products">
           No active products found. Add products first.
         </div>
-
         <div class="td-actions">
           <a class="td-back" href="/manager/tables/"> Back </a>
         </div>
-
         {% endif %}
       </form>
     </div>
@@ -1661,42 +1512,24 @@ extra_styles %}
 <!-- =========================================================
      PAYMENT MODAL
      ========================================================= -->
-
-<!-- =========================================================
-     PAYMENT MODAL
-     ========================================================= -->
-
 <div
   class="td-modal"
   id="paymentModal"
   aria-hidden="true"
-  style="display: none;"
+  style="display: none"
 >
-  <!-- BACKDROP -->
-  <div
-    class="td-modal-overlay"
-    data-close-payment-modal
-  ></div>
+  <div class="td-modal-overlay" data-close-payment-modal></div>
 
-  <!-- MODAL CARD -->
   <div
     class="td-modal-card"
     role="dialog"
     aria-modal="true"
     aria-labelledby="paymentModalTitle"
   >
-
-    <!-- HEADER -->
     <div class="td-modal-header">
       <div>
-        <p class="td-modal-eyebrow">
-          Payment
-        </p>
-
-        <h3 id="paymentModalTitle">
-          Set Order as Paid
-        </h3>
-
+        <p class="td-modal-eyebrow">Payment</p>
+        <h3 id="paymentModalTitle">Set Order as Paid</h3>
         <p class="td-modal-description">
           Select where this payment should be recorded.
         </p>
@@ -1712,1104 +1545,352 @@ extra_styles %}
       </button>
     </div>
 
-    <!-- FORM -->
-    <form
-      method="post"
-      id="paymentForm"
-      class="td-payment-form"
-    >
+    <form method="post" id="paymentForm" class="td-payment-form">
       {% csrf_token %}
+      <input type="hidden" name="action" value="mark_paid" />
 
-      <input
-        type="hidden"
-        name="action"
-        value="mark_paid"
-      />
-
-      <!-- ORDER INFORMATION -->
       <div class="td-payment-order-info">
-
         <div>
           <span>Order</span>
-
           {% if current_order %}
-            <strong>
-              #{{ current_order.id }}
-            </strong>
+          <strong>#{{ current_order.id }}</strong>
           {% else %}
-            <strong>-</strong>
+          <strong>-</strong>
           {% endif %}
         </div>
-
         <div>
           <span>Total</span>
-
-          <strong>
-            {{ order_total_display }}
-          </strong>
+          <strong>{{ order_total_display }}</strong>
         </div>
-
       </div>
 
-      <!-- PAYMENT DESTINATION -->
       <div class="td-payment-field">
-
-        <label for="moneySourceSelect">
-          Payment destination
-        </label>
+        <label for="moneySourceSelect">Payment destination</label>
 
         {% if money_sources %}
+        <select
+          id="moneySourceSelect"
+          name="money_source_id"
+          class="td-payment-select"
+          required
+        >
+          <option value="" disabled selected>Select payment destination</option>
 
-          <select
-            id="moneySourceSelect"
-            name="money_source_id"
-            class="td-payment-select"
-            required
-          >
-            <option
-              value=""
-              disabled
-              selected
-            >
-              Select payment destination
-            </option>
-
-            {% for money_source in money_sources %}
-              <option value="{{ money_source.id }}">
-                {{ money_source.name }}
-                -
-                {{ money_source.source_type }}
-
-                {% if money_source.currency %}
-                  ({{ money_source.currency }})
-                {% endif %}
-              </option>
-            {% endfor %}
-
-          </select>
-
+          {% for money_source in money_sources %}
+          <option value="{{ money_source.id }}">{{ money_source.name }}</option>
+          {% endfor %}
+        </select>
         {% else %}
-
-          <div class="td-payment-no-source">
-            No active payment destinations are available.
-          </div>
-
+        <div class="td-payment-no-source">
+          No active payment destinations are available.
+        </div>
         {% endif %}
-
       </div>
 
-      <!-- BUTTONS -->
       <div class="td-payment-actions">
-
-        <button
-          type="button"
-          class="td-payment-cancel"
-          data-close-payment-modal
-        >
+        <button type="button" class="btn-modal-cancel" data-close-payment-modal>
           Cancel
         </button>
 
         {% if money_sources %}
-
-          <button
-            type="submit"
-            class="td-payment-confirm"
-          >
-            ✓ Confirm Payment
-          </button>
-
+        <button type="submit" class="btn-modal-submit">
+          ✓ Confirm Payment
+        </button>
         {% else %}
-
-          <button
-            type="button"
-            class="td-payment-confirm"
-            disabled
-          >
-            No Payment Destination
-          </button>
-
+        <button type="button" class="btn-modal-submit" disabled>
+          No Payment Destination
+        </button>
         {% endif %}
-
-      </div>
-
-    </form>
-
-  </div>
-</div>
-
-      <!-- BUTTONS -->
-
- 
- 
-
-
       </div>
     </form>
   </div>
 </div>
-
 {% endblock %} {% block extra_scripts %}
-
 <script>
-
   (function () {
     "use strict";
 
-    /* =========================================================
-       GENERAL
-       ========================================================= */
-
     const currency = "{{ currency|default:''|escapejs }}";
 
-
-    /* =========================================================
-       PRODUCTS
-       ========================================================= */
-
     const categoryButtons = Array.from(
-      document.querySelectorAll("[data-category-target]")
+      document.querySelectorAll("[data-category-target]"),
     );
-
     const productRows = Array.from(
-      document.querySelectorAll("[data-product-item]")
+      document.querySelectorAll("[data-product-item]"),
     );
-
     const selectedCount = document.getElementById("tdSelectedCount");
-
-    const pendingListNoNote = document.getElementById(
-      "tdPendingListNoNote"
-    );
-
+    const pendingListNoNote = document.getElementById("tdPendingListNoNote");
     const pendingListWithNote = document.getElementById(
-      "tdPendingListWithNote"
+      "tdPendingListWithNote",
     );
+    const pendingEmpty = document.getElementById("tdPendingEmpty");
 
-    const pendingEmpty = document.getElementById(
-      "tdPendingEmpty"
-    );
-
-
-    /* =========================================================
-       PAYMENT MODAL
-       ========================================================= */
-
-    const paymentModal = document.getElementById(
-      "paymentModal"
-    );
-
+    const paymentModal = document.getElementById("paymentModal");
     const paymentTriggers = document.querySelectorAll(
-      "[data-open-payment-modal]"
+      "[data-open-payment-modal]",
     );
-
     const closePaymentButtons = document.querySelectorAll(
-      "[data-close-payment-modal]"
+      "[data-close-payment-modal]",
     );
-
-    const moneySourceSelect = document.getElementById(
-      "moneySourceSelect"
-    );
-
-
-    /* =========================================================
-       PAYMENT MODAL - OPEN
-       ========================================================= */
+    const moneySourceSelect = document.getElementById("moneySourceSelect");
 
     function openPaymentModal() {
-      if (!paymentModal) {
-        console.warn("Payment modal #paymentModal was not found.");
-        return;
-      }
+      if (!paymentModal) return;
 
-      /*
-       * Select the first REAL payment destination.
-       *
-       * This skips:
-       * - empty placeholder options
-       * - disabled options
-       */
       if (moneySourceSelect) {
-        const options = Array.from(
-          moneySourceSelect.options
+        const options = Array.from(moneySourceSelect.options);
+        const firstValidOption = options.find(
+          (option) => option.value && !option.disabled,
         );
-
-        const firstValidOption = options.find(function (option) {
-          return (
-            option.value &&
-            !option.disabled
-          );
-        });
-
         if (firstValidOption) {
-          moneySourceSelect.value =
-            firstValidOption.value;
+          moneySourceSelect.value = firstValidOption.value;
         }
       }
 
-      /*
-       * Force the modal to behave as a full-screen overlay.
-       * The CSS should also contain these rules, but these
-       * properties protect against template/style conflicts.
-       */
-      paymentModal.style.position = "fixed";
-      paymentModal.style.inset = "0";
-      paymentModal.style.width = "100vw";
-      paymentModal.style.height = "100vh";
-      paymentModal.style.zIndex = "999999";
       paymentModal.style.display = "flex";
-      paymentModal.style.alignItems = "center";
-      paymentModal.style.justifyContent = "center";
-
-      paymentModal.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-
+      paymentModal.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
 
-      /*
-       * Focus the payment destination after opening.
-       */
       if (moneySourceSelect) {
-        window.setTimeout(function () {
-          moneySourceSelect.focus();
-        }, 50);
+        window.setTimeout(() => moneySourceSelect.focus(), 50);
       }
     }
 
-
-    /* =========================================================
-       PAYMENT MODAL - CLOSE
-       ========================================================= */
-
     function closePaymentModal() {
-      if (!paymentModal) {
-        return;
-      }
-
+      if (!paymentModal) return;
       paymentModal.style.display = "none";
-
-      paymentModal.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
+      paymentModal.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
     }
 
-
-    /* =========================================================
-       PAYMENT MODAL - TRIGGERS
-       ========================================================= */
-
-    paymentTriggers.forEach(function (button) {
-      button.addEventListener(
-        "click",
-        function (event) {
-          event.preventDefault();
-          openPaymentModal();
-        }
-      );
+    paymentTriggers.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        openPaymentModal();
+      });
     });
 
-
-    /* =========================================================
-       PAYMENT MODAL - CLOSE BUTTONS
-       ========================================================= */
-
-    closePaymentButtons.forEach(function (button) {
-      button.addEventListener(
-        "click",
-        function (event) {
-          event.preventDefault();
-          closePaymentModal();
-        }
-      );
+    closePaymentButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        closePaymentModal();
+      });
     });
-
-
-    /* =========================================================
-       PAYMENT MODAL - BACKDROP
-       ========================================================= */
 
     if (paymentModal) {
-      paymentModal.addEventListener(
-        "click",
-        function (event) {
-
-          /*
-           * Close when clicking the dark backdrop.
-           */
-          if (
-            event.target === paymentModal ||
-            event.target.classList.contains(
-              "td-modal-overlay"
-            )
-          ) {
-            closePaymentModal();
-          }
-        }
-      );
-    }
-
-
-    /* =========================================================
-       PAYMENT MODAL - ESC KEY
-       ========================================================= */
-
-    document.addEventListener(
-      "keydown",
-      function (event) {
-
+      paymentModal.addEventListener("click", (e) => {
         if (
-          event.key === "Escape" &&
-          paymentModal &&
-          paymentModal.style.display !== "none"
+          e.target === paymentModal ||
+          e.target.classList.contains("td-modal-overlay")
         ) {
           closePaymentModal();
         }
+      });
+    }
 
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "Escape" &&
+        paymentModal &&
+        paymentModal.style.display !== "none"
+      ) {
+        closePaymentModal();
       }
-    );
-
-
-    /* =========================================================
-       QUANTITY HELPERS
-       ========================================================= */
+    });
 
     function normalizeQty(value) {
-      if (
-        Number.isNaN(value) ||
-        value < 0
-      ) {
-        return 0;
-      }
-
-      return Number(
-        value.toFixed(2)
-      );
+      return Number.isNaN(value) || value < 0 ? 0 : Number(value.toFixed(2));
     }
-
 
     function parseQty(input) {
-      if (!input) {
-        return 0;
-      }
-
-      const value = Number.parseFloat(
-        input.value || "0"
-      );
-
-      if (
-        Number.isNaN(value) ||
-        value < 0
-      ) {
-        return 0;
-      }
-
-      return normalizeQty(value);
+      if (!input) return 0;
+      const val = Number.parseFloat(input.value || "0");
+      return normalizeQty(val);
     }
-
 
     function setQty(input, value) {
-      if (!input) {
-        return;
-      }
-
-      input.value = normalizeQty(
-        value
-      ).toString();
+      if (input) input.value = normalizeQty(value).toString();
     }
-
-
-    /* =========================================================
-       PENDING ORDER
-       ========================================================= */
 
     function updatePendingOrder() {
       let total = 0;
-
       const selected = [];
 
+      productRows.forEach((row) => {
+        const qtyInput = row.querySelector("[data-qty-input]");
+        const sendCheck = row.querySelector("[data-send-check]");
+        if (!qtyInput) return;
 
-      productRows.forEach(function (row) {
+        const qty = parseQty(qtyInput);
+        setQty(qtyInput, qty);
 
-        const qtyInput = row.querySelector(
-          "[data-qty-input]"
-        );
-
-        const sendCheck = row.querySelector(
-          "[data-send-check]"
-        );
-
-
-        /*
-         * Skip malformed product rows safely.
-         */
-        if (!qtyInput) {
-          return;
-        }
-
-
-        const qty = parseQty(
-          qtyInput
-        );
-
-        setQty(
-          qtyInput,
-          qty
-        );
-
-
-        if (
-          qty > 0 &&
-          sendCheck &&
-          sendCheck.checked
-        ) {
-
+        if (qty > 0 && sendCheck && sendCheck.checked) {
           total += qty;
-
-
-          const noteInput =
-            row.querySelector(
-              'input[name^="note_"]'
-            );
-
-
-          const note = noteInput
-            ? noteInput.value.trim()
-            : "";
-
+          const noteInput = row.querySelector('input[name^="note_"]');
+          const note = noteInput ? noteInput.value.trim() : "";
 
           selected.push({
-            name:
-              row.dataset.productName || "",
-
+            name: row.dataset.productName || "",
             qty: qty,
-
-            price:
-              row.dataset.productPrice || "0",
-
+            price: row.dataset.productPrice || "0",
             input: qtyInput,
-
             note: note,
           });
         }
-
       });
 
-
-      /* =======================================================
-         SELECTED COUNT
-         ======================================================= */
-
       if (selectedCount) {
-        selectedCount.textContent =
-          "Selected items: " +
-          total;
+        selectedCount.textContent = "Selected items: " + total;
       }
-
-
-      /* =======================================================
-         SPLIT ITEMS WITH / WITHOUT NOTES
-         ======================================================= */
-
-      const selectedWithoutNote =
-        selected.filter(function (item) {
-          return !item.note;
-        });
-
-
-      const selectedWithNote =
-        selected.filter(function (item) {
-          return !!item.note;
-        });
-
-
-      /* =======================================================
-         RENDER
-         ======================================================= */
 
       renderPendingItems(
         pendingListNoNote,
-        selectedWithoutNote
+        selected.filter((item) => !item.note),
       );
-
-
       renderPendingItems(
         pendingListWithNote,
-        selectedWithNote
+        selected.filter((item) => !!item.note),
       );
 
-
-      /* =======================================================
-         EMPTY STATE
-         ======================================================= */
-
       if (pendingEmpty) {
-        pendingEmpty.style.display =
-          selected.length > 0
-            ? "none"
-            : "block";
+        pendingEmpty.style.display = selected.length > 0 ? "none" : "block";
       }
     }
 
-
-    /* =========================================================
-       RENDER PENDING ITEMS
-       ========================================================= */
-
-    function renderPendingItems(
-      targetList,
-      items
-    ) {
-
-      if (!targetList) {
-        return;
-      }
-
-
+    function renderPendingItems(targetList, items) {
+      if (!targetList) return;
       targetList.innerHTML = "";
 
+      items.forEach((item) => {
+        const node = document.createElement("div");
+        node.className = "td-pending-item";
 
-      items.forEach(function (item) {
+        const left = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = item.name;
+        left.appendChild(name);
 
-        const node =
-          document.createElement(
-            "div"
-          );
-
-        node.className =
-          "td-pending-item";
-
-
-        /* =====================================================
-           LEFT SIDE
-           ===================================================== */
-
-        const left =
-          document.createElement(
-            "div"
-          );
-
-
-        const name =
-          document.createElement(
-            "strong"
-          );
-
-        name.textContent =
-          item.name;
-
-
-        left.appendChild(
-          name
-        );
-
-
-        /* =====================================================
-           PRICE
-           ===================================================== */
-
-        const price =
-          document.createElement(
-            "div"
-          );
-
-        price.style.fontSize =
-          "12px";
-
-        price.style.color =
-          "#64748b";
-
-        price.textContent =
-          item.price +
-          (
-            currency
-              ? " " + currency
-              : ""
-          );
-
-
-        left.appendChild(
-          price
-        );
-
-
-        /* =====================================================
-           NOTE
-           ===================================================== */
+        const price = document.createElement("div");
+        price.style.fontSize = "12px";
+        price.style.color = "#64748b";
+        price.textContent = item.price + (currency ? " " + currency : "");
+        left.appendChild(price);
 
         if (item.note) {
-
-          const note =
-            document.createElement(
-              "div"
-            );
-
-          note.style.fontSize =
-            "12px";
-
-          note.style.color =
-            "#64748b";
-
-          note.textContent =
-            "Note: " +
-            item.note;
-
-
-          left.appendChild(
-            note
-          );
+          const note = document.createElement("div");
+          note.style.fontSize = "12px";
+          note.style.color = "#64748b";
+          note.textContent = "Note: " + item.note;
+          left.appendChild(note);
         }
 
+        const controls = document.createElement("div");
+        controls.className = "td-pick";
 
-        /* =====================================================
-           QUANTITY CONTROLS
-           ===================================================== */
+        const minus = document.createElement("button");
+        minus.type = "button";
+        minus.className = "td-minus";
+        minus.textContent = "-";
 
-        const controls =
-          document.createElement(
-            "div"
-          );
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = "0";
+        input.step = "0.01";
+        input.className = "td-qty-input";
+        input.value = item.qty;
 
-        controls.className =
-          "td-pick";
+        const plus = document.createElement("button");
+        plus.type = "button";
+        plus.className = "td-plus";
+        plus.textContent = "+";
 
+        controls.appendChild(minus);
+        controls.appendChild(input);
+        controls.appendChild(plus);
 
-        /* MINUS */
+        node.appendChild(left);
+        node.appendChild(controls);
 
-        const minus =
-          document.createElement(
-            "button"
-          );
+        minus.addEventListener("click", () => {
+          setQty(item.input, parseQty(input) - 1);
+          updatePendingOrder();
+        });
 
-        minus.type =
-          "button";
+        plus.addEventListener("click", () => {
+          setQty(item.input, parseQty(input) + 1);
+          updatePendingOrder();
+        });
 
-        minus.className =
-          "td-minus";
+        input.addEventListener("input", () => {
+          setQty(item.input, parseQty(input));
+          updatePendingOrder();
+        });
 
-        minus.textContent =
-          "-";
-
-
-        /* INPUT */
-
-        const input =
-          document.createElement(
-            "input"
-          );
-
-        input.type =
-          "number";
-
-        input.min =
-          "0";
-
-        input.step =
-          "0.01";
-
-        input.className =
-          "td-qty-input";
-
-        input.value =
-          item.qty;
-
-
-        /* PLUS */
-
-        const plus =
-          document.createElement(
-            "button"
-          );
-
-        plus.type =
-          "button";
-
-        plus.className =
-          "td-plus";
-
-        plus.textContent =
-          "+";
-
-
-        controls.appendChild(
-          minus
-        );
-
-        controls.appendChild(
-          input
-        );
-
-        controls.appendChild(
-          plus
-        );
-
-
-        node.appendChild(
-          left
-        );
-
-        node.appendChild(
-          controls
-        );
-
-
-        /* =====================================================
-           MINUS CLICK
-           ===================================================== */
-
-        minus.addEventListener(
-          "click",
-          function () {
-
-            const newQty =
-              parseQty(input) - 1;
-
-
-            setQty(
-              item.input,
-              newQty
-            );
-
-
-            updatePendingOrder();
-          }
-        );
-
-
-        /* =====================================================
-           PLUS CLICK
-           ===================================================== */
-
-        plus.addEventListener(
-          "click",
-          function () {
-
-            const newQty =
-              parseQty(input) + 1;
-
-
-            setQty(
-              item.input,
-              newQty
-            );
-
-
-            updatePendingOrder();
-          }
-        );
-
-
-        /* =====================================================
-           MANUAL QUANTITY INPUT
-           ===================================================== */
-
-        input.addEventListener(
-          "input",
-          function () {
-
-            const newQty =
-              parseQty(input);
-
-
-            setQty(
-              item.input,
-              newQty
-            );
-
-
-            updatePendingOrder();
-          }
-        );
-
-
-        targetList.appendChild(
-          node
-        );
-
+        targetList.appendChild(node);
       });
     }
 
-
-    /* =========================================================
-       CATEGORY FILTER
-       ========================================================= */
-
-    function filterProducts(
-      categoryId
-    ) {
-
-      productRows.forEach(
-        function (row) {
-
-          const rowCategory =
-            row.dataset.categoryId;
-
-
-          const show =
-            categoryId === "all" ||
-            rowCategory ===
-              categoryId;
-
-
-          row.style.display =
-            show
-              ? "grid"
-              : "none";
-        }
-      );
+    function filterProducts(categoryId) {
+      productRows.forEach((row) => {
+        const rowCategory = row.dataset.categoryId;
+        const show = categoryId === "all" || rowCategory === categoryId;
+        row.style.display = show ? "flex" : "none";
+      });
     }
 
+    categoryButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        categoryButtons.forEach((item) => item.classList.remove("td-active"));
+        button.classList.add("td-active");
+        filterProducts(button.dataset.categoryTarget);
+      });
+    });
 
-    /* =========================================================
-       CATEGORY BUTTONS
-       ========================================================= */
+    productRows.forEach((row) => {
+      const input = row.querySelector("[data-qty-input]");
+      const minus = row.querySelector("[data-qty-minus]");
+      const plus = row.querySelector("[data-qty-plus]");
+      const sendCheck = row.querySelector("[data-send-check]");
 
-    categoryButtons.forEach(
-      function (button) {
-
-        button.addEventListener(
-          "click",
-          function () {
-
-            categoryButtons.forEach(
-              function (item) {
-
-                item.classList.remove(
-                  "td-active"
-                );
-
-              }
-            );
-
-
-            button.classList.add(
-              "td-active"
-            );
-
-
-            filterProducts(
-              button.dataset
-                .categoryTarget
-            );
-          }
-        );
-
+      if (minus && input) {
+        minus.addEventListener("click", () => {
+          setQty(input, parseQty(input) - 1);
+          updatePendingOrder();
+        });
       }
-    );
 
-
-    /* =========================================================
-       PRODUCT QUANTITY BUTTONS
-       ========================================================= */
-
-    productRows.forEach(
-      function (row) {
-
-        const input =
-          row.querySelector(
-            "[data-qty-input]"
-          );
-
-
-        const minus =
-          row.querySelector(
-            "[data-qty-minus]"
-          );
-
-
-        const plus =
-          row.querySelector(
-            "[data-qty-plus]"
-          );
-
-
-        const sendCheck =
-          row.querySelector(
-            "[data-send-check]"
-          );
-
-
-        /* =====================================================
-           MINUS
-           ===================================================== */
-
-        if (
-          minus &&
-          input
-        ) {
-
-          minus.addEventListener(
-            "click",
-            function () {
-
-              setQty(
-                input,
-                parseQty(input) - 1
-              );
-
-
-              updatePendingOrder();
-            }
-          );
-        }
-
-
-        /* =====================================================
-           PLUS
-           ===================================================== */
-
-        if (
-          plus &&
-          input
-        ) {
-
-          plus.addEventListener(
-            "click",
-            function () {
-
-              setQty(
-                input,
-                parseQty(input) + 1
-              );
-
-
-              updatePendingOrder();
-            }
-          );
-        }
-
-
-        /* =====================================================
-           MANUAL INPUT
-           ===================================================== */
-
-        if (input) {
-
-          input.addEventListener(
-            "input",
-            function () {
-
-              setQty(
-                input,
-                parseQty(input)
-              );
-
-
-              updatePendingOrder();
-            }
-          );
-
-
-          input.addEventListener(
-            "change",
-            function () {
-
-              setQty(
-                input,
-                parseQty(input)
-              );
-
-
-              updatePendingOrder();
-            }
-          );
-        }
-
-
-        /* =====================================================
-           SEND CHECKBOX
-           ===================================================== */
-
-        if (sendCheck) {
-
-          sendCheck.addEventListener(
-            "change",
-            function () {
-
-              updatePendingOrder();
-            }
-          );
-        }
-
+      if (plus && input) {
+        plus.addEventListener("click", () => {
+          setQty(input, parseQty(input) + 1);
+          updatePendingOrder();
+        });
       }
-    );
 
+      if (input) {
+        input.addEventListener("input", () => {
+          setQty(input, parseQty(input));
+          updatePendingOrder();
+        });
+        input.addEventListener("change", () => {
+          setQty(input, parseQty(input));
+          updatePendingOrder();
+        });
+      }
 
-    /* =========================================================
-       INITIALIZE
-       ========================================================= */
+      if (sendCheck) {
+        sendCheck.addEventListener("change", () => updatePendingOrder());
+      }
+    });
 
-    filterProducts(
-      "all"
-    );
-
-
+    filterProducts("all");
     updatePendingOrder();
 
-
-    /* =========================================================
-       PRINT INVOICE
-       ========================================================= */
-
-    const printInvoiceForm =
-      document.getElementById(
-        "printInvoiceForm"
-      );
-
-
+    const printInvoiceForm = document.getElementById("printInvoiceForm");
     if (printInvoiceForm) {
-
-      printInvoiceForm.addEventListener(
-        "submit",
-        function () {
-
-          window.setTimeout(
-            function () {
-
-              window.print();
-
-            },
-            200
-          );
-
-        }
-      );
+      printInvoiceForm.addEventListener("submit", () => {
+        window.setTimeout(() => window.print(), 200);
+      });
     }
-
-
-    /* =========================================================
-       DEBUG
-       ========================================================= */
-
-    /*
-     * This helps detect a missing modal in the template.
-     * Remove this section later if you don't need it.
-     */
-
-    if (!paymentModal) {
-
-      console.warn(
-        "RMS: #paymentModal was not found in the page."
-      );
-
-    }
-
-    if (
-      paymentTriggers.length > 0 &&
-      !paymentModal
-    ) {
-
-      console.error(
-        "RMS: Payment button exists, but #paymentModal is missing."
-      );
-
-    }
-
   })();
 </script>
-
 {% endblock %}
-
-

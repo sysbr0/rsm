@@ -135,6 +135,23 @@ class PrintJob(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
     )
+    cancelled_product_name = models.CharField(
+    max_length=255,
+    blank=True,
+    default="",
+)
+
+    cancelled_quantity = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    cancelled_notes = models.TextField(
+        blank=True,
+        default="",
+    )
 
     class Meta:
         ordering = ["-created_at"]

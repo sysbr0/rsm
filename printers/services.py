@@ -397,16 +397,22 @@ def enqueue_print_jobs_for_order(
 # ============================================================
 # PROCESS ONE PRINT JOB
 # ============================================================
-def process_print_job(job: PrintJob) -> PrintJob:
+from django.utils import timezone
+from printers.models import PrintJob, PrintJobStatus
 
+
+def process_print_job(job: PrintJob) -> PrintJob:
+    # Refresh to inspect current DB state
     job.refresh_from_db()
 
-    if job.status == PrintJobStatus.PRINTED:
+    # Prevent processing if already printed or currently being processed
+    if job.status in [PrintJobStatus.PRINTED, PrintJobStatus.PRINTING]:
+        print(f"[PRINT] PrintJob #{job.id} is already in status '{job.status}'. Skipping.")
         return job
 
+    # Mark status as PRINTING immediately to avoid race conditions
     job.status = PrintJobStatus.PRINTING
     job.error_message = ""
-
     job.save(
         update_fields=[
             "status",
@@ -416,52 +422,44 @@ def process_print_job(job: PrintJob) -> PrintJob:
     )
 
     try:
-
         printer = job.printer
 
+        if not printer:
+            raise ValueError("No printer assigned to this PrintJob.")
+
         if not printer.is_active:
-            raise ValueError(
-                f"Printer '{printer.name}' is inactive."
-            )
+            raise ValueError(f"Printer '{printer.name}' is inactive.")
 
         if printer.connection_type != "NETWORK":
-            raise ValueError(
-                f"Printer '{printer.name}' is not a network printer."
-            )
+            raise ValueError(f"Printer '{printer.name}' is not a network printer.")
 
         if not printer.ip_address:
-            raise ValueError(
-                f"Printer '{printer.name}' does not have an IP address."
-            )
+            raise ValueError(f"Printer '{printer.name}' does not have an IP address.")
 
+        if not job.content or not job.content.strip():
+            raise ValueError(f"PrintJob #{job.id} has empty content.")
+
+        # Initialize network ESC/POS connection
         device = ESCPosPrinter(
             host=str(printer.ip_address),
             port=printer.port or 9100,
             timeout=5,
         )
 
-        receipt_data = text_to_escpos(
-            job.content
-        )
+        receipt_data = text_to_escpos(job.content)
 
         # ========================================================
-        # SEND TO PRINTER
+        # SEND TO PHYSICAL PRINTER
         # ========================================================
 
         print(
             f"[PRINT] Sending PrintJob #{job.id} "
-            f"to {printer.name} "
-            f"({printer.ip_address}:{printer.port})"
+            f"to {printer.name} ({printer.ip_address}:{printer.port})"
         )
 
-        device.send(
-            receipt_data
-        )
+        device.send(receipt_data)
 
-        print(
-            f"[PRINT] PrintJob #{job.id} "
-            f"sent successfully."
-        )
+        print(f"[PRINT] PrintJob #{job.id} sent successfully.")
 
         # ========================================================
         # MARK JOB AS PRINTED
@@ -481,38 +479,25 @@ def process_print_job(job: PrintJob) -> PrintJob:
         )
 
         # ========================================================
-        # GET ATTACHED ORDER ITEMS
+        # MARK ATTACHED ORDER ITEMS (IF ANY EXIST)
         # ========================================================
 
-        order_items = list(
-            job.order_items.all()
-        )
+        order_items = list(job.order_items.all())
 
-        print(
-            f"[PRINT] PrintJob #{job.id} has "
-            f"{len(order_items)} attached OrderItem(s)."
-        )
-
-        print(
-            f"[PRINT] OrderItem IDs: "
-            f"{[item.id for item in order_items]}"
-        )
-
-        # ========================================================
-        # MARK EXACT ITEMS AS PRINTED
-        # ========================================================
-
-        for item in order_items:
-
-            item.set_as_printed()
-
+        if order_items:
             print(
-                f"[PRINT] OrderItem #{item.id} "
-                f"has_print_job=True"
+                f"[PRINT] PrintJob #{job.id} has "
+                f"{len(order_items)} attached OrderItem(s): {[item.id for item in order_items]}"
             )
 
-    except Exception as exc:
+            for item in order_items:
+                item.set_as_printed()
+                print(f"[PRINT] OrderItem #{item.id} has_print_job=True")
+        else:
+            # Cancellation tickets or direct message jobs won't have attached OrderItems
+            print(f"[PRINT] PrintJob #{job.id} completed with 0 attached OrderItems (e.g. cancellation/message ticket).")
 
+    except Exception as exc:
         job.status = PrintJobStatus.FAILED
         job.retry_count += 1
         job.error_message = str(exc)[:1000]
@@ -526,12 +511,107 @@ def process_print_job(job: PrintJob) -> PrintJob:
             ]
         )
 
-        print(
-            f"[PRINT ERROR] PrintJob #{job.id}: "
-            f"{job.error_message}"
-        )
+        print(f"[PRINT ERROR] PrintJob #{job.id} failed: {job.error_message}")
 
     return job
+
+def process_print_job1(job):
+
+    print("=" * 60)
+    print(
+        f"[PRINT] Processing PrintJob #{job.id}"
+    )
+
+    try:
+
+        # -----------------------------------------------------
+        # Mark as printing
+        # -----------------------------------------------------
+
+        job.status = PrintJobStatus.PRINTING
+        job.error_message = ""
+        job.save(
+            update_fields=[
+                "status",
+                "error_message",
+                "updated_at",
+            ]
+        )
+
+        # -----------------------------------------------------
+        # THE ONLY PRINTABLE DATA WE NEED
+        # -----------------------------------------------------
+
+        content = job.content
+
+        if not content:
+            raise ValueError(
+                "PrintJob has empty content."
+            )
+
+        print(
+            f"[PRINT] Content length: "
+            f"{len(content)}"
+        )
+
+        print(
+            "[PRINT] Content:"
+        )
+
+        print(content)
+
+        # -----------------------------------------------------
+        # SEND CONTENT TO YOUR EXISTING PRINTER FUNCTION
+        # -----------------------------------------------------
+
+        send_to_printer(
+            printer=job.printer,
+            content=content,
+        )
+
+        # -----------------------------------------------------
+        # SUCCESS
+        # -----------------------------------------------------
+
+        job.status = PrintJobStatus.PRINTED
+        job.printed_at = timezone.now()
+
+        job.save(
+            update_fields=[
+                "status",
+                "printed_at",
+                "updated_at",
+            ]
+        )
+
+        print(
+            f"[PRINT] PrintJob #{job.id} "
+            f"printed successfully."
+        )
+
+        return True
+
+    except Exception as exc:
+
+        job.status = PrintJobStatus.FAILED
+        job.error_message = str(exc)
+        job.retry_count += 1
+
+        job.save(
+            update_fields=[
+                "status",
+                "error_message",
+                "retry_count",
+                "updated_at",
+            ]
+        )
+
+        print(
+            f"[PRINT] PrintJob #{job.id} FAILED: "
+            f"{exc}"
+        )
+
+        return False
 # ============================================================
 # PRINT ALL PENDING ITEMS FOR ORDER
 # ============================================================
@@ -1344,3 +1424,80 @@ def print_customer_invoice(
     # ========================================================
 
     return process_print_job(job)
+
+
+
+
+def create_cancelled_item_print_job(order_item):
+    """
+    Create a print job for an already-printed order item
+    that is being cancelled/deleted.
+
+    If the item was never printed, no cancellation ticket
+    is created.
+    """
+
+    if not order_item.has_print_job:
+        return None
+
+    product = order_item.product
+    section = product.section
+
+    if section is None:
+        return None
+
+    printer = (
+        Printer.objects
+        .filter(
+            section=section,
+            is_active=True,
+        )
+        .first()
+    )
+
+    if printer is None:
+        return None
+
+    order = order_item.order
+
+    # ---------------------------------------------------------
+    # Build cancellation ticket
+    # ---------------------------------------------------------
+
+    content_lines = [
+        "========== CANCELLATION ==========",
+        f"TABLE: {order.table.number}",
+        f"WAITER: {order.waiter.full_name}",
+        "",
+        f"X {order_item.quantity}  {product.name}",
+    ]
+
+    if order_item.notes:
+        content_lines.append(
+            f"NOTE: {order_item.notes}"
+        )
+
+    content_lines.extend(
+        [
+            "",
+            "!!! CANCELLED ITEM !!!",
+            "==================================",
+        ]
+    )
+
+    content = "\n".join(content_lines)
+
+    # ---------------------------------------------------------
+    # Create a NEW print job
+    # ---------------------------------------------------------
+
+    job = PrintJob.objects.create(
+        order_id=order.id,
+        section=section,
+        printer=printer,
+        status=PrintJobStatus.PENDING,
+        content=content,
+    )
+
+    return job
+

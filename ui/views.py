@@ -6,6 +6,7 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
+from requests import request
 from orders.models import *
 from Financial.models import *
 
@@ -833,7 +834,7 @@ def admin_table_detail(request, table_id: int):
 
                     jobs = (
                         OrderItem.print_pending_items(
-                            current_order
+                            current_order,request.user
                         )
                     )
 
@@ -910,7 +911,7 @@ def admin_table_detail(request, table_id: int):
 
                     jobs = (
                         OrderItem.print_pending_items(
-                            current_order
+                            current_order,request.user
                         )
                     )
 
@@ -1077,6 +1078,13 @@ def admin_table_detail(request, table_id: int):
                 order_item = (
                     current_order.items
                     .filter(id=item_id)
+                    .select_related(
+                        "product",
+                        "product__section",
+                        "order",
+                        "order__table",
+                        "order__waiter",
+                    )
                     .first()
                 )
 
@@ -1091,13 +1099,32 @@ def admin_table_detail(request, table_id: int):
 
                     with transaction.atomic():
 
-                        order_item.delete()
+                        # -------------------------------------------------
+                        # This handles:
+                        #
+                        # 1. Not printed → delete only
+                        #
+                        # 2. Already printed → create cancellation
+                        #    PrintJob + delete item
+                        # -------------------------------------------------
+
+                        OrderItem.cancel_and_print(
+                            order_item
+                        )
+
+                        # -------------------------------------------------
+                        # If no items remain, delete order
+                        # -------------------------------------------------
 
                         if not current_order.items.exists():
 
                             current_order.delete()
 
                         else:
+
+                            # -------------------------------------------------
+                            # Recalculate remaining order totals
+                            # -------------------------------------------------
 
                             recalculate_order_totals(
                                 current_order
@@ -1107,7 +1134,6 @@ def admin_table_detail(request, table_id: int):
                         f"{request.path}"
                         "?item_deleted=1"
                     )
-
         # ========================================================
         # DELETE ENTIRE ORDER
         # ========================================================

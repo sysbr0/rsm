@@ -616,7 +616,7 @@ class OrderItem(TimeStampedModel):
         )
 
     @classmethod
-    def print_pending_items(cls, order):
+    def print_pending_items(cls, order , user):
         """
         Create and process PrintJobs for all unprinted OrderItems.
 
@@ -820,7 +820,7 @@ class OrderItem(TimeStampedModel):
             )
 
             lines.append(
-                f"WAITER: {waiter_name}"
+                f"WAITER: {user.full_name }"
             )
 
             lines.append(
@@ -1061,7 +1061,7 @@ class OrderItem(TimeStampedModel):
             )
 
             job = process_print_job(
-                job
+                job 
             )
 
             # ========================================================
@@ -1139,3 +1139,78 @@ class OrderItem(TimeStampedModel):
         print("=" * 60)
 
         return jobs
+
+    
+    @classmethod
+    def cancel_and_print(cls, order_item):
+        from printers.models import (
+            PrintJob,
+            PrintJobStatus,
+            Printer,
+        )
+        from printers.services import process_print_job
+
+        if not order_item.has_print_job:
+            order_item.delete()
+            return None
+
+        order = order_item.order
+        product = order_item.product
+        section = product.section
+
+        if section is None:
+            order_item.delete()
+            return None
+
+        printer = (
+            Printer.objects
+            .filter(
+                section=section,
+                is_active=True,
+            )
+            .first()
+        )
+
+        if printer is None:
+            order_item.delete()
+            return None
+
+        content_lines = [
+            "================================",
+            "          CANCELLATION",
+            "================================",
+            f"TABLE: {order.table}",
+            f"WAITER: {order.waiter.full_name if order.waiter else '-'}",
+            "",
+            f"X {order_item.quantity:g}  {product.name}",
+        ]
+
+        if order_item.notes:
+            content_lines.append(f"NOTE: {order_item.notes}")
+
+        content_lines.extend([
+            "",
+            "        !!! CANCELLED !!!",
+            "================================",
+        ])
+
+        content = "\n".join(content_lines)
+
+        job = PrintJob.objects.create(
+            order=order,
+            section=section,
+            printer=printer,
+            status=PrintJobStatus.PENDING,
+            content=content,
+            cancelled_product_name=product.name,
+            cancelled_quantity=order_item.quantity,
+            cancelled_notes=order_item.notes,
+        )
+
+        # Delete original item after capturing details
+        order_item.delete()
+
+        # Send cancellation job to physical printer
+        process_print_job(job)
+
+        return job

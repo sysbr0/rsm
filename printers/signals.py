@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -14,7 +15,8 @@ def process_new_print_job(
     if not created:
         return
 
-    # Import here to avoid circular imports during Django startup.
+    # Import inside handler to avoid circular imports
     from .services import process_print_job
 
-    process_print_job(instance)
+    # Execute sending to socket ONLY after current DB transaction commits
+    transaction.on_commit(lambda: process_print_job(instance))
