@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.db import models
 
-
 class PrinterType(models.TextChoices):
     THERMAL = "THERMAL", "Thermal"
     A4 = "A4", "A4"
@@ -67,6 +66,9 @@ class Printer(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
     )
+    is_cashier = models.BooleanField(
+    default=False,
+)
 
     class Meta:
         ordering = ["name"]
@@ -80,7 +82,10 @@ class PrintJob(models.Model):
         "orders.Order",
         on_delete=models.CASCADE,
         related_name="print_jobs",
-    )
+        null=True,
+        blank=True,
+)
+    
 
     section = models.ForeignKey(
         "menu.Section",
@@ -92,6 +97,13 @@ class PrintJob(models.Model):
         Printer,
         on_delete=models.PROTECT,
         related_name="print_jobs",
+    )
+
+    order_items = models.ManyToManyField(
+        "orders.OrderItem",
+        related_name="print_jobs",
+        blank=True,
+        null=True,
     )
 
     status = models.CharField(
@@ -129,6 +141,9 @@ class PrintJob(models.Model):
 
     def __str__(self):
         return f"PrintJob #{self.id} - Order #{self.order_id}"
+
+ 
+
 
 
 class MessageToPrinter(models.Model):

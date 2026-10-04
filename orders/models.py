@@ -1,26 +1,22 @@
 from decimal import Decimal
-
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from  common.models import TimeStampedModel
 from config import settings
 from menu.models import Product
 from printers.models import * 
-from printers.models import PrintJobStatus
 from tables.models import RestaurantTable, TableStatus
 from users.models import User
-
 from collections import defaultdict
 from Financial.models import  *
 from django.utils import timezone
-
 class OrderStatus(models.TextChoices):
     OPEN = "OPEN", "Open"
     CONFIRMED = "CONFIRMED", "Confirmed"
     PREPARING = "PREPARING", "Preparing"
     READY = "READY", "Ready"
     SERVED = "SERVED", "Served"
+    ON_PAYMENT = "ON_PAYMENT", "On Payment"
     PAID = "PAID", "Paid"
     CANCELLED = "CANCELLED", "Cancelled"
 
@@ -114,7 +110,7 @@ class Order(TimeStampedModel):
 
         self._sync_table_status(table_id)
 
-    def set_order_as_paid(self, income_source_id: int):
+    def set_order_as_paid(self, income_source_id: int, received_by_who) :
         self.status = OrderStatus.PAID
 
         self.table.status = TableStatus.AVAILABLE
@@ -132,8 +128,10 @@ class Order(TimeStampedModel):
                 else "Unknown Waiter"
             ),
             amount=self.total,
-            payment_method="CASH",
+         
             order=self,
+            received_by =received_by_who
+
         )
 
 
@@ -151,10 +149,17 @@ class Order(TimeStampedModel):
     def set_order_as_printed(self):
         self.status = OrderStatus.SERVED
 
-        self.table.status = TableStatus.ON_PayMENT
+        self.table.status = TableStatus.ON_PAYMENT
         self.table.save(update_fields=["status"])
+        from printers.services import print_customer_invoice
 
         self.save()
+        return print_customer_invoice(self)
+
+       
+   
+
+    
 
     def apply_discount(self, discount_amount: Decimal):
         self.discount = discount_amount
@@ -527,7 +532,6 @@ class OrderItemStatus(models.TextChoices):
     SERVED = "SERVED", "Served"
     CANCELLED = "CANCELLED", "Cancelled"
 
-
 class OrderItem(TimeStampedModel):
     order = models.ForeignKey(
         Order,
@@ -591,21 +595,66 @@ class OrderItem(TimeStampedModel):
     def __str__(self):
         return super().__str__()
 
+    def set_as_printed(self):
+        """
+        Mark this OrderItem as successfully printed.
+        """
 
+        self.has_print_job = True
+        self.status = OrderItemStatus.PRINTED
+
+        self.save(
+            update_fields=[
+                "has_print_job",
+                "status",
+            ]
+        )
+
+        print(
+            f"[PRINT] OrderItem #{self.id} "
+            f"marked as PRINTED."
+        )
 
     @classmethod
     def print_pending_items(cls, order):
         """
-        Create PrintJobs for all unprinted OrderItems belonging to this order.
+        Create and process PrintJobs for all unprinted OrderItems.
 
-        Print format is designed for a 32-column thermal printer.
+        Rules:
+
+        - Only has_print_job=False items are selected.
+        - OrderItems are NEVER merged.
+        - One PrintJob is created per section.
+        - Every PrintJob receives its exact OrderItems through M2M.
+        - The PrintJob is processed ONLY AFTER order_items.set().
+        - OrderItems are marked printed ONLY after successful printing.
+        - Failed printing leaves has_print_job=False.
         """
+
+        from collections import defaultdict
+
+        from django.utils import timezone
+
+        from printers.models import (
+            Printer,
+            PrintJob,
+            PrintJobStatus,
+        )
+
+        from printers.services import process_print_job
+
+        # ============================================================
+        # GET UNPRINTED ITEMS
+        # ============================================================
 
         items = list(
             cls.objects
             .select_related(
                 "product",
                 "product__section",
+                "order",
+                "order__table",
+                "order__waiter",
             )
             .filter(
                 order=order,
@@ -615,24 +664,88 @@ class OrderItem(TimeStampedModel):
         )
 
         if not items:
+
+            print(
+                f"[PRINT] No unprinted OrderItems "
+                f"for Order #{order.id}."
+            )
+
             return []
 
-        # ---------------------------------------------------------
-        # Group items by section
-        # ---------------------------------------------------------
+        # ============================================================
+        # GROUP BY SECTION
+        # ============================================================
 
         sections = defaultdict(list)
 
         for item in items:
-            sections[item.product.section_id].append(item)
+
+            if not item.product:
+
+                print(
+                    f"[PRINT] OrderItem #{item.id} "
+                    f"has no product. Skipping."
+                )
+
+                continue
+
+            if not item.product.section_id:
+
+                print(
+                    f"[PRINT] OrderItem #{item.id} "
+                    f"has no section. Skipping."
+                )
+
+                continue
+
+            sections[
+                item.product.section_id
+            ].append(item)
+
+        # ============================================================
+        # DEBUG
+        # ============================================================
+
+        print("=" * 60)
+
+        print(
+            f"[PRINT] Printing pending items "
+            f"for Order #{order.id}"
+        )
+
+        print("=" * 60)
+
+        for item in items:
+
+            print(
+                f"[PRINT] OrderItem #{item.id} | "
+                f"Product: {item.product.name} | "
+                f"Section: {item.product.section_id} | "
+                f"has_print_job={item.has_print_job}"
+            )
+
+        # ============================================================
+        # JOBS
+        # ============================================================
 
         jobs = []
 
-        # ---------------------------------------------------------
-        # Create one print job per section/printer
-        # ---------------------------------------------------------
+        # ============================================================
+        # PROCESS EACH SECTION
+        # ============================================================
 
         for section_id, section_items in sections.items():
+
+            print("-" * 60)
+
+            print(
+                f"[PRINT] Processing section: "
+                f"{section_id}"
+            )
+
+            # ========================================================
+            # FIND PRINTER
+            # ========================================================
 
             printer = (
                 Printer.objects
@@ -644,66 +757,31 @@ class OrderItem(TimeStampedModel):
                 .first()
             )
 
-            # No printer configured for this section
-            if not printer:
-                continue
-
-            # -----------------------------------------------------
-            # Merge identical products without notes
-            # Keep products with notes separate
-            # -----------------------------------------------------
-
-            merged = {}
-            separate = []
-
-            for item in section_items:
-
-                notes = (item.notes or "").strip()
-
-                # Items with notes must remain separate
-                if notes:
-                    separate.append(
-                        {
-                            "product": item.product,
-                            "quantity": item.quantity,
-                            "notes": notes,
-                            "items": [item],
-                        }
-                    )
-                    continue
-
-                product_id = item.product_id
-
-                if product_id not in merged:
-
-                    merged[product_id] = {
-                        "product": item.product,
-                        "quantity": item.quantity,
-                        "notes": "",
-                        "items": [item],
-                    }
-
-                else:
-
-                    merged[product_id]["quantity"] += item.quantity
-                    merged[product_id]["items"].append(item)
-
-            printable_items = (
-                list(merged.values())
-                + separate
+            print(
+                f"[PRINT] Printer for section "
+                f"{section_id}: {printer}"
             )
 
-            # -----------------------------------------------------
-            # THERMAL PRINT SETTINGS
-            # -----------------------------------------------------
+            # ========================================================
+            # NO PRINTER
+            # ========================================================
+
+            if not printer:
+
+                print(
+                    f"[PRINT] No active printer for "
+                    f"section {section_id}."
+                )
+
+                continue
+
+            # ========================================================
+            # BUILD TICKET
+            # ========================================================
 
             width = 32
 
             lines = []
-
-            # =====================================================
-            # HEADER
-            # =====================================================
 
             lines.append("=" * width)
 
@@ -719,9 +797,9 @@ class OrderItem(TimeStampedModel):
 
             lines.append("=" * width)
 
-            # =====================================================
+            # ========================================================
             # ORDER INFORMATION
-            # =====================================================
+            # ========================================================
 
             table_number = (
                 order.table.table_number
@@ -742,65 +820,78 @@ class OrderItem(TimeStampedModel):
             )
 
             lines.append(
-                f"WAITER: #{waiter_name}"
+                f"WAITER: {waiter_name}"
             )
 
             lines.append(
-                f"TIME: {current_time.strftime('%d/%m/%Y %H:%M')}"
+                f"TIME: "
+                f"{current_time.strftime('%d/%m/%Y %H:%M')}"
             )
 
-            # =====================================================
-            # SEPARATOR
-            # =====================================================
+            lines.append(
+                f"ORDER #{order.id}"
+            )
 
             lines.append("-" * width)
 
-            # =====================================================
-            # PRODUCTS
-            # =====================================================
+            # ========================================================
+            # ORDER ITEMS
+            # ========================================================
 
-            for row in printable_items:
+            for item in section_items:
 
-                quantity = row["quantity"]
-                product = row["product"]
-                notes = row["notes"]
+                product = item.product
 
-                # -------------------------------------------------
-                # Quantity
-                # Example:
-                #
-                # 5.00 x adana lahmacun
-                # -------------------------------------------------
+                quantity = item.quantity
 
-                try:
-                    quantity_text = f"{float(quantity):.2f}"
-                except (TypeError, ValueError):
-                    quantity_text = str(quantity)
+                notes = (
+                    item.notes or ""
+                ).strip()
 
-                product_name = str(product.name)
-
-                product_line = (
-                    f"{quantity_text} x {product_name}"
+                quantity_text = (
+                    f"{quantity:.2f}"
                 )
 
-                # -------------------------------------------------
-                # Handle long product names
-                # -------------------------------------------------
+                product_name = str(
+                    product.name
+                )
+
+                product_line = (
+                    f"{quantity_text} x "
+                    f"{product_name}"
+                )
+
+                # ====================================================
+                # PRODUCT NAME
+                # ====================================================
 
                 if len(product_line) <= width:
 
-                    lines.append(product_line)
+                    lines.append(
+                        product_line
+                    )
 
                 else:
 
-                    # Keep quantity on first line
-                    prefix = f"{quantity_text} x "
+                    prefix = (
+                        f"{quantity_text} x "
+                    )
 
-                    available_width = width - len(prefix)
+                    available_width = (
+                        width - len(prefix)
+                    )
 
-                    first_part = product_name[:available_width]
+                    first_part = (
+                        product_name[
+                            :available_width
+                        ]
+                    )
 
-                    remaining = product_name[available_width:]
+                    remaining = (
+                        product_name[
+                            available_width:
+                        ]
+                    )
 
                     lines.append(
                         prefix + first_part
@@ -810,24 +901,28 @@ class OrderItem(TimeStampedModel):
 
                         lines.append(
                             " " * len(prefix)
-                            + remaining[:available_width]
+                            + remaining[
+                                :available_width
+                            ]
                         )
 
-                        remaining = remaining[available_width:]
+                        remaining = (
+                            remaining[
+                                available_width:
+                            ]
+                        )
 
-                # -------------------------------------------------
-                # NOTE
-                #
-                # Example:
-                #
-                #    NOTE: revan hizli
-                # -------------------------------------------------
+                # ====================================================
+                # NOTES
+                # ====================================================
 
                 if notes:
 
                     note_prefix = "   NOTE: "
 
-                    available_width = width - len(note_prefix)
+                    available_width = (
+                        width - len(note_prefix)
+                    )
 
                     note_parts = [
                         notes[i:i + available_width]
@@ -838,12 +933,15 @@ class OrderItem(TimeStampedModel):
                         )
                     ]
 
-                    for index, note_part in enumerate(note_parts):
+                    for index, note_part in enumerate(
+                        note_parts
+                    ):
 
                         if index == 0:
 
                             lines.append(
-                                note_prefix + note_part
+                                note_prefix
+                                + note_part
                             )
 
                         else:
@@ -853,15 +951,11 @@ class OrderItem(TimeStampedModel):
                                 + note_part
                             )
 
-                # -------------------------------------------------
-                # Space between products
-                # -------------------------------------------------
-
                 lines.append("")
 
-            # =====================================================
+            # ========================================================
             # FOOTER
-            # =====================================================
+            # ========================================================
 
             lines.append("-" * width)
 
@@ -871,12 +965,19 @@ class OrderItem(TimeStampedModel):
 
             lines.append("=" * width)
 
-            # Final newline
-            content = "\n".join(lines) + "\n"
+            content = (
+                "\n".join(lines)
+                + "\n"
+            )
 
-            # =====================================================
+            # ========================================================
             # CREATE PRINT JOB
-            # =====================================================
+            # ========================================================
+
+            print(
+                f"[PRINT] Creating PrintJob "
+                f"for section {section_id}..."
+            )
 
             job = PrintJob.objects.create(
                 order_id=order.id,
@@ -886,10 +987,155 @@ class OrderItem(TimeStampedModel):
                 content=content,
             )
 
+            print(
+                f"[PRINT] Created PrintJob #{job.id}"
+            )
+
+            # ========================================================
+            # ATTACH ITEMS FIRST
+            #
+            # THIS MUST HAPPEN BEFORE process_print_job()
+            # ========================================================
+
+            job.order_items.set(
+                section_items
+            )
+
+            # Force M2M save to database and verify it.
+            attached_ids = list(
+                job.order_items.values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+
+            print(
+                f"[PRINT] Attached "
+                f"{len(attached_ids)} OrderItem(s) "
+                f"to PrintJob #{job.id}"
+            )
+
+            print(
+                f"[PRINT] Attached OrderItem IDs: "
+                f"{attached_ids}"
+            )
+
+            # ========================================================
+            # SAFETY CHECK
+            # ========================================================
+
+            if not attached_ids:
+
+                print(
+                    f"[PRINT ERROR] PrintJob #{job.id} "
+                    f"has no OrderItems after attachment."
+                )
+
+                job.status = PrintJobStatus.FAILED
+
+                job.error_message = (
+                    "No OrderItems attached to PrintJob."
+                )
+
+                job.save(
+                    update_fields=[
+                        "status",
+                        "error_message",
+                        "updated_at",
+                    ]
+                )
+
+                jobs.append(job)
+
+                continue
+
+            # ========================================================
+            # PROCESS PRINT JOB
+            #
+            # THIS IS THE ONLY PLACE WE START PRINTING.
+            # ========================================================
+
+            print(
+                f"[PRINT] Sending PrintJob #{job.id} "
+                f"to printer {printer.name}..."
+            )
+
+            job = process_print_job(
+                job
+            )
+
+            # ========================================================
+            # REFRESH
+            # ========================================================
+
+            job.refresh_from_db()
+
+            print(
+                f"[PRINT] PrintJob #{job.id} "
+                f"status: {job.status}"
+            )
+
+            # ========================================================
+            # SUCCESS
+            # ========================================================
+
+            if job.status == PrintJobStatus.PRINTED:
+
+                print(
+                    f"[PRINT] PrintJob #{job.id} "
+                    f"printed successfully."
+                )
+
+                # Verify exact OrderItems
+                printed_items = list(
+                    job.order_items.all()
+                )
+
+                for item in printed_items:
+
+                    item.refresh_from_db()
+
+                    print(
+                        f"[PRINT] VERIFY "
+                        f"OrderItem #{item.id}: "
+                        f"has_print_job="
+                        f"{item.has_print_job}, "
+                        f"status={item.status}"
+                    )
+
+            # ========================================================
+            # FAILURE
+            # ========================================================
+
+            elif job.status == PrintJobStatus.FAILED:
+
+                print(
+                    f"[PRINT ERROR] PrintJob #{job.id} "
+                    f"failed."
+                )
+
+                print(
+                    f"[PRINT ERROR] "
+                    f"{job.error_message}"
+                )
+
+            # ========================================================
+            # ADD JOB
+            # ========================================================
+
             jobs.append(job)
 
+        # ============================================================
+        # FINISHED
+        # ============================================================
+
+        print("=" * 60)
+
+        print(
+            f"[PRINT] Finished processing "
+            f"{len(jobs)} PrintJob(s)"
+        )
+
+        print("=" * 60)
+
         return jobs
-
-
-    def __str__(self):
-        return str(self.product)

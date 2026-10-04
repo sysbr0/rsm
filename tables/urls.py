@@ -16,5 +16,14 @@ Including another URLconf
 """
 
 from django.urls import path ,include
+from .views import admin_tables
+
+urlpatterns = [
+     path( "",
+            admin_tables,
+            name="admin_tables",
+        ),
+]
+
 
 

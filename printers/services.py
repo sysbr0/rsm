@@ -1,7 +1,6 @@
-
-# Create your tests here.
 from collections import defaultdict
 import socket
+from django.conf import settings
 
 from django.db import transaction
 from django.utils import timezone
@@ -13,8 +12,6 @@ from printers.models import (
     PrintJobStatus,
     Printer,
 )
-
-#from printers.templates import build_order_item_ticket
 
 
 # ============================================================
@@ -52,6 +49,7 @@ class ESCPosPrinter:
             (self.host, self.port),
             timeout=self.timeout,
         ) as connection:
+
             connection.sendall(data)
 
     def test(self):
@@ -64,7 +62,7 @@ class ESCPosPrinter:
         # Initialize printer
         data += b"\x1b\x40"
 
-        # Center alignment
+        # Center
         data += b"\x1b\x61\x01"
 
         # Bold ON
@@ -79,11 +77,14 @@ class ESCPosPrinter:
         data += b"Printer connection OK\n"
         data += b"\n\n\n"
 
+        # Cut paper
+        data += b"\x1d\x56\x01"
+
         self.send(data)
 
 
 # ============================================================
-# TEXT → ESC/POS
+# TEXT -> ESC/POS
 # ============================================================
 
 def text_to_escpos(content: str) -> bytes:
@@ -99,7 +100,7 @@ def text_to_escpos(content: str) -> bytes:
     # Left alignment
     data += b"\x1b\x61\x00"
 
-    # Receipt text
+    # Encode text
     data += content.encode(
         "utf-8",
         errors="replace",
@@ -108,7 +109,176 @@ def text_to_escpos(content: str) -> bytes:
     # Feed paper
     data += b"\n\n\n"
 
+    # Cut
+    data += b"\x1d\x56\x01"
+
     return data
+
+
+# ============================================================
+# BUILD ORDER TICKET
+# ============================================================
+
+def build_order_item_ticket(
+    order,
+    section,
+    items,
+    width: int = 42,
+) -> str:
+    """
+    Build a kitchen/bar/etc. ticket for the selected section.
+    """
+
+    now = timezone.localtime()
+
+    lines = []
+
+    def separator(char="-"):
+        return char * width
+
+    def centered(text):
+        return str(text).center(width)
+
+    # --------------------------------------------------------
+    # HEADER
+    # --------------------------------------------------------
+
+    lines.append(
+        centered("RESTAURANT")
+    )
+
+    lines.append(
+        centered(str(section.name))
+    )
+
+    lines.append(
+        separator("=")
+    )
+
+    # --------------------------------------------------------
+    # TABLE
+    # --------------------------------------------------------
+
+    table = getattr(order, "table", None)
+
+    if table:
+        table_number = getattr(
+            table,
+            "table_number",
+            "-"
+        )
+
+        table_name = getattr(
+            table,
+            "name",
+            ""
+        )
+
+        if table_name:
+            lines.append(
+                f"TABLE   : {table_name}"
+            )
+
+        lines.append(
+            f"TABLE # : {table_number}"
+        )
+
+    # --------------------------------------------------------
+    # WAITER
+    # --------------------------------------------------------
+
+    waiter = getattr(order, "waiter", None)
+
+    if waiter:
+
+        waiter_name = (
+            getattr(
+                waiter,
+                "full_name",
+                None,
+            )
+            or getattr(
+                waiter,
+                "username",
+                None,
+            )
+            or str(waiter)
+        )
+
+        lines.append(
+            f"WAITER  : {waiter_name}"
+        )
+
+    else:
+
+        lines.append(
+            "WAITER  : -"
+        )
+
+    # --------------------------------------------------------
+    # ORDER
+    # --------------------------------------------------------
+
+    lines.append(
+        f"ORDER # : {order.id}"
+    )
+
+    # --------------------------------------------------------
+    # DATE / TIME
+    # --------------------------------------------------------
+
+    lines.append(
+        f"DATE    : {now.strftime('%Y-%m-%d')}"
+    )
+
+    lines.append(
+        f"TIME    : {now.strftime('%H:%M:%S')}"
+    )
+
+    lines.append(
+        separator("=")
+    )
+
+    # --------------------------------------------------------
+    # ITEMS
+    # --------------------------------------------------------
+
+    for item in items:
+
+        product_name = str(item.product.name)
+
+        quantity = item.quantity
+
+        lines.append(
+            f"{quantity:g} x {product_name}"
+        )
+
+        if item.notes:
+
+            for note_line in str(
+                item.notes
+            ).splitlines():
+
+                lines.append(
+                    f"  NOTE: {note_line}"
+                )
+
+    # --------------------------------------------------------
+    # FOOTER
+    # --------------------------------------------------------
+
+    lines.append(
+        separator("=")
+    )
+
+    lines.append(
+        centered("KITCHEN ORDER")
+    )
+
+    lines.append("")
+    lines.append("")
+
+    return "\n".join(lines)
 
 
 # ============================================================
@@ -118,6 +288,19 @@ def text_to_escpos(content: str) -> bytes:
 def enqueue_print_jobs_for_order(
     order: Order,
 ) -> list[PrintJob]:
+    """
+    Create PrintJob records for all OrderItems that
+    have not successfully printed yet.
+
+    IMPORTANT:
+
+    This function ONLY creates PrintJob records.
+
+    It does NOT mark OrderItems as printed.
+
+    OrderItem.has_print_job becomes True ONLY after
+    process_print_job() successfully sends the ticket.
+    """
 
     pending_items = list(
         OrderItem.objects
@@ -137,14 +320,28 @@ def enqueue_print_jobs_for_order(
 
     grouped = defaultdict(list)
 
-    for item in pending_items:
-        grouped[item.product.section_id].append(item)
+    # --------------------------------------------------------
+    # Group items by section
+    # --------------------------------------------------------
 
-    jobs: list[PrintJob] = []
+    for item in pending_items:
+
+        section_id = item.product.section_id
+
+        if not section_id:
+            continue
+
+        grouped[section_id].append(item)
+
+    jobs = []
 
     with transaction.atomic():
 
         for section_id, items in grouped.items():
+
+            # ------------------------------------------------
+            # Find active printer for section
+            # ------------------------------------------------
 
             printer = (
                 Printer.objects
@@ -156,9 +353,12 @@ def enqueue_print_jobs_for_order(
                 .first()
             )
 
-            # No printer configured for this section
-            if not printer:
+            if printer is None:
                 continue
+
+            # ------------------------------------------------
+            # Build ticket
+            # ------------------------------------------------
 
             content = build_order_item_ticket(
                 order=order,
@@ -166,27 +366,30 @@ def enqueue_print_jobs_for_order(
                 items=items,
             )
 
+            # ------------------------------------------------
+            # Create PrintJob
+            # ------------------------------------------------
+
             job = PrintJob.objects.create(
-                order_id=order.id,
-                section_id=section_id,
+                order=order,
+                section=printer.section,
                 printer=printer,
                 status=PrintJobStatus.PENDING,
                 content=content,
             )
 
+            # ------------------------------------------------
+            # IMPORTANT
+            #
+            # PrintJob.order_items is ManyToMany.
+            #
+            # Therefore we MUST use .set()
+            # AFTER creating the PrintJob.
+            # ------------------------------------------------
+
+            job.order_items.set(items)
+
             jobs.append(job)
-
-        # Mark items as having a print job
-        for item in pending_items:
-
-            item.has_print_job = True
-
-            item.save(
-                update_fields=[
-                    "has_print_job",
-                    "updated_at",
-                ]
-            )
 
     return jobs
 
@@ -194,29 +397,12 @@ def enqueue_print_jobs_for_order(
 # ============================================================
 # PROCESS ONE PRINT JOB
 # ============================================================
-
 def process_print_job(job: PrintJob) -> PrintJob:
-    """
-    Immediately send one PrintJob to its printer.
 
-    Flow:
+    job.refresh_from_db()
 
-    PENDING
-        ↓
-    PRINTING
-        ↓
-    PRINTED
-
-    If something fails:
-
-    PRINTING
-        ↓
-    FAILED
-    """
-
-    # --------------------------------------------------------
-    # Mark job as PRINTING
-    # --------------------------------------------------------
+    if job.status == PrintJobStatus.PRINTED:
+        return job
 
     job.status = PrintJobStatus.PRINTING
     job.error_message = ""
@@ -229,60 +415,57 @@ def process_print_job(job: PrintJob) -> PrintJob:
         ]
     )
 
-    # --------------------------------------------------------
-    # Send to printer
-    # --------------------------------------------------------
-
     try:
 
         printer = job.printer
 
-        # Printer must be active
         if not printer.is_active:
             raise ValueError(
                 f"Printer '{printer.name}' is inactive."
             )
 
-        # Currently support network printers
         if printer.connection_type != "NETWORK":
             raise ValueError(
-                f"Printer '{printer.name}' "
-                f"is not a network printer."
+                f"Printer '{printer.name}' is not a network printer."
             )
 
-        # Printer must have an IP
         if not printer.ip_address:
             raise ValueError(
-                f"Printer '{printer.name}' "
-                f"does not have an IP address."
+                f"Printer '{printer.name}' does not have an IP address."
             )
 
-        # ----------------------------------------------------
-        # Create printer connection
-        # ----------------------------------------------------
-
         device = ESCPosPrinter(
-            host=printer.ip_address,
+            host=str(printer.ip_address),
             port=printer.port or 9100,
+            timeout=5,
         )
-
-        # ----------------------------------------------------
-        # Convert content to ESC/POS
-        # ----------------------------------------------------
 
         receipt_data = text_to_escpos(
             job.content
         )
 
-        # ----------------------------------------------------
+        # ========================================================
         # SEND TO PRINTER
-        # ----------------------------------------------------
+        # ========================================================
 
-        device.send(receipt_data)
+        print(
+            f"[PRINT] Sending PrintJob #{job.id} "
+            f"to {printer.name} "
+            f"({printer.ip_address}:{printer.port})"
+        )
 
-        # ----------------------------------------------------
-        # SUCCESS
-        # ----------------------------------------------------
+        device.send(
+            receipt_data
+        )
+
+        print(
+            f"[PRINT] PrintJob #{job.id} "
+            f"sent successfully."
+        )
+
+        # ========================================================
+        # MARK JOB AS PRINTED
+        # ========================================================
 
         job.status = PrintJobStatus.PRINTED
         job.printed_at = timezone.now()
@@ -297,15 +480,42 @@ def process_print_job(job: PrintJob) -> PrintJob:
             ]
         )
 
-    except Exception as exc:
+        # ========================================================
+        # GET ATTACHED ORDER ITEMS
+        # ========================================================
 
-        # ----------------------------------------------------
-        # FAILURE
-        # ----------------------------------------------------
+        order_items = list(
+            job.order_items.all()
+        )
+
+        print(
+            f"[PRINT] PrintJob #{job.id} has "
+            f"{len(order_items)} attached OrderItem(s)."
+        )
+
+        print(
+            f"[PRINT] OrderItem IDs: "
+            f"{[item.id for item in order_items]}"
+        )
+
+        # ========================================================
+        # MARK EXACT ITEMS AS PRINTED
+        # ========================================================
+
+        for item in order_items:
+
+            item.set_as_printed()
+
+            print(
+                f"[PRINT] OrderItem #{item.id} "
+                f"has_print_job=True"
+            )
+
+    except Exception as exc:
 
         job.status = PrintJobStatus.FAILED
         job.retry_count += 1
-        job.error_message = str(exc)[:255]
+        job.error_message = str(exc)[:1000]
 
         job.save(
             update_fields=[
@@ -316,35 +526,86 @@ def process_print_job(job: PrintJob) -> PrintJob:
             ]
         )
 
+        print(
+            f"[PRINT ERROR] PrintJob #{job.id}: "
+            f"{job.error_message}"
+        )
+
     return job
+# ============================================================
+# PRINT ALL PENDING ITEMS FOR ORDER
+# ============================================================
+
+def print_pending_items_for_order(
+    order: Order,
+) -> list[PrintJob]:
+    """
+    Create and immediately process all pending
+    OrderItem print jobs.
+    """
+
+    # --------------------------------------------------------
+    # Create jobs
+    # --------------------------------------------------------
+
+    jobs = enqueue_print_jobs_for_order(
+        order
+    )
+
+    if not jobs:
+        return []
+
+    processed_jobs = []
+
+    # --------------------------------------------------------
+    # Process each job
+    # --------------------------------------------------------
+
+    for job in jobs:
+
+        processed_job = process_print_job(
+            job
+        )
+
+        processed_jobs.append(
+            processed_job
+        )
+
+    return processed_jobs
 
 
 # ============================================================
-# TEST A PRINTER
+# TEST PRINTER
 # ============================================================
 
-def test_printer(printer: Printer):
+def test_printer(
+    printer: Printer,
+):
 
     if not printer.is_active:
+
         raise ValueError(
             f"Printer '{printer.name}' is inactive."
         )
 
     if printer.connection_type != "NETWORK":
+
         raise ValueError(
             "Only NETWORK printers are supported "
             "by the current test."
         )
 
     if not printer.ip_address:
+
         raise ValueError(
             f"Printer '{printer.name}' "
             f"has no IP address."
         )
 
     device = ESCPosPrinter(
-        host=printer.ip_address,
+        host=str(printer.ip_address),
         port=printer.port or 9100,
+        timeout=5,
     )
 
     device.test()
@@ -358,9 +619,6 @@ def build_message_ticket(
     message: MessageToPrinter,
     width: int = 42,
 ) -> str:
-    """
-    Build the printable ticket for a waiter message.
-    """
 
     table = message.table
     waiter = message.waiter
@@ -378,8 +636,13 @@ def build_message_ticket(
     # HEADER
     # --------------------------------------------------------
 
-    lines.append(centered("RESTAURANT"))
-    lines.append(separator("="))
+    lines.append(
+        centered("RESTAURANT")
+    )
+
+    lines.append(
+        separator("=")
+    )
 
     # --------------------------------------------------------
     # TABLE
@@ -400,8 +663,16 @@ def build_message_ticket(
     if waiter:
 
         waiter_name = (
-            getattr(waiter, "full_name", None)
-            or getattr(waiter, "username", None)
+            getattr(
+                waiter,
+                "full_name",
+                None,
+            )
+            or getattr(
+                waiter,
+                "username",
+                None,
+            )
             or str(waiter)
         )
 
@@ -435,7 +706,9 @@ def build_message_ticket(
         f"PRINTER : {message.printer.name}"
     )
 
-    lines.append(separator("="))
+    lines.append(
+        separator("=")
+    )
 
     # --------------------------------------------------------
     # MESSAGE
@@ -445,12 +718,19 @@ def build_message_ticket(
         centered("MESSAGE")
     )
 
-    lines.append(separator("-"))
+    lines.append(
+        separator("-")
+    )
 
-    for line in str(message.message).splitlines():
+    for line in str(
+        message.message
+    ).splitlines():
+
         lines.append(line)
 
-    lines.append(separator("-"))
+    lines.append(
+        separator("-")
+    )
 
     lines.append(
         centered("PLEASE ATTEND")
@@ -469,20 +749,6 @@ def build_message_ticket(
 def print_message_to_printer(
     message: MessageToPrinter,
 ) -> PrintJob:
-    """
-    Directly print a MessageToPrinter to the printer
-    selected by the waiter.
-
-    IMPORTANT:
-
-    This function does NOT create a PENDING PrintJob
-    and does NOT call process_print_job().
-
-    The message is sent directly to the selected printer.
-
-    A PrintJob is created only AFTER successful printing
-    as a historical record.
-    """
 
     printer = message.printer
 
@@ -491,29 +757,33 @@ def print_message_to_printer(
     # --------------------------------------------------------
 
     if not printer:
+
         raise ValueError(
             "No printer selected for this message."
         )
 
     if not printer.is_active:
+
         raise ValueError(
             f"Printer '{printer.name}' is inactive."
         )
 
     if printer.connection_type != "NETWORK":
+
         raise ValueError(
             f"Printer '{printer.name}' "
             f"is not a network printer."
         )
 
     if not printer.ip_address:
+
         raise ValueError(
             f"Printer '{printer.name}' "
-            f"does not have an IP address."
+            f"has no IP address."
         )
 
     # --------------------------------------------------------
-    # Build message ticket
+    # Build ticket
     # --------------------------------------------------------
 
     content = build_message_ticket(
@@ -522,13 +792,10 @@ def print_message_to_printer(
 
     try:
 
-        # ----------------------------------------------------
-        # DIRECT PRINT
-        # ----------------------------------------------------
-
         device = ESCPosPrinter(
-            host=printer.ip_address,
+            host=str(printer.ip_address),
             port=printer.port or 9100,
+            timeout=5,
         )
 
         receipt_data = text_to_escpos(
@@ -541,49 +808,33 @@ def print_message_to_printer(
 
     except Exception as exc:
 
-        # ----------------------------------------------------
-        # PRINT FAILED
-        # ----------------------------------------------------
+        # NOTE:
+        # Your MessageToPrinter model as posted does NOT
+        # contain is_printed / printed_at / error_message.
+        #
+        # Therefore we don't update those fields here.
+        #
+        # We create a FAILED PrintJob instead.
 
-        message.is_printed = False
-
-        message.error_message = str(exc)[:255]
-
-        message.save(
-            update_fields=[
-                "is_printed",
-                "error_message",
-                "updated_at",
-            ]
+        job = PrintJob.objects.create(
+            order=None,
+            section=printer.section,
+            printer=printer,
+            status=PrintJobStatus.FAILED,
+            content=content,
+            error_message=str(exc)[:1000],
         )
 
-        raise
+        return job
 
     # --------------------------------------------------------
-    # PRINT SUCCESS
+    # SUCCESS
     # --------------------------------------------------------
 
     printed_at = timezone.now()
 
-    message.is_printed = True
-    message.printed_at = printed_at
-    message.error_message = ""
-
-    message.save(
-        update_fields=[
-            "is_printed",
-            "printed_at",
-            "error_message",
-            "updated_at",
-        ]
-    )
-
-    # --------------------------------------------------------
-    # CREATE HISTORY RECORD
-    # --------------------------------------------------------
-
     job = PrintJob.objects.create(
-        order_id=None,
+        order=None,
         section=printer.section,
         printer=printer,
         status=PrintJobStatus.PRINTED,
@@ -592,3 +843,504 @@ def print_message_to_printer(
     )
 
     return job
+from collections import OrderedDict
+from decimal import Decimal
+
+from django.conf import settings
+from django.utils import timezone
+
+from printers.models import (
+    ConnectionType,
+    PrintJob,
+    PrintJobStatus,
+    Printer,
+)
+
+
+# ============================================================
+# CUSTOMER INVOICE
+# ============================================================
+
+def build_customer_invoice(
+    order,
+    width: int = 42,
+) -> str:
+    """
+    Build customer invoice / receipt.
+
+    Repeated products are merged into one line.
+
+    Example:
+
+        Chicken       2   250.00     500.00
+
+    instead of:
+
+        Chicken       1   250.00     250.00
+        Chicken       1   250.00     250.00
+    """
+
+    now = timezone.localtime()
+
+    lines = []
+
+    # ========================================================
+    # HELPERS
+    # ========================================================
+
+    def separator(char="-"):
+        return char * width
+
+    def centered(text):
+        return str(text).center(width)
+
+    def money(value):
+        """
+        Format a numeric value without currency.
+        Used for product rows.
+        """
+        return f"{Decimal(value):.2f}"
+
+    def currency(value):
+        """
+        Format a numeric value with the configured currency.
+
+        Example:
+            1050.00 ₺
+        """
+        return (
+            f"{Decimal(value):.2f} "
+            f"{settings.TRY}"
+        )
+
+    def total_line(label, value):
+        """
+        Build a right-aligned total line.
+
+        Example:
+            SUBTOTAL                    1050.00 ₺
+        """
+        amount = currency(value)
+
+        label_width = width - len(amount)
+
+        return (
+            f"{label:<{label_width}}"
+            f"{amount:>{len(amount)}}"
+        )
+
+    def negative_total_line(label, value):
+        """
+        Build a right-aligned negative amount.
+
+        Example:
+            DISCOUNT                   -100.00 ₺
+        """
+        amount = f"-{currency(value)}"
+
+        label_width = width - len(amount)
+
+        return (
+            f"{label:<{label_width}}"
+            f"{amount:>{len(amount)}}"
+        )
+
+    # ========================================================
+    # HEADER
+    # ========================================================
+
+    lines.append(
+        centered("RESTAURANT")
+    )
+
+    lines.append(
+        separator("=")
+    )
+
+    # ========================================================
+    # TABLE
+    # ========================================================
+
+    table = getattr(
+        order,
+        "table",
+        None,
+    )
+
+    if table:
+
+        table_name = getattr(
+            table,
+            "name",
+            "",
+        )
+
+        table_number = getattr(
+            table,
+            "table_number",
+            "-",
+        )
+
+        if table_name:
+            lines.append(
+                f"TABLE   : {table_name}"
+            )
+
+        lines.append(
+            f"TABLE # : {table_number}"
+        )
+
+    # ========================================================
+    # ORDER
+    # ========================================================
+
+    lines.append(
+        f"ORDER # : {order.id}"
+    )
+
+    # ========================================================
+    # WAITER
+    # ========================================================
+
+    waiter = getattr(
+        order,
+        "waiter",
+        None,
+    )
+
+    if waiter:
+
+        waiter_name = (
+            getattr(
+                waiter,
+                "full_name",
+                None,
+            )
+            or getattr(
+                waiter,
+                "username",
+                None,
+            )
+            or str(waiter)
+        )
+
+    else:
+
+        waiter_name = "-"
+
+    lines.append(
+        f"WAITER  : {waiter_name}"
+    )
+
+    # ========================================================
+    # DATE / TIME
+    # ========================================================
+
+    lines.append(
+        f"DATE    : {now.strftime('%Y-%m-%d')}"
+    )
+
+    lines.append(
+        f"TIME    : {now.strftime('%H:%M:%S')}"
+    )
+
+    lines.append(
+        separator("=")
+    )
+
+    # ========================================================
+    # MERGE PRODUCTS
+    # ========================================================
+
+    merged_items = OrderedDict()
+
+    order_items = (
+        order.items
+        .select_related("product")
+        .all()
+    )
+
+    for item in order_items:
+
+        product_id = item.product_id
+
+        if product_id not in merged_items:
+
+            merged_items[product_id] = {
+                "name": str(
+                    item.product.name
+                ),
+                "quantity": Decimal("0"),
+                "unit_price": Decimal(
+                    item.unit_price
+                ),
+                "total": Decimal("0"),
+            }
+
+        merged_items[product_id]["quantity"] += (
+            Decimal(item.quantity)
+        )
+
+        merged_items[product_id]["total"] += (
+            Decimal(item.quantity)
+            * Decimal(item.unit_price)
+        )
+
+    # ========================================================
+    # ITEMS HEADER
+    # ========================================================
+
+    lines.append(
+        f"{'ITEM':<18}"
+        f"{'QTY':>5}"
+        f"{'PRICE':>9}"
+        f"{'TOTAL':>10}"
+    )
+
+    lines.append(
+        separator("-")
+    )
+
+    # ========================================================
+    # ITEMS
+    # ========================================================
+
+    calculated_subtotal = Decimal("0")
+
+    for item in merged_items.values():
+
+        name = item["name"]
+
+        quantity = item["quantity"]
+
+        unit_price = item["unit_price"]
+
+        item_total = item["total"]
+
+        calculated_subtotal += item_total
+
+        # ----------------------------------------------------
+        # Keep product name within receipt width.
+        # ----------------------------------------------------
+
+        name = name[:18]
+
+        lines.append(
+            f"{name:<18}"
+            f"{quantity:>5g}"
+            f"{money(unit_price):>9}"
+            f"{money(item_total):>10}"
+        )
+
+    lines.append(
+        separator("-")
+    )
+
+    # ========================================================
+    # ORDER TOTALS
+    # ========================================================
+
+    order_subtotal = Decimal(
+        getattr(
+            order,
+            "subtotal",
+            calculated_subtotal,
+        )
+        or calculated_subtotal
+    )
+
+    discount = Decimal(
+        getattr(
+            order,
+            "discount",
+            0,
+        )
+        or 0
+    )
+
+    tax = Decimal(
+        getattr(
+            order,
+            "tax",
+            0,
+        )
+        or 0
+    )
+
+    total_value = getattr(
+        order,
+        "total",
+        None,
+    )
+
+    if total_value is not None:
+
+        total = Decimal(
+            total_value
+        )
+
+    else:
+
+        total = (
+            order_subtotal
+            - discount
+            + tax
+        )
+
+    # ========================================================
+    # SUBTOTAL
+    # ========================================================
+
+    lines.append(
+        total_line(
+            "SUBTOTAL",
+            order_subtotal,
+        )
+    )
+
+    # ========================================================
+    # DISCOUNT
+    # ========================================================
+
+    if discount > 0:
+
+        lines.append(
+            negative_total_line(
+                "DISCOUNT",
+                discount,
+            )
+        )
+
+    # ========================================================
+    # TAX
+    # ========================================================
+
+    if tax > 0:
+
+        lines.append(
+            total_line(
+                "TAX",
+                tax,
+            )
+        )
+
+    # ========================================================
+    # TOTAL
+    # ========================================================
+
+    lines.append(
+        separator("=")
+    )
+
+    lines.append(
+        total_line(
+            "TOTAL",
+            total,
+        )
+    )
+
+    lines.append(
+        separator("=")
+    )
+
+    # ========================================================
+    # FOOTER
+    # ========================================================
+
+    lines.append(
+        centered("THANK YOU!")
+    )
+
+    lines.append("")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+# ============================================================
+# PRINT CUSTOMER INVOICE
+# ============================================================
+
+def print_customer_invoice(
+    order,
+) -> PrintJob:
+    """
+    Create and print a customer invoice.
+
+    The printer is selected using:
+
+        is_cashier=True
+        is_active=True
+
+    The invoice is created as a normal PrintJob and then
+    processed through process_print_job().
+    """
+
+    # ========================================================
+    # FIND CASHIER / CUSTOMER INVOICE PRINTER
+    # ========================================================
+
+    printer = (
+        Printer.objects
+        .filter(
+            is_cashier=True,
+            is_active=True,
+        )
+        .order_by("id")
+        .first()
+    )
+
+    if printer is None:
+
+        raise ValueError(
+            "No active cashier printer configured."
+        )
+
+    # ========================================================
+    # VALIDATE CONNECTION TYPE
+    # ========================================================
+
+    if printer.connection_type != ConnectionType.NETWORK:
+
+        raise ValueError(
+            f"Printer '{printer.name}' "
+            f"is not a network printer."
+        )
+
+    # ========================================================
+    # VALIDATE IP ADDRESS
+    # ========================================================
+
+    if not printer.ip_address:
+
+        raise ValueError(
+            f"Printer '{printer.name}' "
+            f"has no IP address."
+        )
+
+    # ========================================================
+    # BUILD INVOICE
+    # ========================================================
+
+    content = build_customer_invoice(
+        order=order,
+        width=42,
+    )
+
+    # ========================================================
+    # CREATE PRINT JOB
+    # ========================================================
+
+    job = PrintJob.objects.create(
+        order=order,
+        section=printer.section,
+        printer=printer,
+        status=PrintJobStatus.PENDING,
+        content=content,
+    )
+
+    # ========================================================
+    # PROCESS PRINT JOB
+    # ========================================================
+
+    return process_print_job(job)

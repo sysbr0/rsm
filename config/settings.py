@@ -26,11 +26,15 @@ SECRET_KEY = "django-insecure-tf(cr#uy6xzmck$1_4*g8cmc&+&w*2#h!l=b_-rcc%79o-!#sk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 LICENSE_SERVER_URL = "https://admin.sysbr.net"
 CURRENCY = os.getenv(
     "CURRENCY",
     "₺",
+)
+TRY = os.getenv(
+    "TRY",
+    "TRY",
 )
 # Application definition
 
@@ -47,7 +51,7 @@ INSTALLED_APPS = [
     "menu",
     "users",
     "orders",
-    "printers",
+   "printers.apps.PrintersConfig",
     "tables",
     "ui",
     "licensing",

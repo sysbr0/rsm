@@ -634,6 +634,10 @@ def admin_table_detail(request, table_id: int):
         request.GET.get("order_paid") == "1"
     )
 
+    order_items_printed = (
+        request.GET.get("order_items_printed") == "1"
+    )
+
     selected_quantities: dict[
         int,
         Decimal,
@@ -693,23 +697,14 @@ def admin_table_detail(request, table_id: int):
             current_order = get_current_order()
 
             raw_money_source_id = (
-                request.POST.get(
-                    "money_source_id"
-                )
+                request.POST
+                .get("money_source_id", "")
+                .strip()
             )
 
-            try:
-                money_source_id = (
-                    int(raw_money_source_id)
-                    if raw_money_source_id
-                    else 0
-                )
-
-            except (
-                TypeError,
-                ValueError,
-            ):
-                money_source_id = 0
+            # ----------------------------------------------------
+            # CHECK ACTIVE ORDER
+            # ----------------------------------------------------
 
             if current_order is None:
 
@@ -718,42 +713,89 @@ def admin_table_detail(request, table_id: int):
                     "to set as paid."
                 )
 
-            elif money_source_id <= 0:
+            # ----------------------------------------------------
+            # CHECK ORDER STATUS
+            # ----------------------------------------------------
+
+            elif current_order.status == OrderStatus.PAID:
 
                 form_error = (
-                    "Please select a money "
-                    "source before marking "
-                    "the order as paid."
+                    "This order has already been paid."
                 )
+
+            # ----------------------------------------------------
+            # VALIDATE MONEY SOURCE
+            # ----------------------------------------------------
 
             else:
 
                 try:
 
-                    MoneySource.objects.get(
-                        id=money_source_id,
-                        is_active=True,
+                    money_source_id = int(
+                        raw_money_source_id
                     )
 
-                except MoneySource.DoesNotExist:
+                except (
+                    TypeError,
+                    ValueError,
+                ):
+
+                    money_source_id = 0
+
+                if money_source_id <= 0:
 
                     form_error = (
-                        "Selected money source "
-                        "is not available."
+                        "Please select a money source "
+                        "before marking the order as paid."
                     )
 
                 else:
 
-                    current_order.set_order_as_paid(
-                        money_source_id
+                    money_source = (
+                        MoneySource.objects
+                        .filter(
+                            id=money_source_id,
+                            is_active=True,
+                        )
+                        .first()
                     )
 
-                    return redirect(
-                        "tables"
-                    )
+                    if money_source is None:
+
+                        form_error = (
+                            "Selected money source "
+                            "is not available."
+                        )
+
+                    else:
+
+                        try:
+
+                            current_order.set_order_as_paid(
+                                income_source_id=money_source.id,
+                                received_by_who=request.user,
+                            )
+
+                            return redirect(
+                                "admin_tables"
+                            )
+
+                        except Exception as exc:
+
+                            form_error = (
+                                "Unable to mark "
+                                "the order as paid: "
+                                f"{exc}"
+                            )
 
         # ========================================================
         # PRINT PENDING KITCHEN / SECTION ITEMS
+        #
+        # IMPORTANT:
+        # This is the ONLY place where pending OrderItems
+        # are sent to the printer.
+        #
+        # Creating or adding an order item does NOT print it.
         # ========================================================
 
         elif action == "print_pending_items":
@@ -763,46 +805,145 @@ def admin_table_detail(request, table_id: int):
             if current_order is None:
 
                 form_error = (
-                    "No active order found "
-                    "to print."
+                    "No active order found to print."
                 )
 
             else:
 
-                jobs = (
-                    OrderItem.print_pending_items(
-                        current_order
+                pending_items = (
+                    OrderItem.objects
+                    .filter(
+                        order=current_order,
+                        has_print_job=False,
+                    )
+                    .select_related(
+                        "product",
+                        "product__section",
                     )
                 )
 
-                if not jobs:
+                if not pending_items.exists():
 
                     form_error = (
-                        "There are no pending "
+                        "There are no unprinted "
+                        "items in this order."
+                    )
+
+                else:
+
+                    jobs = (
+                        OrderItem.print_pending_items(
+                            current_order
+                        )
+                    )
+
+                    if not jobs:
+
+                        form_error = (
+                            "Unprinted items were found, "
+                            "but no active printer is "
+                            "configured for their section."
+                        )
+
+                    else:
+
+                        failed_jobs = [
+                            job
+                            for job in jobs
+                            if job.status
+                            == PrintJobStatus.FAILED
+                        ]
+
+                        if failed_jobs:
+
+                            form_error = (
+                                f"{len(failed_jobs)} "
+                                "print job(s) failed."
+                            )
+
+                        else:
+
+                            return redirect(
+                                f"{request.path}"
+                                "?order_items_printed=1"
+                            )
+
+        # ========================================================
+        # PRINT ORDER ITEMS
+        #
+        # Keep this action as an alias if your template currently
+        # submits action="print_order_items".
+        # ========================================================
+
+        elif action == "print_order_items":
+
+            current_order = get_current_order()
+
+            if current_order is None:
+
+                form_error = (
+                    "No active order found to print."
+                )
+
+            else:
+
+                pending_items = (
+                    OrderItem.objects
+                    .filter(
+                        order=current_order,
+                        has_print_job=False,
+                    )
+                    .select_related(
+                        "product",
+                        "product__section",
+                    )
+                )
+
+                if not pending_items.exists():
+
+                    form_error = (
+                        "There are no new order "
                         "items to print."
                     )
 
                 else:
 
-                    failed_jobs = [
-                        job
-                        for job in jobs
-                        if job.status
-                        == PrintJobStatus.FAILED
-                    ]
+                    jobs = (
+                        OrderItem.print_pending_items(
+                            current_order
+                        )
+                    )
 
-                    if failed_jobs:
+                    if not jobs:
 
                         form_error = (
-                            f"{len(failed_jobs)} "
-                            "print job(s) failed."
+                            "There are pending items, "
+                            "but no active printer is "
+                            "configured for their section."
                         )
 
                     else:
 
-                        return redirect(
-                            "tables"
-                        )
+                        failed_jobs = [
+                            job
+                            for job in jobs
+                            if job.status
+                            == PrintJobStatus.FAILED
+                        ]
+
+                        if failed_jobs:
+
+                            form_error = (
+                                f"{len(failed_jobs)} "
+                                "print job(s) failed."
+                            )
+
+                        else:
+
+                            return redirect(
+                                f"{request.path}"
+                                "?order_items_printed=1"
+                            )
 
         # ========================================================
         # UPDATE ORDER ITEM
@@ -1041,6 +1182,7 @@ def admin_table_detail(request, table_id: int):
                             and candidate
                             > Decimal("0.00")
                         ):
+
                             quantity = candidate
 
                     except Exception:
@@ -1177,6 +1319,7 @@ def admin_table_detail(request, table_id: int):
                             product is None
                             or quantity <= 0
                         ):
+
                             continue
 
                         current_price = (
@@ -1252,6 +1395,17 @@ def admin_table_detail(request, table_id: int):
                                     )
                                 )
 
+                                # --------------------------------
+                                # IMPORTANT:
+                                #
+                                # Every selected product gets a
+                                # NEW OrderItem.
+                                #
+                                # has_print_job MUST remain FALSE
+                                # until the user explicitly presses
+                                # the Print button.
+                                # --------------------------------
+
                                 for (
                                     product,
                                     quantity,
@@ -1264,6 +1418,7 @@ def admin_table_detail(request, table_id: int):
                                         product=product,
                                         quantity=quantity,
                                         unit_price=current_price,
+                                        has_print_job=False,
                                         discount=Decimal(
                                             "0.00"
                                         ),
@@ -1286,27 +1441,17 @@ def admin_table_detail(request, table_id: int):
 
                             else:
 
-                                existing_plain_items = {}
-
-                                for item in (
-                                    current_order
-                                    .items
-                                    .select_related(
-                                        "product"
-                                    )
-                                ):
-
-                                    if item.notes:
-                                        continue
-
-                                    if (
-                                        item.product_id
-                                        not in existing_plain_items
-                                    ):
-
-                                        existing_plain_items[
-                                            item.product_id
-                                        ] = item
+                                # --------------------------------
+                                # IMPORTANT:
+                                #
+                                # NEVER search for an existing
+                                # OrderItem here.
+                                #
+                                # NEVER increase its quantity.
+                                #
+                                # ALWAYS create a completely
+                                # separate OrderItem.
+                                # --------------------------------
 
                                 for (
                                     product,
@@ -1319,53 +1464,17 @@ def admin_table_detail(request, table_id: int):
                                         item_note.strip()
                                     )
 
-                                    existing_item = (
-                                        existing_plain_items.get(
-                                            product.id
-                                        )
+                                    OrderItem.objects.create(
+                                        order=current_order,
+                                        product=product,
+                                        quantity=quantity,
+                                        unit_price=current_price,
+                                        discount=Decimal(
+                                            "0.00"
+                                        ),
+                                        notes=normalized_note,
+                                        has_print_job=False,
                                     )
-
-                                    # --------------------------------
-                                    # NEW ITEM / ITEM WITH NOTE
-                                    # --------------------------------
-
-                                    if (
-                                        normalized_note
-                                        or existing_item
-                                        is None
-                                    ):
-
-                                        OrderItem.objects.create(
-                                            order=current_order,
-                                            product=product,
-                                            quantity=quantity,
-                                            unit_price=current_price,
-                                            discount=Decimal(
-                                                "0.00"
-                                            ),
-                                            notes=normalized_note,
-                                        )
-
-                                    # --------------------------------
-                                    # MERGE EXISTING ITEM
-                                    # --------------------------------
-
-                                    else:
-
-                                        existing_item.quantity += (
-                                            quantity
-                                        )
-
-                                        existing_item.unit_price = (
-                                            current_price
-                                        )
-
-                                        existing_item.save(
-                                            update_fields=[
-                                                "quantity",
-                                                "unit_price",
-                                            ]
-                                        )
 
                                 recalculate_order_totals(
                                     current_order
@@ -1375,23 +1484,26 @@ def admin_table_detail(request, table_id: int):
                                     current_order.table_id
                                 )
 
-                                created_order = (
-                                    current_order
-                                )
+                                created_order = current_order
 
-                        # ----------------------------------------
-                        # PRINT NEW / PENDING ITEMS
-                        # ----------------------------------------
-
-                        if created_order is not None:
-
-                            OrderItem.print_pending_items(
-                                created_order
-                            )
-
-                        # ----------------------------------------
-                        # REDIRECT
-                        # ----------------------------------------
+                        # ====================================================
+                        # IMPORTANT CHANGE
+                        #
+                        # DO NOT PRINT HERE.
+                        #
+                        # The old code had:
+                        #
+                        # OrderItem.print_pending_items(created_order)
+                        #
+                        # That was the reason newly-created items could
+                        # immediately become has_print_job=True.
+                        #
+                        # Printing now happens ONLY from:
+                        #
+                        # action == "print_pending_items"
+                        # OR
+                        # action == "print_order_items"
+                        # ====================================================
 
                         if action == "save_and_create_order":
 
@@ -1460,17 +1572,33 @@ def admin_table_detail(request, table_id: int):
                         "id": item.id,
                         "name": item.product.name,
                         "quantity": item.quantity,
-                        "quantity_display": quantity_display,
+
+                        # ------------------------------------------------
+                        # This reflects the actual database value.
+                        #
+                        # False = not printed yet
+                        # True  = already sent to printer
+                        # ------------------------------------------------
+                        "has_print_job": item.has_print_job,
+
+                        "quantity_display": (
+                            quantity_display
+                        ),
+
                         "quantity_input": (
                             f"{Decimal(str(item.quantity)):.2f}"
                         ),
+
                         "notes": item.notes,
+
                         "unit_price_display": (
                             unit_price_display
                         ),
+
                         "line_total_display": (
                             line_total_display
                         ),
+
                         "summary_display": (
                             f"Qty: "
                             f"{quantity_display}"
@@ -1578,6 +1706,10 @@ def admin_table_detail(request, table_id: int):
         ),
 
         "invoice_printed": invoice_printed,
+
+        "order_items_printed": (
+            order_items_printed
+        ),
 
         "order_paid": order_paid,
 
