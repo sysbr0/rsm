@@ -1,0 +1,747 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}Delete Product{%
+endblock %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     PRODUCT DELETE — confirmation page
+     ============================================ */
+
+  .pd {
+    --pd-ink: #0f172a;
+    --pd-ink-2: #1e293b;
+    --pd-muted: #64748b;
+    --pd-muted-2: #94a3b8;
+    --pd-line: #e2e8f0;
+    --pd-line-2: #f1f5f9;
+    --pd-bg: #f7f8fc;
+    --pd-white: #ffffff;
+    --pd-brand: #6366f1;
+    --pd-brand-2: #8b5cf6;
+    --pd-pink: #ec4899;
+    --pd-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --pd-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --pd-ok: #10b981;
+    --pd-warn: #f59e0b;
+    --pd-danger: #ef4444;
+    --pd-r-xl: 22px;
+    --pd-r-lg: 16px;
+    --pd-r: 12px;
+    --pd-r-sm: 9px;
+
+    color: var(--pd-ink);
+    background: var(--pd-bg);
+    padding: 1.75rem;
+    border-radius: var(--pd-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    max-width: 720px;
+    margin-inline: auto;
+    padding-bottom: 2.5rem;
+  }
+  .pd * {
+    box-sizing: border-box;
+  }
+
+  .pd .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* ============================================
+     HERO (danger variant)
+     ============================================ */
+  .pd-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.75rem 2rem;
+    border-radius: var(--pd-r-xl);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 55%, #b91c1c 100%);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(239, 68, 68, 0.55);
+  }
+  .pd-hero::before,
+  .pd-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .pd-hero::before {
+    width: 240px;
+    height: 240px;
+    top: -120px;
+    right: -60px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .pd-hero::after {
+    width: 160px;
+    height: 160px;
+    bottom: -80px;
+    right: 160px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .pd-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .pd-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.18s ease;
+  }
+  .pd-crumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
+  }
+  .pd-crumb .mat {
+    font-size: 16px;
+  }
+  .pd-hero h1 {
+    font-size: clamp(1.5rem, 2.3vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .pd-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.94;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+  .pd-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .pd-mode-pill .mat {
+    font-size: 18px;
+  }
+
+  /* ============================================
+     CARD
+     ============================================ */
+  .pd-card {
+    background: var(--pd-white);
+    border: 1px solid var(--pd-line);
+    border-radius: var(--pd-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .pd-card-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.35rem 1.6rem;
+    border-bottom: 1px solid var(--pd-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
+  }
+  .pd-card-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #fff;
+    box-shadow: 0 8px 18px -8px rgba(239, 68, 68, 0.65);
+  }
+  .pd-card-icon .mat {
+    font-size: 26px;
+  }
+  .pd-card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--pd-ink);
+    overflow-wrap: anywhere;
+  }
+  .pd-card-desc {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--pd-muted-2);
+    line-height: 1.55;
+  }
+
+  /* ============================================
+     BODY
+     ============================================ */
+  .pd-body {
+    padding: 1.75rem 1.6rem;
+  }
+
+  /* Warning banner */
+  .pd-warn {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    border-radius: var(--pd-r);
+    background: #fef2f2;
+    border-left: 4px solid var(--pd-danger);
+    color: #7f1d1d;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+  .pd-warn .mat {
+    font-size: 22px;
+    color: var(--pd-danger);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .pd-warn strong {
+    color: #991b1b;
+    font-weight: 800;
+  }
+
+  /* Product summary */
+  .pd-summary {
+    border: 1px solid var(--pd-line);
+    border-radius: var(--pd-r);
+    background: #fafbff;
+    overflow: hidden;
+  }
+  .pd-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--pd-line-2);
+    font-size: 0.86rem;
+  }
+  .pd-summary-row:last-child {
+    border-bottom: 0;
+  }
+  .pd-summary-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--pd-muted);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .pd-summary-label .mat {
+    font-size: 18px;
+    color: var(--pd-muted-2);
+  }
+  .pd-summary-value {
+    color: var(--pd-ink);
+    font-weight: 700;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .pd-summary-value.mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    background: var(--pd-line-2);
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+  }
+
+  /* ============================================
+     CONFIRM CHECKBOX
+     ============================================ */
+  .pd-confirm {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin-top: 1.5rem;
+    padding: 1rem 1.15rem;
+    border: 1.5px solid var(--pd-line);
+    border-radius: var(--pd-r);
+    background: #ffffff;
+    cursor: pointer;
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease;
+    user-select: none;
+  }
+  .pd-confirm:hover {
+    border-color: #fca5a5;
+    background: #fef7f7;
+  }
+  .pd-confirm input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0.15rem 0 0;
+    accent-color: var(--pd-danger);
+    cursor: pointer;
+  }
+  .pd-confirm-txt {
+    font-size: 0.85rem;
+    color: var(--pd-ink-2);
+    line-height: 1.55;
+  }
+  .pd-confirm-txt strong {
+    color: #b91c1c;
+    font-weight: 800;
+  }
+
+  /* ============================================
+     FOOTER
+     ============================================ */
+  .pd-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.6rem;
+    border-top: 1px solid var(--pd-line);
+    background: #fbfbff;
+  }
+  .pd-foot-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--pd-muted-2);
+    line-height: 1.55;
+  }
+  .pd-foot-note .mat {
+    font-size: 16px;
+    color: var(--pd-ok);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .pd-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .pd-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1.2rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--pd-r);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+  }
+  .pd-btn .mat {
+    font-size: 18px;
+  }
+
+  .pd-btn-cancel {
+    background: var(--pd-white);
+    border-color: #0f172a;
+    color: #0f172a;
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.15);
+  }
+  .pd-btn-cancel:hover {
+    background: #f1f5f9;
+    color: var(--pd-ink);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -6px rgba(15, 23, 42, 0.28);
+  }
+
+  .pd-btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgba(239, 68, 68, 0.6);
+  }
+  .pd-btn-danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(239, 68, 68, 0.7);
+    filter: brightness(1.05);
+    color: #fff;
+  }
+  .pd-btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    filter: grayscale(0.3);
+  }
+  .pd-btn:focus-visible {
+    outline: 3px solid rgba(239, 68, 68, 0.35);
+    outline-offset: 3px;
+  }
+
+  .pd-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 1.25rem 0 0;
+    font-size: 0.78rem;
+    color: var(--pd-muted-2);
+    text-align: center;
+  }
+  .pd-bottom .mat {
+    font-size: 14px;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 767.98px) {
+    .pd {
+      padding: 1rem;
+      border-radius: 16px;
+      padding-bottom: 1.5rem;
+    }
+    .pd-hero {
+      padding: 1.4rem 1.25rem;
+    }
+    .pd-card-top {
+      padding: 1.1rem 1.15rem;
+    }
+    .pd-body {
+      padding: 1.2rem 1.15rem;
+    }
+    .pd-foot {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 1.1rem 1.15rem;
+    }
+    .pd-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+    }
+    .pd-btn {
+      width: 100%;
+    }
+    .pd-summary-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+    .pd-summary-value {
+      text-align: left;
+    }
+  }
+  @media (max-width: 480px) {
+    .pd {
+      padding: 0.75rem;
+    }
+    .pd-hero-in {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .pd-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+    .pd-card-icon .mat {
+      font-size: 22px;
+    }
+    .pd-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pd *,
+    .pd *::before,
+    .pd *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="pd">
+  <!-- HERO -->
+  <header class="pd-hero">
+    <div class="pd-hero-in">
+      <div>
+        <a href="{% url 'product_list' %}" class="pd-crumb">
+          <span class="mat">arrow_back</span> Products
+        </a>
+        <h1>Delete Product</h1>
+        <p>
+          This action is permanent and cannot be undone. Please review
+          carefully.
+        </p>
+      </div>
+
+      <span class="pd-mode-pill">
+        <span class="mat">warning</span> Destructive action
+      </span>
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  {% if messages %} {% for message in messages %}
+  <div
+    class="pd-alert alert-{{ message.tags|default:'info' }}"
+    role="alert"
+    style="padding:0.9rem 1.1rem;border-radius:12px;margin-bottom:1rem;font-size:0.85rem;font-weight:600;{% if message.tags == 'error' %}background:#fef2f2;color:#b91c1c;border-left:4px solid #ef4444;{% else %}background:#ecfdf5;color:#047857;border-left:4px solid #10b981;{% endif %}"
+  >
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %} {% endif %}
+
+  <!-- CARD -->
+  <section class="pd-card">
+    <div class="pd-card-top">
+      <div class="pd-card-icon">
+        <span class="mat">delete_forever</span>
+      </div>
+      <div style="min-width: 0">
+        <h2 class="pd-card-title">Confirm Deletion</h2>
+        <p class="pd-card-desc">Review the product below before continuing.</p>
+      </div>
+    </div>
+
+    <form method="post" id="product-delete-form" novalidate>
+      {% csrf_token %}
+
+      <div class="pd-body">
+        <!-- Warning -->
+        <div class="pd-warn">
+          <span class="mat">warning</span>
+          <div>
+            You are about to permanently delete this product.
+            <strong>This cannot be undone.</strong>
+            All associated data will be removed.
+          </div>
+        </div>
+
+        <!-- Product summary -->
+        <div class="pd-summary">
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">inventory_2</span>
+              Product
+            </span>
+            <span class="pd-summary-value">{{ object.name|default:"—" }}</span>
+          </div>
+
+          {% if object.sku %}
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">qr_code</span>
+              SKU
+            </span>
+            <span class="pd-summary-value mono">{{ object.sku }}</span>
+          </div>
+          {% endif %} {% if object.category %}
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">folder</span>
+              Category
+            </span>
+            <span class="pd-summary-value">{{ object.category.name }}</span>
+          </div>
+          {% endif %} {% if object.section %}
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">view_module</span>
+              Section
+            </span>
+            <span class="pd-summary-value">{{ object.section.name }}</span>
+          </div>
+          {% endif %}
+
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">payments</span>
+              Price
+            </span>
+            <span class="pd-summary-value"
+              >${{ object.price|floatformat:2 }}</span
+            >
+          </div>
+
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat">percent</span>
+              Tax Rate
+            </span>
+            <span class="pd-summary-value"
+              >{{ object.tax_rate|floatformat:2 }}%</span
+            >
+          </div>
+
+          <div class="pd-summary-row">
+            <span class="pd-summary-label">
+              <span class="mat"
+                >{% if object.is_active %}check_circle{% else %}pause_circle{%
+                endif %}</span
+              >
+              Status
+            </span>
+            <span class="pd-summary-value">
+              {% if object.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Confirm checkbox -->
+        <label class="pd-confirm" for="confirm-delete-check">
+          <input
+            type="checkbox"
+            id="confirm-delete-check"
+            name="confirm-delete"
+          />
+          <span class="pd-confirm-txt">
+            I understand that deleting
+            <strong>{{ object.name|default:"this product" }}</strong>
+            is permanent and cannot be reversed.
+          </span>
+        </label>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="pd-foot">
+        <div class="pd-foot-note">
+          <span class="mat">info</span>
+          <span>You can safely cancel and return to the product list.</span>
+        </div>
+
+        <div class="pd-actions">
+          <a href="{% url 'product_list' %}" class="pd-btn pd-btn-cancel">
+            <span class="mat">close</span> Cancel
+          </a>
+
+          <button
+            type="submit"
+            class="pd-btn pd-btn-danger"
+            id="confirm-delete-btn"
+            disabled
+          >
+            <span class="mat">delete</span>
+            <span>Delete Product</span>
+          </button>
+        </div>
+      </footer>
+    </form>
+  </section>
+
+  <p class="pd-bottom">
+    <span class="mat">shield</span>
+    Deletion is permanent. No recovery is possible.
+  </p>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const form = document.getElementById("product-delete-form");
+    const checkbox = document.getElementById("confirm-delete-check");
+    const deleteBtn = document.getElementById("confirm-delete-btn");
+
+    if (!form || !checkbox || !deleteBtn) return;
+
+    /* Enable/disable the delete button based on the confirm checkbox */
+    function toggleDeleteBtn() {
+      deleteBtn.disabled = !checkbox.checked;
+    }
+
+    checkbox.addEventListener("change", toggleDeleteBtn);
+    toggleDeleteBtn(); // run once on load
+
+    /* Submit guard + loading state */
+    let isSubmitting = false;
+
+    form.addEventListener("submit", function (event) {
+      if (!checkbox.checked) {
+        event.preventDefault();
+        return;
+      }
+
+      if (isSubmitting) {
+        event.preventDefault();
+        return;
+      }
+
+      isSubmitting = true;
+      deleteBtn.disabled = true;
+
+      const icon = deleteBtn.querySelector(".mat");
+      const text = deleteBtn.querySelector("span:last-child");
+
+      if (icon) icon.textContent = "progress_activity";
+      if (text) text.textContent = "Deleting...";
+    });
+  })();
+</script>
+{% endblock %}

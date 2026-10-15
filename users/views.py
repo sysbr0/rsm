@@ -5,6 +5,10 @@ from django.shortcuts import render
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.shortcuts import redirect, render
+from django.template.backends import django
+
+
+
 
 
 def _login_user(request, allowed_roles, redirect_url, template_name):
@@ -99,7 +103,7 @@ def admin_login(request):
         if user is None:
             return render(
                 request,
-                "ui/login_admin.html",
+                "users/login_admin.html",
                 {
                     "error": "Invalid username or password."
                 },
@@ -109,7 +113,7 @@ def admin_login(request):
         if user.role not in ["ADMIN", "MANAGER"]:
             return render(
                 request,
-                "ui/login_admin.html",
+                "users/login_admin.html",
                 {
                     "error": (
                         "You do not have permission "
@@ -242,3 +246,14 @@ class AdminLoginAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+def index_view(request):
+    #if request.user.is_authenticated:
+        # Redirect authenticated users to their dashboard according to role
+      #  if request.user.role == "ADMIN" or request.user.role == "MANAGER":
+         #   return redirect('admin_tables')
+        
+    # Render main selection landing page for unauthenticated users
+    return render(request, 'index.html')

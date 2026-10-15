@@ -1,0 +1,1656 @@
+{% extends "ui/admin_base.html" %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     TRANSACTIONS MANAGER
+     ============================================ */
+  .tm {
+    --tm-ink: #0f172a;
+    --tm-ink-2: #1e293b;
+    --tm-muted: #64748b;
+    --tm-muted-2: #94a3b8;
+    --tm-line: #e2e8f0;
+    --tm-line-2: #f1f5f9;
+    --tm-bg: #f7f8fc;
+    --tm-white: #ffffff;
+    --tm-brand: #6366f1;
+    --tm-brand-2: #8b5cf6;
+    --tm-pink: #ec4899;
+    --tm-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --tm-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --tm-ok: #10b981;
+    --tm-warn: #f59e0b;
+    --tm-danger: #ef4444;
+    --tm-info: #3b82f6;
+    --tm-r-xl: 22px;
+    --tm-r-lg: 16px;
+    --tm-r: 12px;
+    --tm-r-sm: 9px;
+
+    color: var(--tm-ink);
+    background: var(--tm-bg);
+    padding: 1.75rem;
+    border-radius: var(--tm-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    min-height: 500px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .tm * {
+    box-sizing: border-box;
+  }
+
+  .tm .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* HERO */
+  .tm-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.9rem 2.1rem;
+    border-radius: var(--tm-r-xl);
+    background: var(--tm-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .tm-hero::before,
+  .tm-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .tm-hero::before {
+    width: 280px;
+    height: 280px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .tm-hero::after {
+    width: 180px;
+    height: 180px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .tm-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .tm-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+  }
+  .tm-crumb .mat {
+    font-size: 16px;
+  }
+  .tm-hero h1 {
+    font-size: clamp(1.55rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .tm-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .tm-hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .tm-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.35rem;
+    background: #fff;
+    color: var(--tm-brand);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 0;
+  }
+  .tm-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+    color: var(--tm-brand-2);
+  }
+  .tm-cta.ghost {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+  }
+  .tm-cta.ghost:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+  .tm-cta .mat {
+    font-size: 18px;
+  }
+
+  /* KPI */
+  .tm-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .tm-kpi {
+    position: relative;
+    overflow: hidden;
+    padding: 1.15rem 1.3rem;
+    background: var(--tm-white);
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-r-lg);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
+  }
+  .tm-kpi:hover {
+    transform: translateY(-3px);
+    border-color: #c7d2fe;
+    box-shadow: 0 16px 32px -20px rgba(99, 102, 241, 0.45);
+  }
+  .tm-kpi::after {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.14;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+  .tm-kpi:hover::after {
+    opacity: 0.22;
+    transform: scale(1.1);
+  }
+  .tm-kpi.t::after {
+    background: var(--tm-brand);
+  }
+  .tm-kpi.ok::after {
+    background: var(--tm-ok);
+  }
+  .tm-kpi.danger::after {
+    background: var(--tm-danger);
+  }
+  .tm-kpi.warn::after {
+    background: var(--tm-warn);
+  }
+  .tm-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.6rem;
+    position: relative;
+    z-index: 1;
+  }
+  .tm-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .tm-kpi.t .tm-dot {
+    background: var(--tm-brand);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  }
+  .tm-kpi.ok .tm-dot {
+    background: var(--tm-ok);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  }
+  .tm-kpi.danger .tm-dot {
+    background: var(--tm-danger);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+  .tm-kpi.warn .tm-dot {
+    background: var(--tm-warn);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+  }
+  .tm-kpi-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--tm-muted);
+  }
+  .tm-kpi-val {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--tm-ink);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .tm-kpi-sub {
+    position: relative;
+    z-index: 1;
+    font-size: 0.72rem;
+    color: var(--tm-muted-2);
+    margin-top: 0.3rem;
+    font-weight: 600;
+  }
+
+  /* SKELETON */
+  @keyframes tmSk {
+    0% {
+      background-position: -400px 0;
+    }
+    100% {
+      background-position: 400px 0;
+    }
+  }
+  .tm-sk {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 400px 100%;
+    animation: tmSk 1.4s ease-in-out infinite;
+    display: inline-block;
+  }
+  .tm-sk-val {
+    width: 60%;
+    height: 22px;
+  }
+  .tm-sk-sub {
+    width: 45%;
+    height: 10px;
+    margin-top: 0.35rem;
+  }
+  .tm-sk-line {
+    height: 14px;
+    width: 100%;
+  }
+
+  /* GRID */
+  .tm-grid {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 1.35rem;
+    align-items: start;
+  }
+  @media (max-width: 1023px) {
+    .tm-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* FILTERS */
+  .tm-filter {
+    position: sticky;
+    top: 1.25rem;
+    background: var(--tm-white);
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-r-lg);
+    padding: 1.35rem;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .tm-filter h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.3rem;
+  }
+  .tm-filter h2 .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--tm-grad-soft);
+    color: var(--tm-brand);
+    font-size: 18px;
+  }
+  .tm-hint {
+    font-size: 0.78rem;
+    color: var(--tm-muted-2);
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+  }
+  .tm-g {
+    margin-bottom: 1.05rem;
+  }
+  .tm-lbl {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--tm-muted);
+    margin-bottom: 0.5rem;
+  }
+  .tm-search {
+    position: relative;
+  }
+  .tm-search .mat {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--tm-muted-2);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .tm-input,
+  .tm-select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid var(--tm-line);
+    border-radius: var(--tm-r);
+    background: var(--tm-white);
+    color: var(--tm-ink);
+    font-size: 0.86rem;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .tm-search .tm-input {
+    padding-left: 2.6rem;
+  }
+  .tm-input::placeholder {
+    color: var(--tm-muted-2);
+  }
+  .tm-input:focus,
+  .tm-select:focus {
+    outline: none;
+    border-color: var(--tm-brand-2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
+  }
+  .tm-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% - 3px),
+      calc(100% - 14px) calc(50% - 3px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+  .tm-seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3rem;
+    padding: 0.3rem;
+    background: var(--tm-line-2);
+    border-radius: var(--tm-r);
+  }
+  .tm-seg input {
+    display: none;
+  }
+  .tm-seg label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--tm-muted);
+    border-radius: var(--tm-r-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.18s ease;
+  }
+  .tm-seg label:hover {
+    color: var(--tm-brand);
+  }
+  .tm-seg input:checked + label {
+    background: var(--tm-white);
+    color: var(--tm-brand);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  .tm-actions {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px dashed var(--tm-line);
+  }
+  .tm-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.65rem 1.2rem;
+    border: 0;
+    border-radius: var(--tm-r);
+    background: var(--tm-grad);
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+    text-decoration: none;
+  }
+  .tm-btn-grad .mat {
+    font-size: 18px;
+  }
+  .tm-btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    color: #fff;
+  }
+  .tm-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0.55rem 1.1rem;
+    border: 1.5px solid var(--tm-line);
+    border-radius: var(--tm-r);
+    background: var(--tm-white);
+    color: var(--tm-muted);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .tm-btn-ghost .mat {
+    font-size: 18px;
+  }
+  .tm-btn-ghost:hover {
+    border-color: var(--tm-brand-2);
+    color: var(--tm-brand-2);
+    background: #faf5ff;
+  }
+
+  /* PANEL */
+  .tm-panel {
+    background: var(--tm-white);
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+    min-height: 300px !important;
+  }
+  .tm-panel-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--tm-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .tm-panel-top h2 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .tm-panel-top .sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--tm-muted-2);
+  }
+  .tm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    background: var(--tm-grad-soft);
+    color: var(--tm-brand-2);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .tm-pill .mat {
+    font-size: 16px;
+  }
+
+  /* TABLE */
+  .tm-table-wrap {
+    overflow-x: auto;
+  }
+  .tm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .tm-table thead th {
+    text-align: left;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--tm-muted);
+    background: #fbfbff;
+    border-bottom: 1px solid var(--tm-line);
+    white-space: nowrap;
+  }
+  .tm-table tbody td {
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--tm-line-2);
+    vertical-align: middle;
+  }
+  .tm-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .tm-table tbody tr:hover {
+    background: #fbfaff;
+  }
+  .tm-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .tm-tx-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .tm-tx-type .mat {
+    font-size: 14px;
+  }
+  .tm-tx-type.in {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .tm-tx-type.out {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .tm-amount-in {
+    color: #047857;
+    font-weight: 800;
+  }
+  .tm-amount-out {
+    color: #b91c1c;
+    font-weight: 800;
+  }
+  .tm-src-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 8px;
+    background: var(--tm-line-2);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--tm-ink-2);
+    white-space: nowrap;
+  }
+  .tm-src-chip .mat {
+    font-size: 14px;
+    color: var(--tm-brand);
+  }
+
+  /* EMPTY */
+  .tm-empty {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+  }
+  .tm-empty-orb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    background: var(--tm-grad-soft);
+    color: var(--tm-brand-2);
+    box-shadow: 0 12px 30px -12px rgba(139, 92, 246, 0.4);
+  }
+  .tm-empty-orb .mat {
+    font-size: 40px;
+  }
+  .tm-empty h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--tm-ink);
+    margin: 0 0 0.35rem;
+  }
+  .tm-empty p {
+    font-size: 0.86rem;
+    color: var(--tm-muted-2);
+    margin: 0;
+  }
+
+  /* PAGINATION */
+  .tm-foot-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--tm-line);
+    background: #fbfbff;
+  }
+  .tm-summary {
+    font-size: 0.78rem;
+    color: var(--tm-muted-2);
+  }
+  .tm-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+  }
+  .tm-pager button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.6rem;
+    border: 1.5px solid var(--tm-line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--tm-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tm-pager button .mat {
+    font-size: 18px;
+  }
+  .tm-pager button:hover:not(:disabled) {
+    border-color: var(--tm-brand-2);
+    color: var(--tm-brand-2);
+    background: #faf5ff;
+    transform: translateY(-1px);
+  }
+  .tm-pager button[aria-current="page"] {
+    background: var(--tm-grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.6);
+  }
+  .tm-pager button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* TOAST */
+  .tm-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--tm-r);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+    animation: tmIn 0.28s ease;
+  }
+  .tm-toast .mat {
+    font-size: 20px;
+  }
+  @keyframes tmIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .tm-toast.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--tm-ok);
+  }
+  .tm-toast.err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--tm-danger);
+  }
+  .d-none {
+    display: none !important;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .tm {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+    .tm-hero {
+      padding: 1.4rem 1.3rem;
+    }
+    .tm-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .tm-hero-cta {
+      width: 100%;
+    }
+    .tm-foot-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .tm-pager {
+      justify-content: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tm *,
+    .tm *::before,
+    .tm *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="tm" id="transactions-manager">
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}" />
+
+  <!-- HERO -->
+  <header class="tm-hero">
+    <div class="tm-hero-in">
+      <div>
+        <span class="tm-crumb">
+          <span class="mat">receipt_long</span> Finance · History
+        </span>
+        <h1>All Transactions</h1>
+        <p>
+          Every receive payment and make payment ever recorded — searchable,
+          filterable, and exportable.
+        </p>
+      </div>
+      <div class="tm-hero-cta">
+        <button type="button" id="export-btn" class="tm-cta">
+          <span class="mat">download</span> Export CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST -->
+  <div id="api-alert" class="tm-toast d-none" role="alert"></div>
+
+  <!-- KPI -->
+  <section class="tm-kpis">
+    <div class="tm-kpi ok">
+      <div class="tm-kpi-row">
+        <span class="tm-dot"></span>
+        <span class="tm-kpi-lbl">Received</span>
+      </div>
+      <div class="tm-kpi-val" id="kpi-received">
+        <span class="tm-sk tm-sk-val"></span>
+      </div>
+      <div class="tm-kpi-sub">Filtered total</div>
+    </div>
+    <div class="tm-kpi danger">
+      <div class="tm-kpi-row">
+        <span class="tm-dot"></span>
+        <span class="tm-kpi-lbl">Paid</span>
+      </div>
+      <div class="tm-kpi-val" id="kpi-paid">
+        <span class="tm-sk tm-sk-val"></span>
+      </div>
+      <div class="tm-kpi-sub">Filtered total</div>
+    </div>
+    <div class="tm-kpi t">
+      <div class="tm-kpi-row">
+        <span class="tm-dot"></span>
+        <span class="tm-kpi-lbl">Net</span>
+      </div>
+      <div class="tm-kpi-val" id="kpi-net">
+        <span class="tm-sk tm-sk-val"></span>
+      </div>
+      <div class="tm-kpi-sub">Received − Paid</div>
+    </div>
+    <div class="tm-kpi warn">
+      <div class="tm-kpi-row">
+        <span class="tm-dot"></span>
+        <span class="tm-kpi-lbl">Count</span>
+      </div>
+      <div class="tm-kpi-val" id="kpi-count">
+        <span class="tm-sk tm-sk-val"></span>
+      </div>
+      <div class="tm-kpi-sub">Records matched</div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <div class="tm-grid">
+    <!-- FILTERS -->
+    <aside class="tm-filter">
+      <h2><span class="mat">tune</span> Refine</h2>
+      <p class="tm-hint">
+        Filter the transaction history by source, type, or date.
+      </p>
+
+      <form id="filter-form">
+        <div class="tm-g">
+          <label class="tm-lbl" for="q-input">Search</label>
+          <div class="tm-search">
+            <span class="mat">search</span>
+            <input
+              type="search"
+              id="q-input"
+              class="tm-input"
+              placeholder="Description…"
+              autocomplete="off"
+              maxlength="120"
+            />
+          </div>
+        </div>
+
+        <div class="tm-g">
+          <label class="tm-lbl" for="source-select">Source</label>
+          <select id="source-select" class="tm-select">
+            <option value="">All sources</option>
+          </select>
+        </div>
+
+        <div class="tm-g">
+          <span class="tm-lbl">Type</span>
+          <div class="tm-seg" role="radiogroup" aria-label="Filter by type">
+            <input type="radio" name="tt" id="tt-all" value="" checked />
+            <label for="tt-all">All</label>
+
+            <input type="radio" name="tt" id="tt-in" value="RECEIVE" />
+            <label for="tt-in">Receive</label>
+
+            <input type="radio" name="tt" id="tt-out" value="PAYMENT" />
+            <label for="tt-out">Payment</label>
+          </div>
+        </div>
+
+        <div class="tm-g">
+          <label class="tm-lbl" for="date-from">From</label>
+          <input type="date" id="date-from" class="tm-input" />
+        </div>
+
+        <div class="tm-g">
+          <label class="tm-lbl" for="date-to">To</label>
+          <input type="date" id="date-to" class="tm-input" />
+        </div>
+
+        <div class="tm-actions">
+          <button type="submit" class="tm-btn-grad">
+            <span class="mat">bolt</span> Apply Filters
+          </button>
+          <button type="button" id="reset-btn" class="tm-btn-ghost">
+            <span class="mat">restart_alt</span> Reset
+          </button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- PANEL -->
+    <main class="tm-panel">
+      <div class="tm-panel-top">
+        <div>
+          <h2>Transaction History</h2>
+          <p class="sub">Every financial movement, most recent first.</p>
+        </div>
+        <span class="tm-pill">
+          <span class="mat">receipt_long</span>
+          <span id="count-label">— records</span>
+        </span>
+      </div>
+
+      <div id="tx-container">
+        <div class="tm-table-wrap">
+          <table class="tm-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Description</th>
+                <th style="text-align: right">Amount</th>
+                <th style="text-align: right">Before</th>
+                <th style="text-align: right">After</th>
+                <th>Created By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="tx-body">
+              <tr>
+                <td colspan="8"><span class="tm-sk tm-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="8"><span class="tm-sk tm-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="8"><span class="tm-sk tm-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="8"><span class="tm-sk tm-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="8"><span class="tm-sk tm-sk-line"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tm-foot-bar">
+        <span class="tm-summary" id="page-summary">Loading…</span>
+        <nav aria-label="Transactions pagination">
+          <ul class="tm-pager" id="pager"></ul>
+        </nav>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    if (window.__TM_TX_INIT__) {
+      console.warn("[TM] ⚠️ Already initialized — skipping.");
+      return;
+    }
+    window.__TM_TX_INIT__ = true;
+
+    /* ==========================================================
+     LOGGER
+     ========================================================== */
+    const PREFIX = "%c[TM]";
+    const S = {
+      info: "color:#6366f1;font-weight:bold",
+      ok: "color:#10b981;font-weight:bold",
+      warn: "color:#f59e0b;font-weight:bold",
+      err: "color:#ef4444;font-weight:bold",
+      net: "color:#8b5cf6;font-weight:bold",
+      data: "color:#0369a1;font-weight:bold",
+    };
+    const log = {
+      info: (...a) => console.log(PREFIX, S.info, ...a),
+      ok: (...a) => console.log(PREFIX, S.ok, ...a),
+      warn: (...a) => console.warn(PREFIX, S.warn, ...a),
+      err: (...a) => console.error(PREFIX, S.err, ...a),
+      net: (...a) => console.log(PREFIX, S.net, ...a),
+      data: (...a) => console.log(PREFIX, S.data, ...a),
+      group: (l) => console.group(PREFIX + " " + l),
+      groupEnd: () => console.groupEnd(),
+      table: (d) => console.table(d),
+    };
+
+    log.info("🚀 Transactions Manager booting…");
+
+    /* ==========================================================
+     CONFIG
+     ========================================================== */
+    const API = {
+      list: "/financial/api/transactions/",
+      stats: "/financial/api/transactions/stats/",
+      sources: "/financial/api/sources/",
+    };
+    const PAGE_SIZE = 20;
+
+    log.info("API:", API);
+    log.info("PAGE_SIZE:", PAGE_SIZE);
+
+    /* ==========================================================
+     DOM
+     ========================================================== */
+    const manager = document.getElementById("transactions-manager");
+    if (!manager) {
+      console.error("[TM] ❌ #transactions-manager not found — abort.");
+      return;
+    }
+
+    const toastEl = manager.querySelector("#api-alert");
+    const form = manager.querySelector("#filter-form");
+    const qInput = manager.querySelector("#q-input");
+    const sourceSel = manager.querySelector("#source-select");
+    const tRadios = manager.querySelectorAll('input[name="tt"]');
+    const dateFrom = manager.querySelector("#date-from");
+    const dateTo = manager.querySelector("#date-to");
+    const resetBtn = manager.querySelector("#reset-btn");
+    const exportBtn = manager.querySelector("#export-btn");
+
+    const kpiReceived = manager.querySelector("#kpi-received");
+    const kpiPaid = manager.querySelector("#kpi-paid");
+    const kpiNet = manager.querySelector("#kpi-net");
+    const kpiCount = manager.querySelector("#kpi-count");
+
+    const countLabel = manager.querySelector("#count-label");
+    const txContainer = manager.querySelector("#tx-container");
+    const txBody = manager.querySelector("#tx-body");
+    const pageSummary = manager.querySelector("#page-summary");
+    const pagerEl = manager.querySelector("#pager");
+
+    log.ok("DOM resolved.");
+
+    /* ==========================================================
+     STATE
+     ========================================================== */
+    let currentPage = 1;
+    let totalCount = 0;
+    let pageCount = 1;
+    let requestId = 0;
+    let lastData = null;
+
+    /* ==========================================================
+     HELPERS
+     ========================================================== */
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          })[c],
+      );
+
+    function toast(msg, kind = "err") {
+      log.info(`🍞 Toast [${kind}]:`, msg);
+      toastEl.className = `tm-toast ${kind === "ok" ? "ok" : "err"}`;
+      toastEl.innerHTML = `<span class="mat">${kind === "ok" ? "check_circle" : "error"}</span><span>${esc(msg)}</span>`;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => {
+        toastEl.className = "tm-toast d-none";
+      }, 5000);
+    }
+
+    function fmtMoney(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "0.00";
+      return n.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    function fmtDate(v) {
+      if (!v) return "—";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "—";
+      return (
+        d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        }) +
+        " · " +
+        d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+      );
+    }
+
+    const getTypeFilter = () => {
+      const c = [...tRadios].find((r) => r.checked);
+      return c ? c.value : "";
+    };
+
+    /* ==========================================================
+     FETCH
+     ========================================================== */
+    const inflight = new Map();
+
+    async function api(url, options = {}) {
+      const method = options.method || "GET";
+      const tag = `[${method}] ${url}`;
+
+      log.group(`📡 API ${tag}`);
+      log.net("→ Request:", { url, method });
+
+      const controller = new AbortController();
+      if (method === "GET") {
+        if (inflight.has(url)) inflight.get(url).abort();
+        inflight.set(url, controller);
+      }
+
+      const t0 = performance.now();
+      let res;
+      try {
+        res = await fetch(url, {
+          credentials: "same-origin",
+          signal: controller.signal,
+          ...options,
+          headers: { Accept: "application/json", ...(options.headers || {}) },
+        });
+      } catch (e) {
+        if (method === "GET" && inflight.get(url) === controller)
+          inflight.delete(url);
+        if (e.name === "AbortError") log.warn("⏹ Aborted.");
+        else log.err("❌ Network error:", e);
+        log.groupEnd();
+        throw e;
+      }
+
+      if (method === "GET" && inflight.get(url) === controller)
+        inflight.delete(url);
+
+      const dt = (performance.now() - t0).toFixed(1);
+      log.net(`← ${res.status} in ${dt}ms`);
+
+      const ct = res.headers.get("content-type") || "";
+      let data = null;
+      if (ct.includes("application/json"))
+        data = await res.json().catch(() => null);
+      else data = await res.text().catch(() => "");
+
+      log.data("📥 Payload:", data);
+
+      if (!res.ok) {
+        const err = new Error(
+          (data && (data.detail || data.error)) ||
+            `Request failed (${res.status}).`,
+        );
+        err.status = res.status;
+        err.payload = data;
+        log.err(`❌ ${res.status}:`, err.message);
+        log.groupEnd();
+        throw err;
+      }
+
+      log.ok("✅ Success");
+      log.groupEnd();
+      return data;
+    }
+
+    /* ==========================================================
+     SOURCES DROPDOWN
+     ========================================================== */
+    async function loadSources() {
+      log.info("📁 Loading sources for filter…");
+      try {
+        const data = await api(API.sources);
+        const list = Array.isArray(data) ? data : data.results || [];
+        sourceSel.innerHTML =
+          `<option value="">All sources</option>` +
+          list
+            .map((s) => `<option value="${s.id}">${esc(s.name)}</option>`)
+            .join("");
+        log.ok(`📁 Loaded ${list.length} sources.`);
+      } catch (e) {
+        log.err("📁 Failed to load sources:", e.message);
+      }
+    }
+
+    /* ==========================================================
+     BUILD URL
+     ========================================================== */
+    function buildUrl(page = 1) {
+      const url = new URL(API.list, window.location.origin);
+      const q = qInput.value.trim();
+      const src = sourceSel.value;
+      const tt = getTypeFilter();
+      const df = dateFrom.value;
+      const dt = dateTo.value;
+
+      if (q) url.searchParams.set("search", q);
+      if (src) url.searchParams.set("source", src);
+      if (tt) url.searchParams.set("transaction_type", tt);
+      if (df) url.searchParams.set("date_from", df);
+      if (dt) url.searchParams.set("date_to", dt);
+
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("page_size", String(PAGE_SIZE));
+
+      const built = url.toString();
+      log.info("🔗 buildUrl() →", built);
+      return built;
+    }
+
+    function buildStatsUrl() {
+      const url = new URL(API.stats, window.location.origin);
+      const q = qInput.value.trim();
+      const src = sourceSel.value;
+      const tt = getTypeFilter();
+      const df = dateFrom.value;
+      const dt = dateTo.value;
+
+      if (q) url.searchParams.set("search", q);
+      if (src) url.searchParams.set("source", src);
+      if (tt) url.searchParams.set("transaction_type", tt);
+      if (df) url.searchParams.set("date_from", df);
+      if (dt) url.searchParams.set("date_to", dt);
+
+      return url.toString();
+    }
+
+    /* ==========================================================
+     STATS
+     ========================================================== */
+    async function loadStats() {
+      log.info("📊 Loading KPI stats…");
+      try {
+        const data = await api(buildStatsUrl());
+        log.data("📊 Stats:", data);
+
+        const rec = Number(data.total_received) || 0;
+        const paid = Number(data.total_paid) || 0;
+        const net = Number(data.net) || 0;
+
+        kpiReceived.textContent = fmtMoney(rec);
+        kpiPaid.textContent = fmtMoney(paid);
+        kpiNet.textContent = (net >= 0 ? "+" : "−") + fmtMoney(Math.abs(net));
+        kpiNet.style.color = net >= 0 ? "var(--tm-ok)" : "var(--tm-danger)";
+        kpiCount.textContent = data.count ?? 0;
+
+        log.ok("📊 KPIs updated.");
+      } catch (e) {
+        log.err("📊 Stats failed:", e.message);
+        kpiReceived.textContent =
+          kpiPaid.textContent =
+          kpiNet.textContent =
+            "—";
+        kpiCount.textContent = "—";
+      }
+    }
+
+    /* ==========================================================
+     RENDER
+     ========================================================== */
+    function skeletonRows(n = 5) {
+      return Array.from(
+        { length: n },
+        () =>
+          `<tr><td colspan="8"><span class="tm-sk tm-sk-line"></span></td></tr>`,
+      ).join("");
+    }
+
+    function renderRows(items) {
+      if (!items.length) {
+        txContainer.innerHTML = `
+          <div class="tm-empty">
+            <div class="tm-empty-orb"><span class="mat">receipt_long</span></div>
+            <h3>No transactions found</h3>
+            <p>Try adjusting your filters or clearing the search.</p>
+          </div>`;
+        return;
+      }
+
+      const rows = items
+        .map((t) => {
+          const isIn = t.transaction_type === "RECEIVE";
+          const badge = isIn
+            ? `<span class="tm-tx-type in"><span class="mat">south_west</span> Receive</span>`
+            : `<span class="tm-tx-type out"><span class="mat">north_east</span> Payment</span>`;
+          const amt = isIn
+            ? `<span class="tm-amount-in">+${fmtMoney(t.amount)} ${esc(t.currency)}</span>`
+            : `<span class="tm-amount-out">−${fmtMoney(t.amount)} ${esc(t.currency)}</span>`;
+
+          return `
+          <tr>
+            <td>${badge}</td>
+            <td>
+              <span class="tm-src-chip">
+                <span class="mat">account_balance_wallet</span>
+                ${esc(t.source_name || "—")}
+              </span>
+            </td>
+            <td>${esc(t.description || "—")}</td>
+            <td class="num">${amt}</td>
+            <td class="num">${fmtMoney(t.balance_before)} ${esc(t.currency)}</td>
+            <td class="num">${fmtMoney(t.balance_after)} ${esc(t.currency)}</td>
+            <td>${esc(t.created_by_name || "—")}</td>
+            <td style="color:var(--tm-muted);font-size:0.78rem;">${esc(fmtDate(t.created_at))}</td>
+          </tr>`;
+        })
+        .join("");
+
+      txContainer.innerHTML = `
+        <div class="tm-table-wrap">
+          <table class="tm-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Description</th>
+                <th style="text-align:right;">Amount</th>
+                <th style="text-align:right;">Before</th>
+                <th style="text-align:right;">After</th>
+                <th>Created By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function renderPager(data) {
+      pagerEl.innerHTML = "";
+      pageCount = Math.max(1, Math.ceil((data.count ?? 0) / PAGE_SIZE));
+
+      const add = (label, page, disabled, active = false, aria) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.innerHTML = label;
+        btn.disabled = disabled;
+        if (active) btn.setAttribute("aria-current", "page");
+        if (aria) btn.setAttribute("aria-label", aria);
+        btn.addEventListener("click", () => loadList(page));
+        li.appendChild(btn);
+        pagerEl.appendChild(li);
+      };
+
+      add(
+        '<span class="mat">chevron_left</span>',
+        Math.max(1, currentPage - 1),
+        !data.previous,
+        false,
+        "Previous page",
+      );
+
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(pageCount, currentPage + 2);
+      for (let p = start; p <= end; p++) {
+        add(String(p), p, false, p === currentPage, `Page ${p}`);
+      }
+
+      add(
+        '<span class="mat">chevron_right</span>',
+        currentPage + 1,
+        !data.next,
+        false,
+        "Next page",
+      );
+    }
+
+    /* ==========================================================
+     LOAD LIST
+     ========================================================== */
+    async function loadList(page = 1) {
+      const myReq = ++requestId;
+      log.group(`📋 loadList(page=${page}) req=${myReq}`);
+
+      txBody.innerHTML = skeletonRows(5);
+
+      try {
+        const data = await api(buildUrl(page));
+        if (myReq !== requestId) {
+          log.warn("⏭ Stale response ignored.");
+          log.groupEnd();
+          return;
+        }
+
+        lastData = data;
+
+        const items = Array.isArray(data.results) ? data.results : [];
+        totalCount = data.count ?? items.length;
+        currentPage = page;
+
+        log.data("📦 Parsed:", {
+          count: totalCount,
+          page,
+          resultsLength: items.length,
+        });
+
+        countLabel.textContent = `${totalCount} record${totalCount === 1 ? "" : "s"}`;
+        renderRows(items);
+        renderPager(data);
+
+        const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+        const to = Math.min(page * PAGE_SIZE, totalCount);
+        pageSummary.textContent = `Showing ${from}–${to} of ${totalCount}`;
+
+        log.ok(`✅ Rendered ${items.length} rows.`);
+      } catch (e) {
+        if (e.name === "AbortError" || myReq !== requestId) {
+          log.warn("⏹ Superseded.");
+          log.groupEnd();
+          return;
+        }
+        log.err("💥 loadList failed:", e.message);
+        txContainer.innerHTML = `
+          <div class="tm-empty">
+            <div class="tm-empty-orb" style="background:#fef2f2;color:var(--tm-danger);">
+              <span class="mat">warning</span>
+            </div>
+            <h3>Couldn't load transactions</h3>
+            <p>${esc(e.message)}</p>
+          </div>`;
+        countLabel.textContent = "0 records";
+        pageSummary.textContent = "";
+        pagerEl.innerHTML = "";
+        toast(e.message, "err");
+      }
+
+      log.groupEnd();
+    }
+
+    /* ==========================================================
+     EXPORT CSV
+     ========================================================== */
+    function exportCSV() {
+      if (
+        !lastData ||
+        !Array.isArray(lastData.results) ||
+        lastData.results.length === 0
+      ) {
+        toast("Nothing to export on this page.", "err");
+        return;
+      }
+      log.info("📤 Exporting CSV…");
+
+      const headers = [
+        "ID",
+        "Type",
+        "Source",
+        "Description",
+        "Amount",
+        "Currency",
+        "Before",
+        "After",
+        "Created By",
+        "Date",
+      ];
+
+      const rows = lastData.results.map((t) => [
+        t.id,
+        t.transaction_type,
+        t.source_name || "",
+        t.description || "",
+        t.amount,
+        t.currency,
+        t.balance_before,
+        t.balance_after,
+        t.created_by_name || "",
+        t.created_at,
+      ]);
+
+      const csv = [headers, ...rows]
+        .map((r) =>
+          r
+            .map((c) => {
+              const s = String(c ?? "").replace(/"/g, '""');
+              return /[",\n]/.test(s) ? `"${s}"` : s;
+            })
+            .join(","),
+        )
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transactions_page_${currentPage}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      toast("CSV downloaded.", "ok");
+      log.ok("✅ CSV exported.");
+    }
+
+    /* ==========================================================
+     EVENTS
+     ========================================================== */
+    log.info("🔌 Wiring events…");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      log.info("📝 Apply filters");
+      loadList(1);
+      loadStats();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      log.info("♻️ Reset filters");
+      qInput.value = "";
+      sourceSel.value = "";
+      manager.querySelector("#tt-all").checked = true;
+      dateFrom.value = "";
+      dateTo.value = "";
+      loadList(1);
+      loadStats();
+    });
+
+    exportBtn.addEventListener("click", exportCSV);
+
+    let qDebounce;
+    qInput.addEventListener("input", () => {
+      clearTimeout(qDebounce);
+      qDebounce = setTimeout(() => {
+        log.info("⏱ Debounced search");
+        loadList(1);
+        loadStats();
+      }, 400);
+    });
+
+    sourceSel.addEventListener("change", () => {
+      log.info(`📁 Source → "${sourceSel.value || "(all)"}"`);
+      loadList(1);
+      loadStats();
+    });
+
+    tRadios.forEach((r) =>
+      r.addEventListener("change", () => {
+        log.info(`🔘 Type → "${r.value || "(all)"}"`);
+        loadList(1);
+        loadStats();
+      }),
+    );
+
+    dateFrom.addEventListener("change", () => {
+      log.info(`📅 From → "${dateFrom.value || "(none)"}"`);
+      loadList(1);
+      loadStats();
+    });
+
+    dateTo.addEventListener("change", () => {
+      log.info(`📅 To → "${dateTo.value || "(none)"}"`);
+      loadList(1);
+      loadStats();
+    });
+
+    log.ok("🔌 Events wired.");
+
+    /* ==========================================================
+     BOOT
+     ========================================================== */
+    log.group("🏁 BOOT SEQUENCE");
+    log.groupEnd();
+
+    (async () => {
+      await loadSources();
+      await Promise.all([loadList(1), loadStats()]);
+      log.ok("✅ Transactions Manager initialized.");
+    })();
+  })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,1505 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}{% if object %}Edit
+Category{% else %}Create Category{% endif %}{% endblock %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     CATEGORY EDITOR — PROFESSIONAL FORM
+     ============================================ */
+
+  .ce {
+    --cm-ink: #0f172a;
+    --cm-ink-2: #1e293b;
+    --cm-muted: #64748b;
+    --cm-muted-2: #94a3b8;
+    --cm-line: #e2e8f0;
+    --cm-line-2: #f1f5f9;
+    --cm-bg: #f7f8fc;
+    --cm-white: #ffffff;
+    --cm-brand: #6366f1;
+    --cm-brand-2: #8b5cf6;
+    --cm-brand-soft: #eef2ff;
+    --cm-pink: #ec4899;
+    --cm-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --cm-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --cm-ok: #10b981;
+    --cm-warn: #f59e0b;
+    --cm-danger: #ef4444;
+    --cm-info: #3b82f6;
+    --cm-r-xl: 22px;
+    --cm-r-lg: 16px;
+    --cm-r: 12px;
+    --cm-r-sm: 9px;
+    --cm-ring: 0 0 0 4px rgba(139, 92, 246, 0.14);
+
+    color: var(--cm-ink);
+    background: var(--cm-bg);
+    padding: 1.75rem;
+    border-radius: var(--cm-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-bottom: 2.5rem;
+  }
+  .ce * {
+    box-sizing: border-box;
+  }
+
+  /* Material Symbols base */
+  .ce .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* ============================================
+     HERO
+     ============================================ */
+  .ce-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.75rem 2rem;
+    border-radius: var(--cm-r-xl);
+    background: var(--cm-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .ce-hero::before,
+  .ce-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .ce-hero::before {
+    width: 260px;
+    height: 260px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .ce-hero::after {
+    width: 170px;
+    height: 170px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .ce-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .ce-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.18s ease;
+  }
+  .ce-crumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
+  }
+  .ce-crumb .mat {
+    font-size: 16px;
+  }
+  .ce-hero h1 {
+    font-size: clamp(1.5rem, 2.3vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .ce-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+  .ce-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .ce-mode-pill .mat {
+    font-size: 18px;
+  }
+
+  /* ============================================
+     CARD
+     ============================================ */
+  .ce-card {
+    background: var(--cm-white);
+    border: 1px solid var(--cm-line);
+    border-radius: var(--cm-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+
+  .ce-card-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.35rem 1.6rem;
+    border-bottom: 1px solid var(--cm-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .ce-card-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--cm-grad);
+    color: #fff;
+    box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.65);
+  }
+  .ce-card-icon .mat {
+    font-size: 26px;
+  }
+  .ce-card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--cm-ink);
+    overflow-wrap: anywhere;
+  }
+  .ce-card-desc {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--cm-muted-2);
+    line-height: 1.55;
+  }
+
+  /* ============================================
+     BODY
+     ============================================ */
+  .ce-body {
+    padding: 1.75rem 1.6rem;
+  }
+
+  .ce-section {
+    margin-bottom: 1.85rem;
+  }
+  .ce-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .ce-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    font-size: 0.94rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--cm-ink);
+  }
+  .ce-section-heading .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--cm-grad-soft);
+    color: var(--cm-brand);
+    font-size: 18px;
+  }
+
+  .ce-divider {
+    height: 1px;
+    border: 0;
+    background: var(--cm-line-2);
+    margin: 0 0 1.85rem;
+  }
+
+  /* ============================================
+     FIELDS — professional
+     ============================================ */
+  .ce-field {
+    margin-bottom: 1.5rem;
+  }
+  .ce-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .ce-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--cm-ink-2);
+  }
+  .ce-label .req {
+    color: var(--cm-danger);
+    margin-left: 0.2rem;
+  }
+  .ce-label .opt {
+    color: var(--cm-muted-2);
+    font-weight: 500;
+    font-size: 0.72rem;
+    margin-left: 0.25rem;
+  }
+
+  .ce-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .ce-input-icon {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cm-muted-2);
+    font-size: 20px;
+    pointer-events: none;
+    transition: color 0.18s ease;
+    z-index: 1;
+  }
+
+  .ce-input-wrap:focus-within .ce-input-icon {
+    color: var(--cm-brand);
+  }
+
+  /* ============================================
+     TEXT FIELDS — VISIBLE BORDER
+     ============================================ */
+  .ce .form-control,
+  .ce .form-select {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 0.95rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--cm-r);
+    background: var(--cm-white);
+    color: var(--cm-ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+  }
+
+  .ce-input-wrap .form-control {
+    padding-left: 3rem;
+  }
+
+  .ce textarea.form-control {
+    min-height: 140px;
+    padding: 0.95rem 1rem;
+    resize: vertical;
+    line-height: 1.65;
+  }
+
+  .ce .form-control::placeholder {
+    color: var(--cm-muted-2);
+    font-weight: 400;
+  }
+
+  .ce .form-control:hover,
+  .ce .form-select:hover {
+    border-color: #94a3b8;
+  }
+
+  .ce .form-control:focus,
+  .ce .form-select:focus {
+    outline: none;
+    border-color: var(--cm-brand-2);
+    background: #fdfdff;
+    box-shadow: var(--cm-ring);
+  }
+
+  .ce .form-control.is-invalid {
+    border-color: var(--cm-danger);
+    background: #fffbfb;
+    background-image: none;
+  }
+  .ce .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
+  }
+
+  .ce .form-control[type="number"]::-webkit-outer-spin-button,
+  .ce .form-control[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .ce .form-control[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .ce-input-suffix {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cm-muted-2);
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    background: #fff;
+    padding: 0 0.35rem;
+  }
+  .ce-input-wrap .form-control.has-suffix {
+    padding-right: 4rem;
+  }
+
+  /* ============================================
+     FILE CURRENT ROW — CLEANED UP
+     ============================================ */
+  .ce-file-current {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 0.85rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: var(--cm-r);
+    background: #fafbff;
+    font-size: 0.82rem;
+    color: var(--cm-ink);
+    line-height: 1.35;
+  }
+  .ce-file-current .ce-file-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid var(--cm-line);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .ce-file-current .ce-file-preview img,
+  .ce-file-current .ce-file-preview svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+  }
+  .ce-file-current .ce-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .ce-file-current .ce-file-info strong {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--cm-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ce-file-current .ce-file-meta {
+    font-size: 0.7rem;
+    color: var(--cm-muted-2);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .ce-file-current .ce-file-clear {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0.4rem 0.7rem;
+    border: 1.5px solid #fecaca;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+    user-select: none;
+  }
+  .ce-file-current .ce-file-clear:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+  }
+  .ce-file-current .ce-file-clear .mat {
+    font-size: 16px;
+  }
+  /* Hide the raw Django clear checkbox but keep it functional */
+  .ce-file-current .ce-file-clear input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+  }
+  /* When the clear checkbox is checked, visually mark the row */
+  .ce-file-current.is-cleared {
+    opacity: 0.55;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+  .ce-file-current.is-cleared .ce-file-info strong {
+    text-decoration: line-through;
+    color: #b91c1c;
+  }
+
+  /* ============================================
+     FILE INPUT — ICON UPLOAD
+     ============================================ */
+  .ce-file-wrap .form-control[type="file"] {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    padding-left: 3rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--cm-muted);
+  }
+  .ce-file-wrap .form-control[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.35rem 0.8rem;
+    border: 1.5px solid var(--cm-brand);
+    border-radius: 8px;
+    background: var(--cm-brand-soft);
+    color: var(--cm-brand);
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .ce-file-wrap .form-control[type="file"]::file-selector-button:hover {
+    background: var(--cm-brand);
+    color: #fff;
+  }
+  .ce-file-wrap .form-control[type="file"].has-suffix {
+    padding-right: 4.5rem;
+  }
+  .ce-file-hint {
+    max-width: 4.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--cm-muted);
+    font-weight: 700;
+    font-size: 0.7rem;
+  }
+
+  /* ============================================
+     HELP + ERROR
+     ============================================ */
+  .ce-help {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    line-height: 1.5;
+  }
+  .ce-help .mat {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .ce-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 9px;
+    background: #fef2f2;
+    border-left: 3px solid var(--cm-danger);
+    color: #b91c1c;
+    font-size: 0.79rem;
+    font-weight: 650;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    animation: ceIn 0.24s ease;
+  }
+  .ce-error .mat {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ============================================
+     STATUS PANEL
+     ============================================ */
+  .ce-status-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 128px;
+    padding: 1.2rem 1.3rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: var(--cm-r);
+    background: #fafbff;
+    transition:
+      border-color 0.22s ease,
+      background 0.22s ease;
+  }
+  .ce-status-panel.is-enabled {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+  .ce-status-title {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--cm-ink);
+  }
+  .ce-status-desc {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted);
+    line-height: 1.55;
+  }
+  .ce-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--cm-muted);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+  .ce-status-indicator.is-active {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .ce-status-indicator .mat {
+    font-size: 14px;
+  }
+
+  .ce .form-check {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
+  }
+  .ce .form-check-input {
+    float: none;
+    width: 2.9rem;
+    height: 1.55rem;
+    margin: 0;
+    border-color: #cbd5e1;
+    cursor: pointer;
+    box-shadow: none;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .ce .form-check-input:checked {
+    background-color: var(--cm-brand);
+    border-color: var(--cm-brand);
+  }
+  .ce .form-check-input:focus {
+    border-color: var(--cm-brand-2);
+    box-shadow: var(--cm-ring);
+  }
+
+  /* ============================================
+     ALERTS
+     ============================================ */
+  .ce-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--cm-r);
+    border: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    animation: ceIn 0.28s ease;
+  }
+  @keyframes ceIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .ce-alert .mat {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ce-alert.alert-success {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--cm-ok);
+  }
+  .ce-alert.alert-info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-left: 4px solid var(--cm-info);
+  }
+  .ce-alert.alert-warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-left: 4px solid var(--cm-warn);
+  }
+  .ce-alert.alert-danger,
+  .ce-alert.alert-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--cm-danger);
+  }
+  .ce-alert .btn-close {
+    margin-left: auto;
+    font-size: 0.7rem;
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     FOOTER
+     ============================================ */
+  .ce-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.6rem;
+    border-top: 1px solid var(--cm-line);
+    background: #fbfbff;
+  }
+  .ce-foot-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    line-height: 1.55;
+  }
+  .ce-foot-note .mat {
+    font-size: 16px;
+    color: var(--cm-ok);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .ce-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .ce-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1.2rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--cm-r);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+  }
+  .ce-btn .mat {
+    font-size: 18px;
+  }
+
+  .ce-btn-cancel {
+    background: var(--cm-white);
+    border-color: #0f172a;
+    color: #0f172a;
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.15);
+  }
+  .ce-btn-cancel:hover {
+    background: #f1f5f9;
+    color: var(--cm-ink);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -6px rgba(15, 23, 42, 0.28);
+  }
+
+  .ce-btn-save {
+    background: var(--cm-grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+  }
+  .ce-btn-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    filter: brightness(1.05);
+    color: #fff;
+  }
+  .ce-btn-save:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+  }
+  .ce-btn:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.35);
+    outline-offset: 3px;
+  }
+
+  .ce-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 1.25rem 0 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    text-align: center;
+  }
+  .ce-bottom .req {
+    color: var(--cm-danger);
+    margin: 0 0.15rem;
+  }
+  .ce-bottom .mat {
+    font-size: 14px;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 767.98px) {
+    .ce {
+      padding: 1rem;
+      border-radius: 16px;
+      padding-bottom: 1.5rem;
+    }
+    .ce-hero {
+      padding: 1.4rem 1.25rem;
+    }
+    .ce-card-top {
+      padding: 1.1rem 1.15rem;
+    }
+    .ce-body {
+      padding: 1.2rem 1.15rem;
+    }
+    .ce-foot {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 1.1rem 1.15rem;
+    }
+    .ce-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+    }
+    .ce-btn {
+      width: 100%;
+    }
+  }
+  @media (max-width: 480px) {
+    .ce {
+      padding: 0.75rem;
+    }
+    .ce-hero-in {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .ce-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+    .ce-card-icon .mat {
+      font-size: 22px;
+    }
+    .ce-status-panel {
+      min-height: auto;
+      padding: 1rem;
+    }
+    .ce-actions {
+      grid-template-columns: 1fr;
+    }
+    .ce-file-wrap .form-control[type="file"]::file-selector-button {
+      margin-right: 0.5rem;
+      padding: 0.3rem 0.55rem;
+    }
+    .ce-file-current {
+      flex-wrap: wrap;
+    }
+    .ce-file-current .ce-file-clear {
+      margin-left: auto;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ce *,
+    .ce *::before,
+    .ce *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="ce">
+  <!-- HERO -->
+  <header class="ce-hero">
+    <div class="ce-hero-in">
+      <div>
+        <a href="{% url 'category_list' %}" class="ce-crumb">
+          <span class="mat">arrow_back</span> Categories
+        </a>
+
+        {% if object %}
+        <h1>Edit Category</h1>
+        <p>Update the category details, display order, and visibility.</p>
+        {% else %}
+        <h1>Create Category</h1>
+        <p>Create and configure a category to keep your products organized.</p>
+        {% endif %}
+      </div>
+
+      {% if object %}
+      <span class="ce-mode-pill">
+        <span class="mat">edit</span> Editing category
+      </span>
+      {% else %}
+      <span class="ce-mode-pill">
+        <span class="mat">create_new_folder</span> New category
+      </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  {% if messages %} {% for message in messages %}
+  <div
+    class="ce-alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+    role="alert"
+  >
+    {% if message.tags == 'success' %}
+    <span class="mat">check_circle</span>
+    {% elif message.tags == 'warning' %}
+    <span class="mat">warning</span>
+    {% elif message.tags == 'error' %}
+    <span class="mat">error</span>
+    {% else %}
+    <span class="mat">info</span>
+    {% endif %}
+    <span>{{ message }}</span>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %} {% endif %}
+
+  <!-- NON-FIELD ERRORS -->
+  {% if form.non_field_errors %}
+  <div class="ce-alert alert-danger" role="alert">
+    <span class="mat">error</span>
+    <div>
+      <strong>Please review the following:</strong>
+      {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- CARD -->
+  <section class="ce-card">
+    <div class="ce-card-top">
+      <div class="ce-card-icon">
+        {% if object %}
+        <span class="mat">edit_note</span>
+        {% else %}
+        <span class="mat">folder_open</span>
+        {% endif %}
+      </div>
+      <div style="min-width: 0">
+        {% if object %}
+        <h2 class="ce-card-title">
+          {{ object.name|default:"Category Details" }}
+        </h2>
+        {% else %}
+        <h2 class="ce-card-title">Category Details</h2>
+        {% endif %}
+        <p class="ce-card-desc">
+          Enter the details that identify and organize this category.
+        </p>
+      </div>
+    </div>
+
+    <form
+      method="post"
+      id="category-editor-form"
+      autocomplete="off"
+      enctype="multipart/form-data"
+      novalidate
+    >
+      {% csrf_token %}
+
+      <div class="ce-body">
+        <!-- GENERAL INFORMATION -->
+        <section class="ce-section">
+          <h3 class="ce-section-heading">
+            <span class="mat">info</span> General Information
+          </h3>
+
+          <!-- Name -->
+          <div class="ce-field">
+            <label for="{{ form.name.id_for_label }}" class="ce-label">
+              <span>Category Name <span class="req">*</span></span>
+            </label>
+
+            <div class="ce-input-wrap">
+              <span class="mat ce-input-icon">folder</span>
+              {{ form.name }}
+              <span class="ce-input-suffix" id="name-counter">0 / 150</span>
+            </div>
+
+            {% if form.name.errors %}
+            <div class="ce-error" id="category-name-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.name.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="ce-help">
+              <span class="mat">lightbulb</span>
+              Use a clear name that makes the category easy to recognize.
+            </p>
+          </div>
+
+          <!-- Description -->
+          <div class="ce-field">
+            <label for="{{ form.description.id_for_label }}" class="ce-label">
+              <span>Description <span class="opt">(Optional)</span></span>
+            </label>
+
+            {{ form.description }} {% if form.description.errors %}
+            <div class="ce-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.description.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="ce-help">
+              <span class="mat">notes</span>
+              Describe which products belong in this category.
+            </p>
+          </div>
+
+          <!-- Icon -->
+          <div class="ce-field" style="margin-bottom: 0">
+            <label for="{{ form.icon.id_for_label }}" class="ce-label">
+              <span>
+                Category Icon
+                <span class="opt">(Optional — SVG only, max 1 MB)</span>
+              </span>
+            </label>
+
+            <!-- Current icon (edit mode) with clear option -->
+            {% if object and object.icon %}
+            <div class="ce-file-current" id="icon-current">
+              <span class="ce-file-preview">
+                <img
+                  src="{{ object.icon.url }}"
+                  alt="{{ object.name }} icon preview"
+                  loading="lazy"
+                />
+              </span>
+              <span class="ce-file-info">
+                <strong>{{ object.icon.name }}</strong>
+                <span class="ce-file-meta">Currently uploaded</span>
+              </span>
+              <label
+                for="{{ form.icon.clear_checkbox_id }}"
+                class="ce-file-clear"
+                title="Remove this icon"
+              >
+                {{ form.icon.clear_checkbox }}
+                <span class="mat">delete</span>
+                <span>Clear</span>
+              </label>
+            </div>
+            {% endif %}
+
+            <!-- File input for new upload -->
+            <div class="ce-input-wrap ce-file-wrap" style="margin-top: 0.75rem">
+              <span class="mat ce-input-icon">image</span>
+              {{ form.icon }}
+              <span class="ce-input-suffix ce-file-hint" id="icon-hint"
+                >.svg</span
+              >
+            </div>
+
+            {% if form.icon.errors %}
+            <div class="ce-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.icon.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="ce-help">
+              <span class="mat">info</span>
+              Upload a simple SVG icon (max 1 MB). Leave empty to keep the
+              current icon.
+            </p>
+          </div>
+        </section>
+
+        <hr class="ce-divider" />
+
+        <!-- DISPLAY & VISIBILITY -->
+        <section class="ce-section" style="margin-bottom: 0">
+          <h3 class="ce-section-heading">
+            <span class="mat">tune</span> Display &amp; Visibility
+          </h3>
+
+          <div class="row g-3 g-lg-4">
+            <!-- Display order -->
+            <div class="col-12 col-md-6">
+              <div class="ce-field" style="margin-bottom: 0">
+                <label
+                  for="{{ form.display_order.id_for_label }}"
+                  class="ce-label"
+                >
+                  <span>Display Order</span>
+                </label>
+
+                <div class="ce-input-wrap">
+                  <span class="mat ce-input-icon">sort</span>
+                  {{ form.display_order }}
+                </div>
+
+                {% if form.display_order.errors %}
+                <div class="ce-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.display_order.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="ce-help">
+                  <span class="mat">arrow_downward</span>
+                  Lower numbers appear first.
+                </p>
+              </div>
+            </div>
+
+            <!-- Status panel -->
+            <div class="col-12 col-md-6">
+              <div class="ce-status-panel" id="category-status-panel">
+                <div>
+                  <div class="ce-status-title">Category Status</div>
+                  <p class="ce-status-desc">
+                    Choose whether this category is active.
+                  </p>
+
+                  <span
+                    id="category-status-label"
+                    class="ce-status-indicator"
+                    aria-live="polite"
+                  >
+                    <span class="mat">circle</span>
+                    <span>Checking status</span>
+                  </span>
+                </div>
+
+                <div class="form-check form-switch">{{ form.is_active }}</div>
+              </div>
+
+              {% if form.is_active.errors %}
+              <div class="ce-error" style="margin-top: 0.6rem">
+                <span class="mat">error</span>
+                <div>
+                  {% for error in form.is_active.errors %}
+                  <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <p class="ce-help" style="margin-top: 0.7rem">
+                <span class="mat">visibility</span>
+                Inactive categories may be hidden from the storefront.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="ce-foot">
+        <div class="ce-foot-note">
+          <span class="mat">verified_user</span>
+          <span>Your changes will be saved when you submit the form.</span>
+        </div>
+
+        <div class="ce-actions">
+          <a href="{% url 'category_list' %}" class="ce-btn ce-btn-cancel">
+            <span class="mat">close</span> Cancel
+          </a>
+
+          <button
+            type="submit"
+            class="ce-btn ce-btn-save"
+            id="save-category-btn"
+          >
+            <span class="mat">check</span>
+            {% if object %}
+            <span>Update Category</span>
+            {% else %}
+            <span>Create Category</span>
+            {% endif %}
+          </button>
+        </div>
+      </footer>
+    </form>
+  </section>
+
+  <p class="ce-bottom">
+    <span class="mat">info</span>
+    Fields marked with <span class="req">*</span> are required.
+  </p>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const form = document.getElementById("category-editor-form");
+    if (!form) return;
+
+    const activeCheckbox = form.querySelector(
+      'input[name="{{ form.is_active.html_name|escapejs }}"]',
+    );
+    const nameInput = form.querySelector(
+      'input[name="{{ form.name.html_name|escapejs }}"]',
+    );
+    const iconInput = form.querySelector(
+      'input[name="{{ form.icon.html_name|escapejs }}"]',
+    );
+    const statusLabel = document.getElementById("category-status-label");
+    const statusPanel = document.getElementById("category-status-panel");
+    const saveButton = document.getElementById("save-category-btn");
+    const nameCounter = document.getElementById("name-counter");
+    const iconHint = document.getElementById("icon-hint");
+
+    let isSubmitting = false;
+
+    /* --------------------------------------------
+       GENERIC FIELD STYLING
+       -------------------------------------------- */
+    form
+      .querySelectorAll(
+        'input:not([type="checkbox"]):not([type="hidden"]), textarea, select',
+      )
+      .forEach(function (field) {
+        if (field.type !== "file" && field.type !== "submit") {
+          field.classList.add("form-control");
+        }
+        if (field.tagName === "SELECT") {
+          field.classList.remove("form-control");
+          field.classList.add("form-select");
+        }
+        if (field.type === "number") {
+          field.setAttribute("inputmode", "numeric");
+        }
+        if (
+          field.closest(".ce-input-wrap") &&
+          field.parentElement.querySelector(".ce-input-suffix")
+        ) {
+          field.classList.add("has-suffix");
+        }
+      });
+
+    if (activeCheckbox) {
+      activeCheckbox.classList.add("form-check-input");
+      activeCheckbox.setAttribute("aria-label", "Category active status");
+    }
+
+    /* --------------------------------------------
+       NAME FIELD
+       -------------------------------------------- */
+    if (nameInput) {
+      nameInput.setAttribute("maxlength", "150");
+      nameInput.setAttribute("required", "required");
+      nameInput.setAttribute("autocomplete", "off");
+      nameInput.setAttribute("aria-required", "true");
+
+      const updateCounter = () => {
+        if (nameCounter) {
+          nameCounter.textContent = nameInput.value.length + " / 150";
+        }
+      };
+      nameInput.addEventListener("input", updateCounter);
+      updateCounter();
+    }
+
+    /* --------------------------------------------
+       STATUS SWITCH
+       -------------------------------------------- */
+    function updateStatusLabel() {
+      if (!activeCheckbox || !statusLabel) return;
+      const active = activeCheckbox.checked;
+
+      statusLabel.classList.toggle("is-active", active);
+      if (statusPanel) statusPanel.classList.toggle("is-enabled", active);
+
+      const icon = document.createElement("span");
+      icon.className = "mat";
+      icon.textContent = active ? "check_circle" : "pause_circle";
+
+      const text = document.createElement("span");
+      text.textContent = active ? "Active and available" : "Inactive";
+
+      statusLabel.replaceChildren(icon, text);
+    }
+
+    if (activeCheckbox) {
+      activeCheckbox.addEventListener("change", updateStatusLabel);
+      updateStatusLabel();
+    }
+
+    /* --------------------------------------------
+       ICON FILE FIELD
+       -------------------------------------------- */
+    function truncateFileName(name, max) {
+      if (!name) return "";
+      if (name.length <= max) return name;
+      return "…" + name.slice(-(max - 1));
+    }
+
+    function updateIconHint() {
+      if (!iconHint) return;
+
+      if (iconInput && iconInput.files && iconInput.files.length > 0) {
+        iconHint.textContent = truncateFileName(iconInput.files[0].name, 14);
+        iconHint.title = iconInput.files[0].name;
+        return;
+      }
+
+      iconHint.textContent = ".svg";
+      iconHint.title = "SVG only";
+    }
+
+    if (iconInput) {
+      iconInput.classList.add("form-control");
+      iconInput.classList.add("has-suffix");
+      iconInput.setAttribute("accept", ".svg,image/svg+xml");
+
+      // Wire up the Django clear checkbox inside the row
+      const clearCheckbox = form.querySelector(
+        'input[name="{{ form.icon.field.widget.clear_checkbox_name|escapejs }}"]',
+      );
+      const iconRow = document.getElementById("icon-current");
+
+      if (clearCheckbox && iconRow) {
+        const syncClearState = () => {
+          iconRow.classList.toggle("is-cleared", clearCheckbox.checked);
+        };
+        clearCheckbox.addEventListener("change", syncClearState);
+        syncClearState();
+      }
+
+      // When a new file is selected, auto-uncheck the clear checkbox
+      iconInput.addEventListener("change", function () {
+        updateIconHint();
+
+        if (
+          iconInput.files &&
+          iconInput.files.length > 0 &&
+          clearCheckbox &&
+          clearCheckbox.checked
+        ) {
+          clearCheckbox.checked = false;
+          if (iconRow) iconRow.classList.remove("is-cleared");
+        }
+      });
+
+      updateIconHint();
+    }
+
+    /* --------------------------------------------
+       NAME ERROR HANDLING
+       -------------------------------------------- */
+    function clearNameError() {
+      if (!nameInput) return;
+      nameInput.classList.remove("is-invalid");
+      nameInput.removeAttribute("aria-invalid");
+      const error = document.getElementById("category-name-error");
+      if (error) error.remove();
+    }
+
+    if (nameInput) {
+      nameInput.addEventListener("input", function () {
+        if (nameInput.value.trim()) clearNameError();
+      });
+    }
+
+    /* --------------------------------------------
+       SUBMIT HANDLING
+       -------------------------------------------- */
+    form.addEventListener("submit", function (event) {
+      if (nameInput && !nameInput.value.trim()) {
+        event.preventDefault();
+
+        nameInput.classList.add("is-invalid");
+        nameInput.setAttribute("aria-invalid", "true");
+
+        let error = document.getElementById("category-name-error");
+        if (!error) {
+          error = document.createElement("div");
+          error.id = "category-name-error";
+          error.className = "ce-error";
+
+          const icon = document.createElement("span");
+          icon.className = "mat";
+          icon.textContent = "error";
+
+          const wrap = document.createElement("div");
+          error.appendChild(icon);
+          error.appendChild(wrap);
+
+          const anchor = nameInput.closest(".ce-input-wrap") || nameInput;
+          anchor.insertAdjacentElement("afterend", error);
+        }
+
+        error.querySelector("div").textContent =
+          "Please enter a category name.";
+        nameInput.focus();
+        return;
+      }
+
+      if (isSubmitting) {
+        event.preventDefault();
+        return;
+      }
+
+      clearNameError();
+      isSubmitting = true;
+
+      if (saveButton) {
+        saveButton.disabled = true;
+        const icon = saveButton.querySelector(".mat");
+        const text = saveButton.querySelector("span:last-child");
+        if (icon) icon.textContent = "progress_activity";
+        if (text) text.textContent = "Saving...";
+      }
+    });
+  })();
+</script>
+{% endblock %}

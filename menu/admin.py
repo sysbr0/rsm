@@ -110,6 +110,7 @@ class CategoryAdmin(admin.ModelAdmin):
         "is_active",
         "created_at",
         "updated_at",
+        "icon"
     )
 
     list_filter = (
@@ -152,6 +153,7 @@ class CategoryAdmin(admin.ModelAdmin):
                 "fields": (
                     "display_order",
                     "is_active",
+                    "icon",
                 )
             },
         ),

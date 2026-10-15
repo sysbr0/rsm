@@ -11,7 +11,7 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404, redirect, render
 from orders.models import *
 from Financial.models import *
-
+from django.utils import timezone
 from users.models import User, UserRole
 #add format_currency
 from Financial.utils import format_currency
@@ -23,6 +23,7 @@ from tables.models import (
     SectionBlock,
     TableStatus,
 )
+
 
 def admin_tables(request):
     # ---------------------------------------------------------
@@ -85,11 +86,11 @@ def admin_tables(request):
     # Table Status Colors
     # ---------------------------------------------------------
     status_background = {
-        TableStatus.AVAILABLE: "#ffffff",
-        TableStatus.OCCUPIED: "#70eb04",
-        TableStatus.RESERVED: "#ff00bb",
-        TableStatus.CLOSED: "#ff0000",
-        TableStatus.ON_PAYMENT: "#1100ff",
+        TableStatus.AVAILABLE:   "#FFFFFF",  # soft emerald tint  — free & ready
+        TableStatus.OCCUPIED:    "#D5C688",  # soft amber tint    — in service
+        TableStatus.RESERVED:    "#D17CAB",  # soft pink tint     — booked
+        TableStatus.CLOSED:      "#A23F3F",  # soft red tint      — out of service
+        TableStatus.ON_PAYMENT:  "#5A85BD",  # soft blue tint     — settling up
     }
 
     # ---------------------------------------------------------
@@ -97,9 +98,14 @@ def admin_tables(request):
     # ---------------------------------------------------------
     dashboard_tables = []
 
+    now = timezone.now()
+
     for table in tables:
         waiter_name = ""
         order_total = None
+        order_created_at = None
+        elapsed_display = ""
+        elapsed_seconds = 0
 
         # Only look for an order when the table is not available
         if table.status != TableStatus.AVAILABLE:
@@ -112,6 +118,24 @@ def admin_tables(request):
                 )
 
                 order_total = order.total
+                order_created_at = order.created_at
+
+                # ---------------------------------------------
+                # Elapsed time since order was created
+                # ---------------------------------------------
+                if order_created_at:
+                    delta = now - order_created_at
+                    elapsed_seconds = int(delta.total_seconds())
+
+                    hours, remainder = divmod(elapsed_seconds, 3600)
+                    minutes, seconds = divmod(remainder, 60)
+
+                    if hours > 0:
+                        elapsed_display = f"{hours}h {minutes}m"
+                    elif minutes > 0:
+                        elapsed_display = f"{minutes}m {seconds}s"
+                    else:
+                        elapsed_display = f"{seconds}s"
 
         order_total_display = (
             format_currency(order_total)
@@ -132,6 +156,9 @@ def admin_tables(request):
                 ),
                 "waiter_name": waiter_name,
                 "order_total_display": order_total_display,
+                "order_created_at": order_created_at,
+                "elapsed_display": elapsed_display,
+                "elapsed_seconds": elapsed_seconds,
                 "section_block_id": table.section_block_id,
                 "section_block_name": (
                     table.section_block.name

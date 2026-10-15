@@ -1,0 +1,1600 @@
+{% extends "ui/admin_base.html" %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     MAKE PAYMENT LIST
+     ============================================ */
+  .mpl {
+    --mpl-ink: #0f172a;
+    --mpl-ink-2: #1e293b;
+    --mpl-muted: #64748b;
+    --mpl-muted-2: #94a3b8;
+    --mpl-line: #e2e8f0;
+    --mpl-line-2: #f1f5f9;
+    --mpl-bg: #f7f8fc;
+    --mpl-white: #ffffff;
+    --mpl-brand: #6366f1;
+    --mpl-brand-2: #8b5cf6;
+    --mpl-pink: #ec4899;
+    --mpl-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --mpl-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --mpl-ok: #10b981;
+    --mpl-warn: #f59e0b;
+    --mpl-danger: #ef4444;
+    --mpl-info: #3b82f6;
+    --mpl-r-xl: 22px;
+    --mpl-r-lg: 16px;
+    --mpl-r: 12px;
+    --mpl-r-sm: 9px;
+
+    color: var(--mpl-ink);
+    background: var(--mpl-bg);
+    padding: 1.75rem;
+    border-radius: var(--mpl-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    min-height: 500px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .mpl * {
+    box-sizing: border-box;
+  }
+
+  .mpl .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* HERO */
+  .mpl-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.9rem 2.1rem;
+    border-radius: var(--mpl-r-xl);
+    background: var(--mpl-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .mpl-hero::before,
+  .mpl-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .mpl-hero::before {
+    width: 280px;
+    height: 280px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .mpl-hero::after {
+    width: 180px;
+    height: 180px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .mpl-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .mpl-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+  }
+  .mpl-crumb .mat {
+    font-size: 16px;
+  }
+  .mpl-hero h1 {
+    font-size: clamp(1.55rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .mpl-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .mpl-hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .mpl-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.35rem;
+    background: #fff;
+    color: var(--mpl-brand);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 0;
+  }
+  .mpl-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+    color: var(--mpl-brand-2);
+  }
+  .mpl-cta.ghost {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+  }
+  .mpl-cta.ghost:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+  .mpl-cta .mat {
+    font-size: 18px;
+  }
+
+  /* KPI */
+  .mpl-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .mpl-kpi {
+    position: relative;
+    overflow: hidden;
+    padding: 1.15rem 1.3rem;
+    background: var(--mpl-white);
+    border: 1px solid var(--mpl-line);
+    border-radius: var(--mpl-r-lg);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
+  }
+  .mpl-kpi:hover {
+    transform: translateY(-3px);
+    border-color: #c7d2fe;
+    box-shadow: 0 16px 32px -20px rgba(99, 102, 241, 0.45);
+  }
+  .mpl-kpi::after {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.14;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+  .mpl-kpi:hover::after {
+    opacity: 0.22;
+    transform: scale(1.1);
+  }
+  .mpl-kpi.t::after {
+    background: var(--mpl-brand);
+  }
+  .mpl-kpi.ok::after {
+    background: var(--mpl-ok);
+  }
+  .mpl-kpi.danger::after {
+    background: var(--mpl-danger);
+  }
+  .mpl-kpi.warn::after {
+    background: var(--mpl-warn);
+  }
+  .mpl-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.6rem;
+    position: relative;
+    z-index: 1;
+  }
+  .mpl-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .mpl-kpi.t .mpl-dot {
+    background: var(--mpl-brand);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  }
+  .mpl-kpi.ok .mpl-dot {
+    background: var(--mpl-ok);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  }
+  .mpl-kpi.danger .mpl-dot {
+    background: var(--mpl-danger);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+  .mpl-kpi.warn .mpl-dot {
+    background: var(--mpl-warn);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+  }
+  .mpl-kpi-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--mpl-muted);
+  }
+  .mpl-kpi-val {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--mpl-ink);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .mpl-kpi-sub {
+    position: relative;
+    z-index: 1;
+    font-size: 0.72rem;
+    color: var(--mpl-muted-2);
+    margin-top: 0.3rem;
+    font-weight: 600;
+  }
+
+  /* SKELETON */
+  @keyframes mplSk {
+    0% {
+      background-position: -400px 0;
+    }
+    100% {
+      background-position: 400px 0;
+    }
+  }
+  .mpl-sk {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 400px 100%;
+    animation: mplSk 1.4s ease-in-out infinite;
+    display: inline-block;
+  }
+  .mpl-sk-val {
+    width: 60%;
+    height: 22px;
+  }
+  .mpl-sk-line {
+    height: 14px;
+    width: 100%;
+  }
+
+  /* GRID */
+  .mpl-grid {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 1.35rem;
+    align-items: start;
+  }
+  @media (max-width: 1023px) {
+    .mpl-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* FILTERS */
+  .mpl-filter {
+    position: sticky;
+    top: 1.25rem;
+    background: var(--mpl-white);
+    border: 1px solid var(--mpl-line);
+    border-radius: var(--mpl-r-lg);
+    padding: 1.35rem;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .mpl-filter h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.3rem;
+  }
+  .mpl-filter h2 .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--mpl-grad-soft);
+    color: var(--mpl-brand);
+    font-size: 18px;
+  }
+  .mpl-hint {
+    font-size: 0.78rem;
+    color: var(--mpl-muted-2);
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+  }
+  .mpl-g {
+    margin-bottom: 1.05rem;
+  }
+  .mpl-lbl {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--mpl-muted);
+    margin-bottom: 0.5rem;
+  }
+  .mpl-search {
+    position: relative;
+  }
+  .mpl-search .mat {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--mpl-muted-2);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .mpl-input,
+  .mpl-select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid var(--mpl-line);
+    border-radius: var(--mpl-r);
+    background: var(--mpl-white);
+    color: var(--mpl-ink);
+    font-size: 0.86rem;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .mpl-search .mpl-input {
+    padding-left: 2.6rem;
+  }
+  .mpl-input::placeholder {
+    color: var(--mpl-muted-2);
+  }
+  .mpl-input:focus,
+  .mpl-select:focus {
+    outline: none;
+    border-color: var(--mpl-brand-2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
+  }
+  .mpl-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% - 3px),
+      calc(100% - 14px) calc(50% - 3px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+  .mpl-seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3rem;
+    padding: 0.3rem;
+    background: var(--mpl-line-2);
+    border-radius: var(--mpl-r);
+  }
+  .mpl-seg input {
+    display: none;
+  }
+  .mpl-seg label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--mpl-muted);
+    border-radius: var(--mpl-r-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.18s ease;
+  }
+  .mpl-seg label:hover {
+    color: var(--mpl-brand);
+  }
+  .mpl-seg input:checked + label {
+    background: var(--mpl-white);
+    color: var(--mpl-brand);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  .mpl-actions {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px dashed var(--mpl-line);
+  }
+  .mpl-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.65rem 1.2rem;
+    border: 0;
+    border-radius: var(--mpl-r);
+    background: var(--mpl-grad);
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+    text-decoration: none;
+  }
+  .mpl-btn-grad .mat {
+    font-size: 18px;
+  }
+  .mpl-btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    color: #fff;
+  }
+  .mpl-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0.55rem 1.1rem;
+    border: 1.5px solid var(--mpl-line);
+    border-radius: var(--mpl-r);
+    background: var(--mpl-white);
+    color: var(--mpl-muted);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .mpl-btn-ghost .mat {
+    font-size: 18px;
+  }
+  .mpl-btn-ghost:hover {
+    border-color: var(--mpl-brand-2);
+    color: var(--mpl-brand-2);
+    background: #faf5ff;
+  }
+
+  /* PANEL */
+  .mpl-panel {
+    background: var(--mpl-white);
+    border: 1px solid var(--mpl-line);
+    border-radius: var(--mpl-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+    min-height: 300px !important;
+  }
+  .mpl-panel-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--mpl-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .mpl-panel-top h2 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .mpl-panel-top .sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--mpl-muted-2);
+  }
+  .mpl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    background: var(--mpl-grad-soft);
+    color: var(--mpl-brand-2);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .mpl-pill .mat {
+    font-size: 16px;
+  }
+
+  /* TABLE */
+  .mpl-table-wrap {
+    overflow-x: auto;
+  }
+  .mpl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .mpl-table thead th {
+    text-align: left;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--mpl-muted);
+    background: #fbfbff;
+    border-bottom: 1px solid var(--mpl-line);
+    white-space: nowrap;
+  }
+  .mpl-table tbody td {
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid var(--mpl-line-2);
+    vertical-align: middle;
+  }
+  .mpl-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .mpl-table tbody tr:hover {
+    background: #fbfaff;
+  }
+  .mpl-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+  .mpl-amount {
+    color: #b91c1c;
+    font-weight: 800;
+  }
+  .mpl-type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .mpl-type-chip .mat {
+    font-size: 14px;
+  }
+  .mpl-type-chip.EMPLOYEE {
+    background: #eef2ff;
+    color: #4338ca;
+  }
+  .mpl-type-chip.SUPPLIER {
+    background: #f0f9ff;
+    color: #0369a1;
+  }
+  .mpl-type-chip.CLIENT {
+    background: #f5f3ff;
+    color: #6d28d9;
+  }
+  .mpl-type-chip.EXPENSE {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .mpl-type-chip.OTHER {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .mpl-src-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 8px;
+    background: var(--mpl-line-2);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--mpl-ink-2);
+    white-space: nowrap;
+  }
+  .mpl-src-chip .mat {
+    font-size: 14px;
+    color: var(--mpl-brand);
+  }
+  .mpl-ref {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.72rem;
+    color: var(--mpl-muted-2);
+    background: var(--mpl-line-2);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+  }
+
+  /* EMPTY */
+  .mpl-empty {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+  }
+  .mpl-empty-orb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    background: var(--mpl-grad-soft);
+    color: var(--mpl-brand-2);
+    box-shadow: 0 12px 30px -12px rgba(139, 92, 246, 0.4);
+  }
+  .mpl-empty-orb .mat {
+    font-size: 40px;
+  }
+  .mpl-empty h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--mpl-ink);
+    margin: 0 0 0.35rem;
+  }
+  .mpl-empty p {
+    font-size: 0.86rem;
+    color: var(--mpl-muted-2);
+    margin: 0;
+  }
+
+  /* PAGINATION */
+  .mpl-foot-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--mpl-line);
+    background: #fbfbff;
+  }
+  .mpl-summary {
+    font-size: 0.78rem;
+    color: var(--mpl-muted-2);
+  }
+  .mpl-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+  }
+  .mpl-pager button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.6rem;
+    border: 1.5px solid var(--mpl-line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--mpl-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .mpl-pager button .mat {
+    font-size: 18px;
+  }
+  .mpl-pager button:hover:not(:disabled) {
+    border-color: var(--mpl-brand-2);
+    color: var(--mpl-brand-2);
+    background: #faf5ff;
+    transform: translateY(-1px);
+  }
+  .mpl-pager button[aria-current="page"] {
+    background: var(--mpl-grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.6);
+  }
+  .mpl-pager button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* TOAST */
+  .mpl-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--mpl-r);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+    animation: mplIn 0.28s ease;
+  }
+  .mpl-toast .mat {
+    font-size: 20px;
+  }
+  @keyframes mplIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .mpl-toast.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--mpl-ok);
+  }
+  .mpl-toast.err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--mpl-danger);
+  }
+  .d-none {
+    display: none !important;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .mpl {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+    .mpl-hero {
+      padding: 1.4rem 1.3rem;
+    }
+    .mpl-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .mpl-hero-cta {
+      width: 100%;
+    }
+    .mpl-foot-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .mpl-pager {
+      justify-content: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mpl *,
+    .mpl *::before,
+    .mpl *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="mpl" id="make-payments-list">
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}" />
+
+  <!-- HERO -->
+  <header class="mpl-hero">
+    <div class="mpl-hero-in">
+      <div>
+        <span class="mpl-crumb">
+          <span class="mat">north_east</span> Finance · Payments
+        </span>
+        <h1>Make Payments</h1>
+        <p>
+          Every expense, salary, supplier payment, and refund — searchable,
+          filterable, and exportable.
+        </p>
+      </div>
+      <div class="mpl-hero-cta">
+        <a href="{% url 'financial:make_add' %}" class="mpl-cta">
+          <span class="mat">add</span> New Payment
+        </a>
+        <button type="button" id="export-btn" class="mpl-cta ghost">
+          <span class="mat">download</span> Export CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST -->
+  <div id="api-alert" class="mpl-toast d-none" role="alert"></div>
+
+  <!-- KPI -->
+  <section class="mpl-kpis">
+    <div class="mpl-kpi danger">
+      <div class="mpl-kpi-row">
+        <span class="mpl-dot"></span>
+        <span class="mpl-kpi-lbl">Total Paid</span>
+      </div>
+      <div class="mpl-kpi-val" id="kpi-total">
+        <span class="mpl-sk mpl-sk-val"></span>
+      </div>
+      <div class="mpl-kpi-sub">Filtered total</div>
+    </div>
+    <div class="mpl-kpi t">
+      <div class="mpl-kpi-row">
+        <span class="mpl-dot"></span>
+        <span class="mpl-kpi-lbl">Transactions</span>
+      </div>
+      <div class="mpl-kpi-val" id="kpi-count">
+        <span class="mpl-sk mpl-sk-val"></span>
+      </div>
+      <div class="mpl-kpi-sub">Records matched</div>
+    </div>
+    <div class="mpl-kpi warn">
+      <div class="mpl-kpi-row">
+        <span class="mpl-dot"></span>
+        <span class="mpl-kpi-lbl">Average</span>
+      </div>
+      <div class="mpl-kpi-val" id="kpi-avg">
+        <span class="mpl-sk mpl-sk-val"></span>
+      </div>
+      <div class="mpl-kpi-sub">Per transaction</div>
+    </div>
+    <div class="mpl-kpi ok">
+      <div class="mpl-kpi-row">
+        <span class="mpl-dot"></span>
+        <span class="mpl-kpi-lbl">Largest</span>
+      </div>
+      <div class="mpl-kpi-val" id="kpi-max">
+        <span class="mpl-sk mpl-sk-val"></span>
+      </div>
+      <div class="mpl-kpi-sub">Single payment</div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <div class="mpl-grid">
+    <!-- FILTERS -->
+    <aside class="mpl-filter">
+      <h2><span class="mat">tune</span> Refine</h2>
+      <p class="mpl-hint">
+        Filter the payment history by source, type, or date.
+      </p>
+
+      <form id="filter-form">
+        <div class="mpl-g">
+          <label class="mpl-lbl" for="q-input">Search</label>
+          <div class="mpl-search">
+            <span class="mat">search</span>
+            <input
+              type="search"
+              id="q-input"
+              class="mpl-input"
+              placeholder="Receiver or reference…"
+              autocomplete="off"
+              maxlength="120"
+            />
+          </div>
+        </div>
+
+        <div class="mpl-g">
+          <label class="mpl-lbl" for="source-select">Source</label>
+          <select id="source-select" class="mpl-select">
+            <option value="">All sources</option>
+          </select>
+        </div>
+
+        <div class="mpl-g">
+          <label class="mpl-lbl" for="type-select">Payment Type</label>
+          <select id="type-select" class="mpl-select">
+            <option value="">All types</option>
+            <option value="EMPLOYEE">Employee</option>
+            <option value="SUPPLIER">Supplier</option>
+            <option value="CLIENT">Client</option>
+            <option value="EXPENSE">Expense</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div class="mpl-g">
+          <label class="mpl-lbl" for="date-from">From</label>
+          <input type="date" id="date-from" class="mpl-input" />
+        </div>
+
+        <div class="mpl-g">
+          <label class="mpl-lbl" for="date-to">To</label>
+          <input type="date" id="date-to" class="mpl-input" />
+        </div>
+
+        <div class="mpl-actions">
+          <button type="submit" class="mpl-btn-grad">
+            <span class="mat">bolt</span> Apply Filters
+          </button>
+          <button type="button" id="reset-btn" class="mpl-btn-ghost">
+            <span class="mat">restart_alt</span> Reset
+          </button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- PANEL -->
+    <main class="mpl-panel">
+      <div class="mpl-panel-top">
+        <div>
+          <h2>Payment History</h2>
+          <p class="sub">
+            Every payment made from your sources, most recent first.
+          </p>
+        </div>
+        <span class="mpl-pill">
+          <span class="mat">north_east</span>
+          <span id="count-label">— records</span>
+        </span>
+      </div>
+
+      <div id="list-container">
+        <div class="mpl-table-wrap">
+          <table class="mpl-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Receiver</th>
+                <th>Reference</th>
+                <th style="text-align: right">Amount</th>
+                <th>Paid By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="list-body">
+              <tr>
+                <td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td>
+              </tr>
+              <tr>
+                <td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mpl-foot-bar">
+        <span class="mpl-summary" id="page-summary">Loading…</span>
+        <nav aria-label="Payments pagination">
+          <ul class="mpl-pager" id="pager"></ul>
+        </nav>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    if (window.__MPL_INIT__) {
+      console.warn("[MPL] Already initialized.");
+      return;
+    }
+    window.__MPL_INIT__ = true;
+
+    /* ==========================================================
+     LOGGER
+     ========================================================== */
+    const PREFIX = "%c[MPL]";
+    const S = {
+      info: "color:#6366f1;font-weight:bold",
+      ok: "color:#10b981;font-weight:bold",
+      warn: "color:#f59e0b;font-weight:bold",
+      err: "color:#ef4444;font-weight:bold",
+      net: "color:#8b5cf6;font-weight:bold",
+      data: "color:#0369a1;font-weight:bold",
+    };
+    const log = {
+      info: (...a) => console.log(PREFIX, S.info, ...a),
+      ok: (...a) => console.log(PREFIX, S.ok, ...a),
+      warn: (...a) => console.warn(PREFIX, S.warn, ...a),
+      err: (...a) => console.error(PREFIX, S.err, ...a),
+      net: (...a) => console.log(PREFIX, S.net, ...a),
+      data: (...a) => console.log(PREFIX, S.data, ...a),
+      group: (l) => console.group(PREFIX + " " + l),
+      groupEnd: () => console.groupEnd(),
+    };
+
+    log.info("🚀 Make Payments List booting…");
+
+    /* ==========================================================
+     CONFIG
+     ========================================================== */
+    const API = {
+      list: "/financial/api/make-payments/",
+      sources: "/financial/api/sources/",
+    };
+    const PAGE_SIZE = 20;
+
+    log.info("API:", API);
+
+    /* ==========================================================
+     DOM
+     ========================================================== */
+    const manager = document.getElementById("make-payments-list");
+    if (!manager) {
+      log.err("#make-payments-list not found.");
+      return;
+    }
+
+    const toastEl = manager.querySelector("#api-alert");
+    const form = manager.querySelector("#filter-form");
+    const qInput = manager.querySelector("#q-input");
+    const sourceSel = manager.querySelector("#source-select");
+    const typeSel = manager.querySelector("#type-select");
+    const dateFrom = manager.querySelector("#date-from");
+    const dateTo = manager.querySelector("#date-to");
+    const resetBtn = manager.querySelector("#reset-btn");
+    const exportBtn = manager.querySelector("#export-btn");
+
+    const kpiTotal = manager.querySelector("#kpi-total");
+    const kpiCount = manager.querySelector("#kpi-count");
+    const kpiAvg = manager.querySelector("#kpi-avg");
+    const kpiMax = manager.querySelector("#kpi-max");
+
+    const countLabel = manager.querySelector("#count-label");
+    const listBody = manager.querySelector("#list-body");
+    const listContainer = manager.querySelector("#list-container");
+    const pageSummary = manager.querySelector("#page-summary");
+    const pagerEl = manager.querySelector("#pager");
+
+    log.ok("DOM resolved.");
+
+    /* ==========================================================
+     STATE
+     ========================================================== */
+    let currentPage = 1;
+    let totalCount = 0;
+    let pageCount = 1;
+    let requestId = 0;
+    let lastData = null;
+    let allFilteredAmounts = [];
+
+    /* ==========================================================
+     HELPERS
+     ========================================================== */
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          })[c],
+      );
+
+    function toast(msg, kind = "err") {
+      log.info(`🍞 Toast [${kind}]:`, msg);
+      toastEl.className = `mpl-toast ${kind === "ok" ? "ok" : "err"}`;
+      toastEl.innerHTML = `<span class="mat">${kind === "ok" ? "check_circle" : "error"}</span><span>${esc(msg)}</span>`;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => {
+        toastEl.className = "mpl-toast d-none";
+      }, 5000);
+    }
+
+    function fmtMoney(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "0.00";
+      return n.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    function fmtDate(v) {
+      if (!v) return "—";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "—";
+      return (
+        d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        }) +
+        " · " +
+        d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+      );
+    }
+
+    /* ==========================================================
+     FETCH
+     ========================================================== */
+    const inflight = new Map();
+
+    async function api(url, options = {}) {
+      const method = options.method || "GET";
+      const tag = `[${method}] ${url}`;
+
+      log.group(`📡 API ${tag}`);
+
+      const controller = new AbortController();
+      if (method === "GET") {
+        if (inflight.has(url)) inflight.get(url).abort();
+        inflight.set(url, controller);
+      }
+
+      const t0 = performance.now();
+      let res;
+      try {
+        res = await fetch(url, {
+          credentials: "same-origin",
+          signal: controller.signal,
+          ...options,
+          headers: { Accept: "application/json", ...(options.headers || {}) },
+        });
+      } catch (e) {
+        if (method === "GET" && inflight.get(url) === controller)
+          inflight.delete(url);
+        if (e.name === "AbortError") log.warn("⏹ Aborted.");
+        else log.err("❌ Network error:", e);
+        log.groupEnd();
+        throw e;
+      }
+
+      if (method === "GET" && inflight.get(url) === controller)
+        inflight.delete(url);
+
+      const dt = (performance.now() - t0).toFixed(1);
+      log.net(`← ${res.status} in ${dt}ms`);
+
+      const ct = res.headers.get("content-type") || "";
+      let data = null;
+      if (ct.includes("application/json"))
+        data = await res.json().catch(() => null);
+      else data = await res.text().catch(() => "");
+
+      log.data("📥 Payload:", data);
+
+      if (!res.ok) {
+        const err = new Error(
+          (data && (data.detail || data.error)) ||
+            `Request failed (${res.status}).`,
+        );
+        err.status = res.status;
+        err.payload = data;
+        log.err(`❌ ${res.status}:`, err.message);
+        log.groupEnd();
+        throw err;
+      }
+
+      log.ok("✅ Success");
+      log.groupEnd();
+      return data;
+    }
+
+    /* ==========================================================
+     SOURCES
+     ========================================================== */
+    async function loadSources() {
+      try {
+        const data = await api(API.sources);
+        const list = Array.isArray(data) ? data : data.results || [];
+        sourceSel.innerHTML =
+          `<option value="">All sources</option>` +
+          list
+            .map((s) => `<option value="${s.id}">${esc(s.name)}</option>`)
+            .join("");
+        log.ok(`📁 Loaded ${list.length} sources.`);
+      } catch (e) {
+        log.err("📁 Sources failed:", e.message);
+      }
+    }
+
+    /* ==========================================================
+     URL BUILDERS
+     ========================================================== */
+    function buildUrl(page = 1) {
+      const url = new URL(API.list, window.location.origin);
+      const q = qInput.value.trim();
+      const src = sourceSel.value;
+      const tt = typeSel.value;
+      const df = dateFrom.value;
+      const dt = dateTo.value;
+
+      if (q) url.searchParams.set("search", q);
+      if (src) url.searchParams.set("source", src);
+      if (tt) url.searchParams.set("payment_type", tt);
+      if (df) url.searchParams.set("created_at__date__gte", df);
+      if (dt) url.searchParams.set("created_at__date__lte", dt);
+
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("page_size", String(PAGE_SIZE));
+
+      return url.toString();
+    }
+
+    /* ==========================================================
+     KPIs (computed from current page — approximate)
+     ========================================================== */
+    function updateKPIs(items, count) {
+      const amounts = items.map((p) => Number(p.amount) || 0);
+      const total = amounts.reduce((a, b) => a + b, 0);
+      const avg = amounts.length ? total / amounts.length : 0;
+      const max = amounts.length ? Math.max(...amounts) : 0;
+
+      kpiTotal.textContent = fmtMoney(total);
+      kpiCount.textContent = count ?? items.length;
+      kpiAvg.textContent = fmtMoney(avg);
+      kpiMax.textContent = fmtMoney(max);
+
+      log.ok("📊 KPIs updated:", { total, avg, max, count });
+    }
+
+    /* ==========================================================
+     RENDER
+     ========================================================== */
+    function skeletonRows(n = 5) {
+      return Array.from(
+        { length: n },
+        () =>
+          `<tr><td colspan="7"><span class="mpl-sk mpl-sk-line"></span></td></tr>`,
+      ).join("");
+    }
+
+    function typeIcon(t) {
+      return (
+        {
+          EMPLOYEE: "badge",
+          SUPPLIER: "local_shipping",
+          CLIENT: "person",
+          EXPENSE: "receipt",
+          OTHER: "more_horiz",
+        }[t] || "more_horiz"
+      );
+    }
+
+    function renderRows(items) {
+      if (!items.length) {
+        listContainer.innerHTML = `
+          <div class="mpl-empty">
+            <div class="mpl-empty-orb"><span class="mat">north_east</span></div>
+            <h3>No payments found</h3>
+            <p>Try adjusting your filters or clearing the search.</p>
+          </div>`;
+        return;
+      }
+
+      const rows = items
+        .map((p) => {
+          const type = p.payment_type || "OTHER";
+          const typeLabel = p.payment_type_display || type;
+          return `
+          <tr>
+            <td>
+              <span class="mpl-type-chip ${esc(type)}">
+                <span class="mat">${typeIcon(type)}</span>
+                ${esc(typeLabel)}
+              </span>
+            </td>
+            <td>
+              <span class="mpl-src-chip">
+                <span class="mat">account_balance_wallet</span>
+                ${esc(p.source_name || "—")}
+              </span>
+            </td>
+            <td>${esc(p.receiver_name || "—")}</td>
+            <td>${p.reference ? `<span class="mpl-ref">${esc(p.reference)}</span>` : "—"}</td>
+            <td class="num">
+              <span class="mpl-amount">−${fmtMoney(p.amount)} ${esc(p.currency)}</span>
+            </td>
+            <td>${esc(p.paid_by_name || "—")}</td>
+            <td style="color:var(--mpl-muted);font-size:0.78rem;">${esc(fmtDate(p.created_at))}</td>
+          </tr>`;
+        })
+        .join("");
+
+      listContainer.innerHTML = `
+        <div class="mpl-table-wrap">
+          <table class="mpl-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Receiver</th>
+                <th>Reference</th>
+                <th style="text-align:right;">Amount</th>
+                <th>Paid By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function renderPager(data) {
+      pagerEl.innerHTML = "";
+      pageCount = Math.max(1, Math.ceil((data.count ?? 0) / PAGE_SIZE));
+
+      const add = (label, page, disabled, active = false, aria) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.innerHTML = label;
+        btn.disabled = disabled;
+        if (active) btn.setAttribute("aria-current", "page");
+        if (aria) btn.setAttribute("aria-label", aria);
+        btn.addEventListener("click", () => loadList(page));
+        li.appendChild(btn);
+        pagerEl.appendChild(li);
+      };
+
+      add(
+        '<span class="mat">chevron_left</span>',
+        Math.max(1, currentPage - 1),
+        !data.previous,
+        false,
+        "Previous page",
+      );
+
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(pageCount, currentPage + 2);
+      for (let p = start; p <= end; p++) {
+        add(String(p), p, false, p === currentPage, `Page ${p}`);
+      }
+
+      add(
+        '<span class="mat">chevron_right</span>',
+        currentPage + 1,
+        !data.next,
+        false,
+        "Next page",
+      );
+    }
+
+    /* ==========================================================
+     LOAD LIST
+     ========================================================== */
+    async function loadList(page = 1) {
+      const myReq = ++requestId;
+      log.group(`📋 loadList(page=${page}) req=${myReq}`);
+
+      listBody.innerHTML = skeletonRows(5);
+
+      try {
+        const data = await api(buildUrl(page));
+        if (myReq !== requestId) {
+          log.warn("⏭ Stale response ignored.");
+          log.groupEnd();
+          return;
+        }
+
+        lastData = data;
+        const items = Array.isArray(data.results) ? data.results : [];
+        totalCount = data.count ?? items.length;
+        currentPage = page;
+
+        countLabel.textContent = `${totalCount} record${totalCount === 1 ? "" : "s"}`;
+        renderRows(items);
+        renderPager(data);
+        updateKPIs(items, totalCount);
+
+        const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+        const to = Math.min(page * PAGE_SIZE, totalCount);
+        pageSummary.textContent = `Showing ${from}–${to} of ${totalCount}`;
+
+        log.ok(`✅ Rendered ${items.length} rows.`);
+      } catch (e) {
+        if (e.name === "AbortError" || myReq !== requestId) {
+          log.warn("⏹ Superseded.");
+          log.groupEnd();
+          return;
+        }
+        log.err("💥 loadList failed:", e.message);
+        listContainer.innerHTML = `
+          <div class="mpl-empty">
+            <div class="mpl-empty-orb" style="background:#fef2f2;color:var(--mpl-danger);">
+              <span class="mat">warning</span>
+            </div>
+            <h3>Couldn't load payments</h3>
+            <p>${esc(e.message)}</p>
+          </div>`;
+        countLabel.textContent = "0 records";
+        pageSummary.textContent = "";
+        pagerEl.innerHTML = "";
+        toast(e.message, "err");
+      }
+
+      log.groupEnd();
+    }
+
+    /* ==========================================================
+     EXPORT CSV
+     ========================================================== */
+    function exportCSV() {
+      if (
+        !lastData ||
+        !Array.isArray(lastData.results) ||
+        lastData.results.length === 0
+      ) {
+        toast("Nothing to export on this page.", "err");
+        return;
+      }
+
+      const headers = [
+        "ID",
+        "Type",
+        "Source",
+        "Receiver",
+        "Amount",
+        "Currency",
+        "Reference",
+        "Notes",
+        "Paid By",
+        "Date",
+      ];
+
+      const rows = lastData.results.map((p) => [
+        p.id,
+        p.payment_type || "",
+        p.source_name || "",
+        p.receiver_name || "",
+        p.amount,
+        p.currency,
+        p.reference || "",
+        p.notes || "",
+        p.paid_by_name || "",
+        p.created_at,
+      ]);
+
+      const csv = [headers, ...rows]
+        .map((r) =>
+          r
+            .map((c) => {
+              const s = String(c ?? "").replace(/"/g, '""');
+              return /[",\n]/.test(s) ? `"${s}"` : s;
+            })
+            .join(","),
+        )
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `make_payments_page_${currentPage}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      toast("CSV downloaded.", "ok");
+      log.ok("✅ CSV exported.");
+    }
+
+    /* ==========================================================
+     EVENTS
+     ========================================================== */
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      log.info("📝 Apply filters");
+      loadList(1);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      qInput.value = "";
+      sourceSel.value = "";
+      typeSel.value = "";
+      dateFrom.value = "";
+      dateTo.value = "";
+      loadList(1);
+    });
+
+    exportBtn.addEventListener("click", exportCSV);
+
+    let qDebounce;
+    qInput.addEventListener("input", () => {
+      clearTimeout(qDebounce);
+      qDebounce = setTimeout(() => loadList(1), 400);
+    });
+
+    sourceSel.addEventListener("change", () => loadList(1));
+    typeSel.addEventListener("change", () => loadList(1));
+    dateFrom.addEventListener("change", () => loadList(1));
+    dateTo.addEventListener("change", () => loadList(1));
+
+    log.ok("🔌 Events wired.");
+
+    /* ==========================================================
+     BOOT
+     ========================================================== */
+    (async () => {
+      await loadSources();
+      await loadList(1);
+      log.ok("✅ Make Payments List initialized.");
+    })();
+  })();
+</script>
+
+{% endblock %}

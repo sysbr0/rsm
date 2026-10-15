@@ -1,0 +1,1719 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}Categories
+Management{% endblock %} {% block content %}
+
+<style>
+  /* ============================================
+     CATEGORY MANAGER — Material Symbols Icons
+     ============================================ */
+
+  .cm {
+    --cm-ink: #0f172a;
+    --cm-ink-2: #1e293b;
+    --cm-muted: #64748b;
+    --cm-muted-2: #94a3b8;
+    --cm-line: #e2e8f0;
+    --cm-line-2: #f1f5f9;
+    --cm-bg: #f7f8fc;
+    --cm-white: #ffffff;
+    --cm-brand: #6366f1;
+    --cm-brand-2: #8b5cf6;
+    --cm-pink: #ec4899;
+    --cm-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --cm-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --cm-ok: #10b981;
+    --cm-warn: #f59e0b;
+    --cm-danger: #ef4444;
+    --cm-info: #3b82f6;
+    --cm-r-xl: 22px;
+    --cm-r-lg: 16px;
+    --cm-r: 12px;
+    --cm-r-sm: 9px;
+
+    color: var(--cm-ink);
+    background: var(--cm-bg);
+    padding: 1.75rem;
+    border-radius: var(--cm-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+  }
+
+  .cm * {
+    box-sizing: border-box;
+  }
+
+  /* ============================================
+     Material Symbols base class
+     ============================================ */
+  .cm .mat {
+    font-family: "Material Symbols Outlined";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+  }
+
+  .cm .mat-sm {
+    font-size: 16px;
+  }
+  .cm .mat-md {
+    font-size: 20px;
+  }
+  .cm .mat-lg {
+    font-size: 24px;
+  }
+  .cm .mat-xl {
+    font-size: 28px;
+  }
+
+  /* ============================================
+     ICON ACTION BUTTONS — WHITE BG, BLACK ICON, BLACK BORDER
+     ============================================ */
+  .cm .cm-ibtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 1.5px solid #0f172a;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.15);
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .cm .cm-ibtn .mat {
+    font-size: 18px;
+  }
+
+  .cm .cm-ibtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px -6px rgba(15, 23, 42, 0.28);
+  }
+
+  .cm .cm-ibtn:active {
+    transform: translateY(0);
+  }
+
+  .cm .cm-ibtn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+  }
+
+  /* Semantic hover accents */
+  .cm .cm-ibtn.edit:hover {
+    background: #eef2ff;
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+  .cm .cm-ibtn.deactivate:hover {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #b45309;
+  }
+  .cm .cm-ibtn.activate:hover {
+    background: #f0fdf4;
+    border-color: #10b981;
+    color: #047857;
+  }
+  .cm .cm-ibtn.delete:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
+  }
+
+  /* ============================================
+     HERO
+     ============================================ */
+  .cm-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.9rem 2.1rem;
+    border-radius: var(--cm-r-xl);
+    background: var(--cm-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .cm-hero::before,
+  .cm-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .cm-hero::before {
+    width: 280px;
+    height: 280px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .cm-hero::after {
+    width: 180px;
+    height: 180px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .cm-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .cm-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+  }
+  .cm-crumb .mat {
+    font-size: 16px;
+  }
+  .cm-hero h1 {
+    font-size: clamp(1.55rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .cm-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .cm-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.35rem;
+    background: #fff;
+    color: var(--cm-brand);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+    white-space: nowrap;
+  }
+  .cm-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+    color: var(--cm-brand-2);
+  }
+  .cm-cta .mat {
+    font-size: 18px;
+  }
+
+  /* ============================================
+     KPI
+     ============================================ */
+  .cm-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .cm-kpi {
+    position: relative;
+    overflow: hidden;
+    padding: 1.2rem 1.35rem;
+    background: var(--cm-white);
+    border: 1px solid var(--cm-line);
+    border-radius: var(--cm-r-lg);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
+  }
+  .cm-kpi:hover {
+    transform: translateY(-3px);
+    border-color: #c7d2fe;
+    box-shadow: 0 16px 32px -20px rgba(99, 102, 241, 0.45);
+  }
+  .cm-kpi::after {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.14;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+  .cm-kpi:hover::after {
+    opacity: 0.22;
+    transform: scale(1.1);
+  }
+  .cm-kpi.t::after {
+    background: var(--cm-brand);
+  }
+  .cm-kpi.a::after {
+    background: var(--cm-ok);
+  }
+  .cm-kpi.i::after {
+    background: var(--cm-muted-2);
+  }
+  .cm-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+    position: relative;
+    z-index: 1;
+  }
+  .cm-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .cm-kpi.t .cm-dot {
+    background: var(--cm-brand);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  }
+  .cm-kpi.a .cm-dot {
+    background: var(--cm-ok);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  }
+  .cm-kpi.i .cm-dot {
+    background: var(--cm-muted-2);
+    box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.15);
+  }
+  .cm-kpi-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--cm-muted);
+  }
+  .cm-kpi-val {
+    position: relative;
+    z-index: 1;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--cm-ink);
+  }
+
+  /* ============================================
+     GRID
+     ============================================ */
+  .cm-grid {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 1.35rem;
+    align-items: start;
+  }
+  @media (max-width: 1023px) {
+    .cm-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ============================================
+     FILTERS
+     ============================================ */
+  .cm-filter {
+    position: sticky;
+    top: 1.25rem;
+    background: var(--cm-white);
+    border: 1px solid var(--cm-line);
+    border-radius: var(--cm-r-lg);
+    padding: 1.35rem;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .cm-filter h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.3rem;
+  }
+  .cm-filter h2 .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--cm-grad-soft);
+    color: var(--cm-brand);
+    font-size: 18px;
+  }
+  .cm-hint {
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+  }
+  .cm-g {
+    margin-bottom: 1.1rem;
+  }
+  .cm-lbl {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--cm-muted);
+    margin-bottom: 0.5rem;
+  }
+  .cm-search {
+    position: relative;
+  }
+  .cm-search .mat {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--cm-muted-2);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .cm-input,
+  .cm-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.6rem 0.9rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: var(--cm-r);
+    background: var(--cm-white);
+    color: var(--cm-ink);
+    font-size: 0.88rem;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .cm-search .cm-input {
+    padding-left: 2.6rem;
+  }
+  .cm-input::placeholder {
+    color: var(--cm-muted-2);
+  }
+  .cm-input:focus,
+  .cm-select:focus {
+    outline: none;
+    border-color: var(--cm-brand-2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
+  }
+
+  /* Segmented status */
+  .cm-seg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3rem;
+    padding: 0.3rem;
+    background: var(--cm-line-2);
+    border-radius: var(--cm-r);
+  }
+  .cm-seg input {
+    display: none;
+  }
+  .cm-seg label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--cm-muted);
+    border-radius: var(--cm-r-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.18s ease;
+  }
+  .cm-seg label:hover {
+    color: var(--cm-brand);
+  }
+  .cm-seg input:checked + label {
+    background: var(--cm-white);
+    color: var(--cm-brand);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+
+  .cm-actions {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px dashed var(--cm-line);
+  }
+  .cm-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.7rem 1.2rem;
+    border: 0;
+    border-radius: var(--cm-r);
+    background: var(--cm-grad);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      filter 0.15s ease;
+  }
+  .cm-btn-grad .mat {
+    font-size: 18px;
+  }
+  .cm-btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    filter: brightness(1.05);
+  }
+  .cm-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.6rem 1.1rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: var(--cm-r);
+    background: var(--cm-white);
+    color: var(--cm-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cm-btn-ghost .mat {
+    font-size: 18px;
+  }
+  .cm-btn-ghost:hover {
+    border-color: var(--cm-brand-2);
+    color: var(--cm-brand-2);
+    background: #faf5ff;
+  }
+
+  /* ============================================
+     PANEL
+     ============================================ */
+  .cm-panel {
+    background: var(--cm-white);
+    border: 1px solid var(--cm-line);
+    border-radius: var(--cm-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .cm-panel-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--cm-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .cm-panel-top h2 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .cm-panel-top .sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+  }
+  .cm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    background: var(--cm-grad-soft);
+    color: var(--cm-brand-2);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .cm-pill .mat {
+    font-size: 16px;
+  }
+
+  /* ============================================
+     LIST / CARDS
+     ============================================ */
+  .cm-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  @media (min-width: 680px) {
+    .cm-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (min-width: 1400px) {
+    .cm-list {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+
+  .cm-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    padding: 1.25rem 1.3rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--cm-r-lg);
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease,
+      transform 0.2s ease;
+  }
+  .cm-card:hover {
+    background: #fbfaff;
+    border-color: var(--cm-brand);
+    box-shadow: 0 10px 24px -10px rgba(99, 102, 241, 0.35);
+    transform: translateY(-2px);
+  }
+  .cm-card:hover .cm-avatar {
+    transform: scale(1.08) rotate(-3deg);
+  }
+
+  .cm-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .cm-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--cm-grad);
+    color: #fff;
+    box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.65);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+  }
+  .cm-avatar .mat {
+    font-size: 24px;
+  }
+
+  /* Uploaded SVG icon inside the avatar */
+  .cm-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+    padding: 8px;
+  }
+
+  /* When an icon is present, give the avatar a neutral surface */
+  .cm-avatar.has-icon {
+    background: #ffffff;
+    border: 1px solid var(--cm-line);
+    box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.12);
+  }
+
+  .cm-title-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+  .cm-title {
+    font-size: 0.94rem;
+    font-weight: 800;
+    color: var(--cm-ink);
+    letter-spacing: -0.015em;
+    margin: 0 0 0.15rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .cm-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    color: var(--cm-muted-2);
+  }
+  .cm-meta .d {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--cm-muted-2);
+  }
+  .cm-desc {
+    font-size: 0.83rem;
+    color: var(--cm-muted);
+    line-height: 1.55;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.5em;
+  }
+  .cm-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .cm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .cm-badge .mat {
+    font-size: 14px;
+  }
+  .cm-badge.ok {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .cm-badge.off {
+    background: var(--cm-line-2);
+    color: var(--cm-muted);
+  }
+  .cm-badge.prod {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+  .cm-badge.ord {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  .cm-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.8rem;
+    margin-top: auto;
+    border-top: 1px dashed var(--cm-line);
+  }
+  .cm-date {
+    font-size: 0.72rem;
+    color: var(--cm-muted-2);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .cm-date .mat {
+    font-size: 14px;
+  }
+  .cm-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  /* ============================================
+     SKELETON
+     ============================================ */
+  @keyframes cmSk {
+    0% {
+      background-position: -400px 0;
+    }
+    100% {
+      background-position: 400px 0;
+    }
+  }
+  .cm-sk {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 400px 100%;
+    animation: cmSk 1.4s ease-in-out infinite;
+  }
+  .cm-sk-card {
+    padding: 1.25rem 1.3rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--cm-r-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: var(--cm-white);
+  }
+  .cm-sk-row {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  .cm-sk-av {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+  .cm-sk-line {
+    height: 12px;
+  }
+
+  /* ============================================
+     EMPTY
+     ============================================ */
+  .cm-empty {
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    grid-column: 1 / -1;
+  }
+  .cm-empty-orb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    background: var(--cm-grad-soft);
+    color: var(--cm-brand-2);
+    box-shadow: 0 12px 30px -12px rgba(139, 92, 246, 0.4);
+  }
+  .cm-empty-orb .mat {
+    font-size: 40px;
+  }
+  .cm-empty h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--cm-ink);
+    margin: 0 0 0.35rem;
+  }
+  .cm-empty p {
+    font-size: 0.86rem;
+    color: var(--cm-muted-2);
+    margin: 0;
+  }
+
+  /* ============================================
+     PAGINATION
+     ============================================ */
+  .cm-foot-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--cm-line);
+    background: #fbfbff;
+  }
+  .cm-summary {
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+  }
+  .cm-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+  }
+  .cm-pager button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.6rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--cm-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cm-pager button .mat {
+    font-size: 18px;
+  }
+  .cm-pager button:hover:not(:disabled) {
+    border-color: var(--cm-brand-2);
+    color: var(--cm-brand-2);
+    background: #faf5ff;
+    transform: translateY(-1px);
+  }
+  .cm-pager button[aria-current="page"] {
+    background: var(--cm-grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.6);
+  }
+  .cm-pager button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ============================================
+     TOASTS / MODAL
+     ============================================ */
+  .cm-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--cm-r);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+    animation: cmIn 0.28s ease;
+  }
+  .cm-toast .mat {
+    font-size: 20px;
+  }
+  @keyframes cmIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .cm-toast.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--cm-ok);
+  }
+  .cm-toast.err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--cm-danger);
+  }
+
+  .cm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    animation: cmFade 0.2s ease;
+  }
+  @keyframes cmFade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .cm-modal {
+    background: #fff;
+    border-radius: var(--cm-r-lg);
+    max-width: 460px;
+    width: 100%;
+    padding: 1.6rem;
+    box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.5);
+    animation: cmPop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes cmPop {
+    from {
+      opacity: 0;
+      transform: scale(0.94) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  .cm-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: #fef2f2;
+    color: var(--cm-danger);
+    margin-bottom: 1rem;
+  }
+  .cm-modal-icon .mat {
+    font-size: 28px;
+  }
+  .cm-modal h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--cm-ink);
+  }
+  .cm-modal p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--cm-muted);
+    line-height: 1.55;
+  }
+  .cm-modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin-top: 1.35rem;
+  }
+  .cm-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.6rem 1.15rem;
+    border: 0;
+    border-radius: var(--cm-r);
+    background: var(--cm-danger);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cm-btn-danger .mat {
+    font-size: 18px;
+  }
+  .cm-btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    box-shadow: 0 8px 20px -8px rgba(239, 68, 68, 0.6);
+    transform: translateY(-1px);
+  }
+  .cm-btn-danger:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 640px) {
+    .cm {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+    .cm-hero {
+      padding: 1.4rem 1.3rem;
+    }
+    .cm-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .cm-foot-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .cm-pager {
+      justify-content: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cm *,
+    .cm *::before,
+    .cm *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="cm">
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}" />
+
+  <!-- HERO -->
+  <header class="cm-hero">
+    <div class="cm-hero-in">
+      <div>
+        <span class="cm-crumb"> <span class="mat">layers</span> Catalog </span>
+        <h1>Category Management</h1>
+        <p>
+          Organize, reorder, and publish the product categories that power your
+          storefront.
+        </p>
+      </div>
+      <a href="{% url 'category_create' %}" class="cm-cta">
+        <span class="mat">add</span> New Category
+      </a>
+    </div>
+  </header>
+
+  <!-- Toast -->
+  <div id="api-alert" class="cm-toast d-none" role="alert"></div>
+
+  <!-- KPIs -->
+  <section class="cm-kpis">
+    <div class="cm-kpi t">
+      <div class="cm-kpi-row">
+        <span class="cm-dot"></span><span class="cm-kpi-lbl">Total</span>
+      </div>
+      <div class="cm-kpi-val" id="kpi-total">—</div>
+    </div>
+    <div class="cm-kpi a">
+      <div class="cm-kpi-row">
+        <span class="cm-dot"></span><span class="cm-kpi-lbl">Active</span>
+      </div>
+      <div class="cm-kpi-val" id="kpi-active">—</div>
+    </div>
+    <div class="cm-kpi i">
+      <div class="cm-kpi-row">
+        <span class="cm-dot"></span><span class="cm-kpi-lbl">Inactive</span>
+      </div>
+      <div class="cm-kpi-val" id="kpi-inactive">—</div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <div class="cm-grid">
+    <!-- FILTERS -->
+    <aside class="cm-filter">
+      <h2><span class="mat">tune</span> Refine</h2>
+      <p class="cm-hint">Narrow the catalog down to exactly what you need.</p>
+
+      <form id="filter-form">
+        <div class="cm-g">
+          <label class="cm-lbl" for="q-input">Search</label>
+          <div class="cm-search">
+            <span class="mat">search</span>
+            <input
+              type="search"
+              id="q-input"
+              class="cm-input"
+              placeholder="Name or description…"
+              autocomplete="off"
+              maxlength="120"
+            />
+          </div>
+        </div>
+
+        <div class="cm-g">
+          <span class="cm-lbl">Status</span>
+          <div class="cm-seg" role="radiogroup" aria-label="Filter by status">
+            <input type="radio" name="st" id="st-all" value="" checked />
+            <label for="st-all">All</label>
+
+            <input type="radio" name="st" id="st-active" value="active" />
+            <label for="st-active">Active</label>
+
+            <input type="radio" name="st" id="st-inactive" value="inactive" />
+            <label for="st-inactive">Inactive</label>
+          </div>
+        </div>
+
+        <div class="cm-actions">
+          <button type="submit" class="cm-btn-grad">
+            <span class="mat">bolt</span> Apply Filters
+          </button>
+          <button type="button" id="reset-btn" class="cm-btn-ghost">
+            <span class="mat">restart_alt</span> Reset
+          </button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- PANEL -->
+    <main class="cm-panel">
+      <div class="cm-panel-top">
+        <div>
+          <h2>All Categories</h2>
+          <p class="sub">
+            Search, edit, toggle visibility, or remove a category.
+          </p>
+        </div>
+        <span class="cm-pill">
+          <span class="mat">check_circle</span>
+          <span id="count-label">0 records</span>
+        </span>
+      </div>
+
+      <div class="cm-list" id="cat-list">
+        <!-- skeleton (2 placeholder cards) -->
+        <div class="cm-sk-card">
+          <div class="cm-sk-row">
+            <div class="cm-sk cm-sk-av"></div>
+            <div style="flex: 1">
+              <div
+                class="cm-sk cm-sk-line"
+                style="width: 60%; margin-bottom: 6px"
+              ></div>
+              <div
+                class="cm-sk cm-sk-line"
+                style="width: 40%; height: 10px"
+              ></div>
+            </div>
+          </div>
+          <div class="cm-sk cm-sk-line" style="width: 100%"></div>
+          <div class="cm-sk cm-sk-line" style="width: 75%"></div>
+        </div>
+        <div class="cm-sk-card">
+          <div class="cm-sk-row">
+            <div class="cm-sk cm-sk-av"></div>
+            <div style="flex: 1">
+              <div
+                class="cm-sk cm-sk-line"
+                style="width: 60%; margin-bottom: 6px"
+              ></div>
+              <div
+                class="cm-sk cm-sk-line"
+                style="width: 40%; height: 10px"
+              ></div>
+            </div>
+          </div>
+          <div class="cm-sk cm-sk-line" style="width: 100%"></div>
+          <div class="cm-sk cm-sk-line" style="width: 75%"></div>
+        </div>
+      </div>
+
+      <div class="cm-foot-bar">
+        <span class="cm-summary" id="page-summary">Loading…</span>
+        <nav aria-label="Category pagination">
+          <ul class="cm-pager" id="pager"></ul>
+        </nav>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="modal-root"></div>
+
+<script>
+  (function () {
+    "use strict";
+
+    /* ==========================================================
+     CONFIG — matches the Django REST API exactly
+     ========================================================== */
+    const API = {
+      list: "/manager/menu/api/categories/",
+      stats: "/manager/menu/api/categories/stats/",
+      toggle: (id) =>
+        `/manager/menu/api/categories/${encodeURIComponent(id)}/toggle/`,
+      detail: (id) => `/manager/menu/api/categories/${encodeURIComponent(id)}/`,
+    };
+
+    const PAGE_SIZE = 10;
+
+    /* ==========================================================
+     DOM
+     ========================================================== */
+    const listEl = document.getElementById("cat-list");
+    const toastEl = document.getElementById("api-alert");
+    const modalRoot = document.getElementById("modal-root");
+    const csrfToken = document.getElementById("csrf-token").value;
+
+    const qInput = document.getElementById("q-input");
+    const stRadios = document.querySelectorAll('input[name="st"]');
+    const form = document.getElementById("filter-form");
+
+    const kpiTotal = document.getElementById("kpi-total");
+    const kpiActive = document.getElementById("kpi-active");
+    const kpiInactive = document.getElementById("kpi-inactive");
+
+    const countLabel = document.getElementById("count-label");
+    const pageSummary = document.getElementById("page-summary");
+    const pagerEl = document.getElementById("pager");
+
+    /* ==========================================================
+     STATE
+     ========================================================== */
+    let currentPage = 1;
+    let totalCount = 0;
+    let pageCount = 1;
+    let requestId = 0;
+
+    /* ==========================================================
+     HELPERS
+     ========================================================== */
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          })[c],
+      );
+
+    const getStatusFilter = () => {
+      const checked = [...stRadios].find((r) => r.checked);
+      return checked ? checked.value : "";
+    };
+
+    function toast(message, kind = "err") {
+      toastEl.className = `cm-toast ${kind === "ok" ? "ok" : "err"}`;
+      toastEl.innerHTML = `<span class="mat">${kind === "ok" ? "check_circle" : "error"}</span><span>${esc(message)}</span>`;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => {
+        toastEl.className = "cm-toast d-none";
+      }, 5000);
+    }
+
+    function clearToast() {
+      toastEl.className = "cm-toast d-none";
+      toastEl.innerHTML = "";
+    }
+
+    function fmtDate(v) {
+      if (!v) return "—";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "—";
+      return d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+      });
+    }
+
+    /* ==========================================================
+     FETCH WRAPPER
+     ========================================================== */
+    async function api(url, options = {}) {
+      const isWrite = options.method && options.method !== "GET";
+
+      const res = await fetch(url, {
+        credentials: "same-origin",
+        ...options,
+        headers: {
+          Accept: "application/json",
+          ...(options.body ? { "Content-Type": "application/json" } : {}),
+          ...(isWrite ? { "X-CSRFToken": csrfToken } : {}),
+          ...(options.headers || {}),
+        },
+      });
+
+      if (res.status === 204) return { ok: true, status: 204, data: null };
+
+      const ct = res.headers.get("content-type") || "";
+      const data = ct.includes("application/json")
+        ? await res.json().catch(() => null)
+        : await res.text().catch(() => "");
+
+      if (!res.ok) {
+        const err = new Error(
+          (data && (data.detail || data.error)) ||
+            (typeof data === "string" && data) ||
+            `Request failed (${res.status}).`,
+        );
+        err.status = res.status;
+        err.payload = data;
+        throw err;
+      }
+
+      return { ok: true, status: res.status, data };
+    }
+
+    /* ==========================================================
+     STATS
+     ========================================================== */
+    async function loadStats() {
+      try {
+        const { data } = await api(API.stats);
+        kpiTotal.textContent = data.total_categories ?? 0;
+        kpiActive.textContent = data.active_categories ?? 0;
+        kpiInactive.textContent = data.inactive_categories ?? 0;
+      } catch (e) {
+        console.error("Stats failed:", e);
+      }
+    }
+
+    /* ==========================================================
+     BUILD LIST URL
+     ========================================================== */
+    function buildUrl(page = 1) {
+      const url = new URL(API.list, window.location.origin);
+      const q = qInput.value.trim();
+      const s = getStatusFilter();
+
+      if (q) url.searchParams.set("q", q);
+      if (s) url.searchParams.set("status", s);
+
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("page_size", String(PAGE_SIZE));
+      return url.toString();
+    }
+
+    /* ==========================================================
+     CARD RENDER — displays uploaded SVG icon or fallback symbol
+     ========================================================== */
+    function cardHTML(c) {
+      const id = esc(c.id);
+      const name = esc(c.name);
+      const desc = esc(c.description || "No description provided.");
+      const order = esc(c.display_order ?? 0);
+      const products = Number(c.total_products ?? 0);
+      const active = Boolean(c.is_active);
+
+      // Icon: uploaded SVG or fallback Material Symbol
+      const hasIcon = Boolean(c.icon_url);
+      const iconHTML = hasIcon
+        ? `<img src="${esc(c.icon_url)}" alt="" loading="lazy" />`
+        : `<span class="mat">folder_open</span>`;
+
+      const avatarClass = hasIcon ? "cm-avatar has-icon" : "cm-avatar";
+
+      const statusBadge = active
+        ? `<span class="cm-badge ok"><span class="mat">check_circle</span> Active</span>`
+        : `<span class="cm-badge off"><span class="mat">pause_circle</span> Inactive</span>`;
+
+      const toggleBtn = active
+        ? `<button type="button" class="cm-ibtn deactivate" data-action="toggle" data-id="${id}" title="Deactivate category" aria-label="Deactivate"><span class="mat">pause</span></button>`
+        : `<button type="button" class="cm-ibtn activate" data-action="toggle" data-id="${id}" title="Activate category" aria-label="Activate"><span class="mat">play_arrow</span></button>`;
+
+      const deleteBtn = `<button type="button" class="cm-ibtn delete" data-action="delete" data-id="${id}" data-name="${name}" title="Delete category" aria-label="Delete"><span class="mat">delete</span></button>`;
+
+      return `
+      <article class="cm-card">
+        <div class="cm-card-head">
+          <div class="${avatarClass}">${iconHTML}</div>
+          <div class="cm-title-wrap">
+            <h3 class="cm-title">${name}</h3>
+            <div class="cm-meta">
+              <span>ID ${id}</span>
+              <span class="d"></span>
+              <span>Order ${order}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="cm-desc">${desc}</p>
+
+        <div class="cm-badges">
+          ${statusBadge}
+          <span class="cm-badge prod"><span class="mat">inventory_2</span> ${products} product${products === 1 ? "" : "s"}</span>
+          <span class="cm-badge ord"><span class="mat">sort</span> #${order}</span>
+        </div>
+
+        <div class="cm-foot">
+          <span class="cm-date"><span class="mat">calendar_today</span> ${esc(fmtDate(c.created_at))}</span>
+          <div class="cm-card-actions">
+            <a href="/manager/menu/categories/${id}/edit/" class="cm-ibtn edit" title="Edit category" aria-label="Edit"><span class="mat">edit</span></a>
+            ${toggleBtn}
+            ${deleteBtn}
+          </div>
+        </div>
+      </article>
+      `;
+    }
+
+    function emptyHTML(title, msg, tone = "neutral") {
+      const bg = tone === "error" ? "#fef2f2" : "";
+      const clr = tone === "error" ? "#ef4444" : "";
+      const ico = tone === "error" ? "warning" : "folder_open";
+      return `
+      <div class="cm-empty">
+        <div class="cm-empty-orb" style="${bg ? `background:${bg};color:${clr}` : ""}">
+          <span class="mat">${ico}</span>
+        </div>
+        <h3>${esc(title)}</h3>
+        <p>${esc(msg)}</p>
+      </div>
+      `;
+    }
+
+    function skeletonHTML(n = 6) {
+      return Array.from(
+        { length: n },
+        () => `
+      <div class="cm-sk-card">
+        <div class="cm-sk-row">
+          <div class="cm-sk cm-sk-av"></div>
+          <div style="flex:1">
+            <div class="cm-sk cm-sk-line" style="width:60%;margin-bottom:6px"></div>
+            <div class="cm-sk cm-sk-line" style="width:40%;height:10px"></div>
+          </div>
+        </div>
+        <div class="cm-sk cm-sk-line" style="width:100%"></div>
+        <div class="cm-sk cm-sk-line" style="width:75%"></div>
+      </div>
+      `,
+      ).join("");
+    }
+
+    /* ==========================================================
+     PAGINATION
+     ========================================================== */
+    function renderPager(data) {
+      pagerEl.innerHTML = "";
+      pageCount = Math.max(1, Math.ceil((data.count ?? 0) / PAGE_SIZE));
+
+      const add = (label, page, disabled, active = false, aria) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.innerHTML = label;
+        btn.disabled = disabled;
+        if (active) btn.setAttribute("aria-current", "page");
+        btn.setAttribute("aria-label", aria);
+        btn.addEventListener("click", () => loadList(page));
+        li.appendChild(btn);
+        pagerEl.appendChild(li);
+      };
+
+      add(
+        '<span class="mat">chevron_left</span>',
+        Math.max(1, currentPage - 1),
+        !data.previous,
+        false,
+        "Previous page",
+      );
+
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(pageCount, currentPage + 2);
+      for (let p = start; p <= end; p++) {
+        add(String(p), p, false, p === currentPage, `Page ${p}`);
+      }
+
+      add(
+        '<span class="mat">chevron_right</span>',
+        currentPage + 1,
+        !data.next,
+        false,
+        "Next page",
+      );
+    }
+
+    /* ==========================================================
+     LOAD LIST
+     ========================================================== */
+    async function loadList(page = 1) {
+      const myReq = ++requestId;
+      clearToast();
+      listEl.innerHTML = skeletonHTML();
+
+      try {
+        const { data } = await api(buildUrl(page));
+        if (myReq !== requestId) return;
+
+        const items = Array.isArray(data.results) ? data.results : [];
+        totalCount = data.count ?? items.length;
+        currentPage = page;
+
+        countLabel.textContent = `${totalCount} record${totalCount === 1 ? "" : "s"}`;
+
+        if (items.length === 0) {
+          listEl.innerHTML = emptyHTML(
+            "No categories found",
+            qInput.value.trim() || getStatusFilter()
+              ? "Try adjusting your search or clearing the filters."
+              : "Create your first category to get started.",
+          );
+        } else {
+          listEl.innerHTML = items.map(cardHTML).join("");
+        }
+
+        const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+        const to = Math.min(page * PAGE_SIZE, totalCount);
+        pageSummary.textContent = `Showing ${from}–${to} of ${totalCount}`;
+
+        renderPager(data);
+      } catch (e) {
+        if (myReq !== requestId) return;
+        listEl.innerHTML = emptyHTML(
+          "Couldn't load categories",
+          e.message,
+          "error",
+        );
+        countLabel.textContent = "0 records";
+        pageSummary.textContent = "";
+        pagerEl.innerHTML = "";
+        toast(e.message, "err");
+      }
+    }
+
+    /* ==========================================================
+     TOGGLE
+     ========================================================== */
+    async function doToggle(btn) {
+      const id = btn.dataset.id;
+      const original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="mat">progress_activity</span>';
+
+      try {
+        await api(API.toggle(id), { method: "POST" });
+        toast("Category status updated.", "ok");
+        await Promise.all([loadList(currentPage), loadStats()]);
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = original;
+        toast(e.message, "err");
+      }
+    }
+
+    /* ==========================================================
+     DELETE
+     ========================================================== */
+    function openDeleteModal(id, name) {
+      modalRoot.innerHTML = `
+      <div class="cm-backdrop" role="dialog" aria-modal="true" aria-labelledby="del-title">
+        <div class="cm-modal" role="document">
+          <div class="cm-modal-icon"><span class="mat">delete_forever</span></div>
+          <h3 id="del-title">Delete category?</h3>
+          <p>You are about to permanently delete <strong>${esc(name)}</strong>. This action cannot be undone.</p>
+          <div class="cm-modal-foot">
+            <button type="button" class="cm-btn-ghost" data-modal="cancel">Cancel</button>
+            <button type="button" class="cm-btn-danger" data-modal="confirm">
+              <span class="mat">delete</span> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+      `;
+
+      const backdrop = modalRoot.querySelector(".cm-backdrop");
+      const confirm = modalRoot.querySelector('[data-modal="confirm"]');
+      const cancel = modalRoot.querySelector('[data-modal="cancel"]');
+
+      const close = () => {
+        modalRoot.innerHTML = "";
+      };
+
+      backdrop.addEventListener("click", (ev) => {
+        if (ev.target === backdrop) close();
+      });
+      cancel.addEventListener("click", close);
+
+      confirm.addEventListener("click", async () => {
+        confirm.disabled = true;
+        confirm.innerHTML =
+          '<span class="mat">progress_activity</span> Deleting…';
+
+        try {
+          await api(API.detail(id), { method: "DELETE" });
+          close();
+          toast("Category deleted successfully.", "ok");
+          await Promise.all([loadList(currentPage), loadStats()]);
+        } catch (e) {
+          close();
+          if (e.status === 400 && e.payload && e.payload.product_count) {
+            toast(e.payload.detail, "err");
+          } else {
+            toast(e.message, "err");
+          }
+        }
+      });
+    }
+
+    /* ==========================================================
+     EVENT WIRING
+     ========================================================== */
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      loadList(1);
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      qInput.value = "";
+      document.getElementById("st-all").checked = true;
+      loadList(1);
+    });
+
+    let qDebounce;
+    qInput.addEventListener("input", () => {
+      clearTimeout(qDebounce);
+      qDebounce = setTimeout(() => loadList(1), 400);
+    });
+
+    stRadios.forEach((r) => r.addEventListener("change", () => loadList(1)));
+
+    listEl.addEventListener("click", (e) => {
+      const tBtn = e.target.closest('[data-action="toggle"]');
+      if (tBtn) {
+        doToggle(tBtn);
+        return;
+      }
+
+      const dBtn = e.target.closest('[data-action="delete"]');
+      if (dBtn) {
+        openDeleteModal(dBtn.dataset.id, dBtn.dataset.name);
+        return;
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") modalRoot.innerHTML = "";
+    });
+
+    /* ==========================================================
+     BOOT
+     ========================================================== */
+    loadList(1);
+    loadStats();
+  })();
+</script>
+{% endblock %}

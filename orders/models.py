@@ -9,7 +9,16 @@ from tables.models import RestaurantTable, TableStatus
 from users.models import User
 from collections import defaultdict
 from Financial.models import  *
+from django.db import transaction
+from django.core.exceptions import ValidationError
+
+from Financial.services import receive_money
+
+
 from django.utils import timezone
+
+
+
 class OrderStatus(models.TextChoices):
     OPEN = "OPEN", "Open"
     CONFIRMED = "CONFIRMED", "Confirmed"
@@ -20,6 +29,14 @@ class OrderStatus(models.TextChoices):
     PAID = "PAID", "Paid"
     CANCELLED = "CANCELLED", "Cancelled"
 
+    
+ACTIVE_ORDER_STATUSES = (
+    OrderStatus.OPEN,
+    OrderStatus.CONFIRMED,
+    OrderStatus.PREPARING,
+    OrderStatus.READY,
+    OrderStatus.SERVED,
+)
 
 class Order(TimeStampedModel):
     table = models.ForeignKey(
@@ -66,24 +83,56 @@ class Order(TimeStampedModel):
         default=0,
     )
 
+
     @classmethod
     def _sync_table_status(cls, table_id: int | None) -> None:
+        """
+        Synchronize the status of a restaurant table based on whether it
+        currently has any active (in-progress) orders.
+
+        A table is marked as OCCUPIED when at least one order referencing it
+        is in an active state (OPEN, CONFIRMED, PREPARING, READY, or SERVED).
+        Otherwise, the table is marked as AVAILABLE.
+
+        This method is idempotent and safe to call multiple times — it will
+        only issue an UPDATE when the computed status differs from the stored
+        status.
+
+        Args:
+            table_id: Primary key of the RestaurantTable to synchronize.
+                If ``None`` or falsy, the method returns without doing anything.
+
+        Returns:
+            None
+        """
         if not table_id:
             return
 
-        active_order_exists = cls.objects.filter(
+        # Determine whether an active order currently references this table.
+        has_active_order = cls.objects.filter(
             table_id=table_id,
-            status__in=[
-                OrderStatus.OPEN,
-                OrderStatus.CONFIRMED,
-                OrderStatus.PREPARING,
-                OrderStatus.READY,
-                OrderStatus.SERVED,
-            ],
+            status__in=ACTIVE_ORDER_STATUSES,
         ).exists()
 
-        if not active_order_exists:
-            return
+        desired_status = (
+            TableStatus.OCCUPIED if has_active_order else TableStatus.AVAILABLE
+        )
+
+        # Only write to the DB if the status actually needs to change.
+        (
+            RestaurantTable.objects
+            .filter(pk=table_id)
+            .exclude(status=desired_status)
+            .update(status=desired_status)
+        )
+
+    # ------------------------------------------------------------------
+    # Overridden ORM methods
+    # ------------------------------------------------------------------
+
+
+    # Overridden ORM methods
+    # ------------------------------------------------------------------
 
     def save(self, *args, **kwargs):
         previous_table_id = None
@@ -103,6 +152,75 @@ class Order(TimeStampedModel):
         if previous_table_id and previous_table_id != self.table_id:
             self._sync_table_status(previous_table_id)
 
+
+    # ------------------------------------------------------------------
+    # Change table
+    # ------------------------------------------------------------------
+
+    @transaction.atomic
+    def change_table(self, new_table_id):
+        """
+        Change the table assigned to this order.
+
+        Handles:
+        - Guard against changing table on a paid/cancelled order
+        - Validation that the new table exists and is available
+        - Syncing status of both old and new tables
+        """
+        # ---- Guard: cannot move a closed/paid order ----
+        if self.status in [OrderStatus.PAID, OrderStatus.CANCELLED]:
+            raise ValidationError(
+                "Cannot change the table of a paid or cancelled order."
+            )
+
+        # ---- Guard: same table, nothing to do ----
+        if self.table_id == new_table_id:
+            return self
+
+        # ---- Validate new table exists (lock row for safety) ----
+        try:
+            new_table = (
+                RestaurantTable.objects
+                .select_for_update()
+                .get(pk=new_table_id)
+            )
+        except RestaurantTable.DoesNotExist:
+            raise ValidationError("Target table does not exist.")
+
+        # ---- Prevent moving to a table that already has an active order ----
+        occupied = (
+            Order.objects
+            .filter(
+                table=new_table,
+                status__in=ACTIVE_ORDER_STATUSES,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+        if occupied:
+            raise ValidationError(
+                f"Table {new_table} is already occupied by another active order."
+            )
+
+        old_table_id = self.table_id
+
+        # ---- Swap the table (save() will sync both old and new tables) ----
+        self.table = new_table
+        self.save(update_fields=["table", "updated_at"])
+
+        # ---- Explicit sync as a safety net (redundant with save(), harmless) ----
+        self._sync_table_status(new_table_id)
+        if old_table_id:
+            self._sync_table_status(old_table_id)
+
+        return self
+
+    # ------------------------------------------------------------------
+    # Cancel / print
+    # ------------------------------------------------------------------
+
+
     def delete(self, *args, **kwargs):
         table_id = self.table_id
 
@@ -110,33 +228,128 @@ class Order(TimeStampedModel):
 
         self._sync_table_status(table_id)
 
-    def set_order_as_paid(self, income_source_id: int, received_by_who) :
-        self.status = OrderStatus.PAID
 
-        self.table.status = TableStatus.AVAILABLE
-        self.table.save(update_fields=["status"])
+    @transaction.atomic
+    def set_order_as_paid(self, income_source_id, received_by_who):
+        """
+        Mark this order as paid, free the table, and record the receipt
+        in the financial ledger.
 
+        Atomic — either everything succeeds or nothing does.
+        """
+        # ---- Guard: don't double-charge ----
+        if self.status == OrderStatus.PAID:
+            raise ValidationError("This order has already been paid.")
 
+        # ---- Guard: order must have a total ----
+        if not self.total or self.total <= 0:
+            raise ValidationError("Order total must be greater than zero.")
 
-      
+        # ---- Guard: source must exist ----
+        from Financial.models import MoneySource
+        try:
+            source = MoneySource.objects.get(pk=income_source_id, is_active=True)
+        except MoneySource.DoesNotExist:
+            raise ValidationError("Invalid or inactive money source.")
 
-        ReceivePayment.objects.create(
-            source_id=income_source_id,
-            payer_name=(
-                self.waiter.full_name
-                if self.waiter
-                else "Unknown Waiter"
-            ),
+        # ---- Determine payer name safely ----
+        payer_name = "Unknown Payer"
+        if self.waiter:
+            # Adjust to whatever your User model exposes.
+            # `get_full_name()` returns "" if both names are empty.
+            payer_name = (
+                self.waiter.get_full_name().strip()
+                or self.waiter.username
+            )
+
+        # ---- Record the financial transaction (updates balance + ledger) ----
+        receive_money(
+            source=source,
             amount=self.total,
-         
+            received_by=received_by_who,
             order=self,
-            received_by =received_by_who
-
+            payer_name=payer_name,
+            reference=f"Order #{self.pk}",
+            notes=f"Payment for order #{self.pk}",
         )
 
+        # ---- Update order status ----
+        self.status = OrderStatus.PAID
+        self.save(update_fields=["status", "updated_at"])
+
+        # ---- Free the table ----
+        if self.table:
+            self.table.status = TableStatus.AVAILABLE
+            self.table.save(update_fields=["status"])
+
+    @transaction.atomic
+    def change_table(self, new_table_id):
+        """
+        Change the table assigned to this order.
+
+        Handles:
+        - Guard against changing table on a paid/cancelled order
+        - Validation that the new table exists and is available
+        - Syncing status of both old and new tables
+        """
+        # ---- Guard: cannot move a closed/paid order ----
+        if self.status in [OrderStatus.PAID, OrderStatus.CANCELLED]:
+            raise ValidationError(
+                "Cannot change the table of a paid or cancelled order."
+            )
+
+        # ---- Guard: same table, nothing to do ----
+        if self.table_id == new_table_id:
+            return self
+
+        # ---- Validate new table exists (lock row for safety) ----
+        try:
+            new_table = (
+                RestaurantTable.objects
+                .select_for_update()
+                .get(pk=new_table_id)
+            )
+        except RestaurantTable.DoesNotExist:
+            raise ValidationError("Target table does not exist.")
+
+        # ---- Prevent moving to a table that already has an active order ----
+        occupied = (
+            Order.objects
+            .filter(
+                table=new_table,
+                status__in=[
+                    OrderStatus.OPEN,
+                    OrderStatus.CONFIRMED,
+                    OrderStatus.PREPARING,
+                    OrderStatus.READY,
+                    OrderStatus.SERVED,
+                ],
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+        if occupied:
+            raise ValidationError(
+                f"Table {new_table} is already occupied by another active order."
+            )
+
+        old_table_id = self.table_id
+
+        # ---- Swap the table (save() will sync both old and new tables) ----
+        self.table = new_table
+        self.save(update_fields=["table", "updated_at"])
+
+        # ---- Explicit sync as a safety net (redundant with save(), harmless) ----
+        self._sync_table_status(new_table_id)
+        if old_table_id:
+            self._sync_table_status(old_table_id)
+
+        return self
 
 
-        self.save()
+
+
 
     def set_order_as_cancelled(self):
         self.status = OrderStatus.CANCELLED

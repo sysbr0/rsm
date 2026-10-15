@@ -1,20 +1,19 @@
-"""
-URL configuration for config project.
+# orders/urls.py
+from django.urls import path
+from . import api_views
+from . import views
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+app_name = "orders"
 
-from django.urls import path ,include
+urlpatterns = [
+   path("", views.order_dashboard, name="order_list")
+   ,path("analytics/", views.analytics_dashboard, name="analytics_dashboard_html"),
 
 
+    # Analytics API
+    path("api/analytics/dashboard/", api_views.analytics_dashboard, name="analytics_dashboard"),
+    path("api/analytics/daily-revenue/", api_views.daily_revenue, name="daily_revenue"),
+    path("api/analytics/hourly-today/", api_views.hourly_today, name="hourly_today"),
+    path("api/analytics/status-breakdown/", api_views.status_breakdown, name="status_breakdown"),
+    path("api/analytics/top-items/", api_views.top_items, name="top_items"),
+]

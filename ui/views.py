@@ -413,7 +413,6 @@ def test(request):
         request,
         "ui/test.html",
     )
-
 def admin_table_detail(request, table_id: int):
     table = get_object_or_404(
         RestaurantTable,
@@ -434,6 +433,69 @@ def admin_table_detail(request, table_id: int):
         OrderStatus.SERVED,
         OrderStatus.PAID,
     ]
+
+    # ============================================================
+    # SECTIONS + AVAILABLE TABLES (for the change-table modal)
+    #
+    # Two-step picker:
+    #   1. Choose a section
+    #   2. Choose an available table in that section
+    #
+    # A table is "available" when:
+    #   - it is active
+    #   - it is NOT the current table
+    #   - its status is not OCCUPIED / ON_PAYMENT / RESERVED / CLOSED
+    # ============================================================
+
+    available_tables_qs = (
+        RestaurantTable.objects
+        .filter(is_active=True)
+        .exclude(pk=table.pk)
+        .exclude(
+            status__in=[
+                TableStatus.OCCUPIED,
+                TableStatus.ON_PAYMENT,
+                TableStatus.RESERVED,
+                TableStatus.CLOSED,
+            ]
+        )
+        .select_related("section_block")
+        .order_by(
+            "section_block__display_order",
+            "table_number",
+        )
+    )
+
+    # Group available tables by section for the two-step picker.
+    available_tables_by_section = {}
+
+    for t in available_tables_qs:
+        section = t.section_block
+        if section is None:
+            continue
+        available_tables_by_section.setdefault(
+            section.id, []
+        ).append(t)
+
+    # Build a JSON-friendly structure for the template.
+    sections_payload = []
+    for section in section_blocks:
+        tables = available_tables_by_section.get(section.id, [])
+        if not tables:
+            continue  # skip sections with no available tables
+        sections_payload.append({
+            "id": section.id,
+            "name": section.name,
+            "tables": [
+                {
+                    "id": t.id,
+                    "table_number": t.table_number,
+                    "name": t.name or f"Table {t.table_number}",
+                    "capacity": t.capacity,
+                }
+                for t in tables
+            ],
+        })
 
     # ============================================================
     # HELPERS
@@ -639,6 +701,10 @@ def admin_table_detail(request, table_id: int):
         request.GET.get("order_items_printed") == "1"
     )
 
+    table_changed = (
+        request.GET.get("table_changed") == "1"
+    )
+
     selected_quantities: dict[
         int,
         Decimal,
@@ -790,6 +856,90 @@ def admin_table_detail(request, table_id: int):
                             )
 
         # ========================================================
+        # CHANGE TABLE
+        #
+        # Two-step picker in the UI:
+        #   1. Choose a section
+        #   2. Choose an available table in that section
+        #
+        # Only available tables are shown (excluding the current
+        # table and any table that is OCCUPIED / ON_PAYMENT /
+        # RESERVED / CLOSED).
+        # ========================================================
+
+        elif action == "change_table":
+
+            current_order = get_current_order()
+
+            if current_order is None:
+
+                form_error = (
+                    "No active order found "
+                    "to change the table for."
+                )
+
+            elif current_order.status in (
+                OrderStatus.PAID,
+                OrderStatus.CANCELLED,
+            ):
+
+                form_error = (
+                    "Cannot change the table of a paid "
+                    "or cancelled order."
+                )
+
+            else:
+
+                raw_table_id = (
+                    request.POST
+                    .get("new_table_id", "")
+                    .strip()
+                )
+
+                try:
+                    new_table_id = int(raw_table_id)
+                except (TypeError, ValueError):
+                    new_table_id = 0
+
+                if new_table_id <= 0:
+
+                    form_error = (
+                        "Please select a section and a "
+                        "table before confirming."
+                    )
+
+                else:
+
+                    try:
+
+                        current_order.change_table(
+                            new_table_id=new_table_id,
+                        )
+
+                        # ------------------------------------------
+                        # Redirect to the *new* table's admin page
+                        # so the user lands on the correct screen.
+                        # ------------------------------------------
+                        return redirect(
+                            "admin_table_detail",
+                            table_id=new_table_id,
+                        )
+
+                    except ValidationError as exc:
+
+                        if hasattr(exc, "messages"):
+                            form_error = " ".join(exc.messages)
+                        else:
+                            form_error = str(exc)
+
+                    except Exception as exc:
+
+                        form_error = (
+                            "Unable to change the table: "
+                            f"{exc}"
+                        )
+
+        # ========================================================
         # PRINT PENDING KITCHEN / SECTION ITEMS
         #
         # IMPORTANT:
@@ -834,7 +984,7 @@ def admin_table_detail(request, table_id: int):
 
                     jobs = (
                         OrderItem.print_pending_items(
-                            current_order,request.user
+                            current_order, request.user
                         )
                     )
 
@@ -911,7 +1061,7 @@ def admin_table_detail(request, table_id: int):
 
                     jobs = (
                         OrderItem.print_pending_items(
-                            current_order,request.user
+                            current_order, request.user
                         )
                     )
 
@@ -1134,6 +1284,7 @@ def admin_table_detail(request, table_id: int):
                         f"{request.path}"
                         "?item_deleted=1"
                     )
+
         # ========================================================
         # DELETE ENTIRE ORDER
         # ========================================================
@@ -1693,6 +1844,7 @@ def admin_table_detail(request, table_id: int):
         TableStatus.AVAILABLE: "#dcfce7",
         TableStatus.OCCUPIED: "#fee2e2",
         TableStatus.RESERVED: "#fef3c7",
+        TableStatus.ON_PAYMENT: "#fde68a",
         TableStatus.CLOSED: "#e5e7eb",
     }
 
@@ -1738,6 +1890,8 @@ def admin_table_detail(request, table_id: int):
         ),
 
         "order_paid": order_paid,
+
+        "table_changed": table_changed,
 
         "money_sources": money_sources,
 
@@ -1789,6 +1943,11 @@ def admin_table_detail(request, table_id: int):
         "occupied_status": (
             TableStatus.OCCUPIED
         ),
+
+        # --------------------------------------------------------
+        # Change-table payload (sections → available tables)
+        # --------------------------------------------------------
+        "sections_payload": sections_payload,
 
         "admin_page": "tables",
     }

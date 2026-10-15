@@ -1,0 +1,52 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}Delete Category{%
+endblock %} {% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white py-3">
+          <h2 class="h5 mb-0">Confirm Deletion</h2>
+        </div>
+        <div class="card-body p-4">
+          <p class="fs-5">
+            Are you sure you want to delete category
+            <strong>"{{ object.name }}"</strong>?
+          </p>
+
+          {% if object.products.exists %}
+          <div class="alert alert-warning border-warning" role="alert">
+            <strong>Protected:</strong> This category contains
+            <strong>{{ object.products.count }} product(s)</strong>. Django's
+            <code>PROTECT</code> rule prevents deletion until these products are
+            reassigned or deleted.
+          </div>
+          {% else %}
+          <p class="text-muted small">This action cannot be undone.</p>
+          {% endif %}
+
+          <form method="post" class="d-flex justify-content-end gap-2 mt-4">
+            {% csrf_token %}
+            <a
+              href="{% url 'category_list' %}"
+              class="btn btn-outline-secondary"
+              >Cancel</a
+            >
+            <button
+              type="submit"
+              class="btn btn-danger"
+              {%
+              if
+              object.products.exists
+              %}disabled{%
+              endif
+              %}
+            >
+              Confirm Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

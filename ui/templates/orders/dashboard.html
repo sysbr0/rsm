@@ -1,0 +1,1234 @@
+{% extends "ui/admin_base.html" %} {% load static %} {% block title %}Order
+Dashboard{% endblock %} {% block content %}
+<style>
+  /* =========================================================
+     DESIGN TOKENS
+     ========================================================= */
+  .order-dashboard {
+    --primary: #8b1e1e;
+    --primary-dark: #641414;
+    --primary-light: #b83232;
+    --primary-soft: rgba(139, 30, 30, 0.08);
+
+    --success: #16a34a;
+    --success-soft: #dcfce7;
+    --warning: #d97706;
+    --warning-soft: #fef3c7;
+    --info: #2563eb;
+    --info-soft: #dbeafe;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --purple: #7c3aed;
+    --purple-soft: #ede9fe;
+
+    --ink-900: #0f172a;
+    --ink-700: #334155;
+    --ink-500: #64748b;
+    --ink-400: #94a3b8;
+    --ink-300: #cbd5e1;
+    --ink-200: #e2e8f0;
+    --ink-100: #f1f5f9;
+    --ink-50: #f8fafc;
+
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --border: #eaecef;
+
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 18px;
+
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.08);
+
+    --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    padding: 28px;
+    background: var(--bg);
+    min-height: 100vh;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .order-dashboard * {
+    box-sizing: border-box;
+  }
+
+  /* =========================================================
+     HEADER
+     ========================================================= */
+  .dashboard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dashboard-title .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+
+  .dashboard-title .eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+  }
+
+  .dashboard-title h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--ink-900);
+  }
+
+  .dashboard-title p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-500);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* =========================================================
+     FILTERS
+     ========================================================= */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .filter-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .filter-group svg {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--ink-400);
+    pointer-events: none;
+  }
+
+  .filter-control {
+    height: 40px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 0 14px 0 36px;
+    background: var(--ink-50);
+    min-width: 170px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink-900);
+    transition: var(--transition);
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .filter-control:hover {
+    background: var(--ink-100);
+  }
+
+  .filter-control:focus {
+    outline: none;
+    background: var(--surface);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+
+  select.filter-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .filter-button {
+    height: 40px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    padding: 0 20px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(139, 30, 30, 0.25);
+  }
+
+  .filter-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 30, 30, 0.3);
+  }
+
+  .filter-button:active {
+    transform: translateY(0);
+  }
+
+  .filter-reset {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-500);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: var(--transition);
+  }
+
+  .filter-reset:hover {
+    background: var(--ink-50);
+    color: var(--ink-900);
+  }
+
+  /* =========================================================
+     STATS CARDS
+     ========================================================= */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-xs);
+    transition: var(--transition);
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    opacity: 0;
+    transition: var(--transition);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--ink-200);
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-500);
+    letter-spacing: 0.01em;
+  }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-icon.revenue {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .stat-icon.orders {
+    background: var(--info-soft);
+    color: var(--info);
+  }
+  .stat-icon.tables {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+  .stat-icon.cancelled {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--ink-900);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-value .unit {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink-500);
+    margin-left: 4px;
+  }
+
+  .stat-extra {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--ink-400);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-extra .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink-300);
+  }
+
+  /* =========================================================
+     GRID / CARDS
+     ========================================================= */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-xs);
+    transition: var(--transition);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+
+  .card-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink-900);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .card-header .meta {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-500);
+    background: var(--ink-50);
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* =========================================================
+     CHART
+     ========================================================= */
+  .chart-container {
+    position: relative;
+    height: 340px;
+  }
+
+  /* =========================================================
+     TABLE STATUS
+     ========================================================= */
+  .table-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .table-status {
+    position: relative;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--ink-50);
+    border: 1px solid transparent;
+    transition: var(--transition);
+  }
+
+  .table-status:hover {
+    background: var(--surface);
+    border-color: var(--ink-200);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .table-status-name {
+    color: var(--ink-500);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .table-status-name::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-300);
+  }
+
+  .table-status.total .table-status-name::before {
+    background: var(--ink-500);
+  }
+  .table-status.available .table-status-name::before {
+    background: var(--success);
+  }
+  .table-status.occupied .table-status-name::before {
+    background: var(--primary);
+  }
+  .table-status.reserved .table-status-name::before {
+    background: var(--info);
+  }
+  .table-status.payment .table-status-name::before {
+    background: var(--warning);
+  }
+  .table-status.closed .table-status-name::before {
+    background: var(--ink-400);
+  }
+
+  .table-status-number {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ink-900);
+    margin-top: 6px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =========================================================
+     DATA TABLES
+     ========================================================= */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+    font-size: 14px;
+  }
+
+  .data-table thead th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-500);
+    background: var(--ink-50);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .data-table tbody td {
+    padding: 15px 16px;
+    border-bottom: 1px solid var(--ink-100);
+    color: var(--ink-700);
+    vertical-align: middle;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .data-table tbody tr {
+    transition: var(--transition);
+  }
+
+  .data-table tbody tr:hover {
+    background: var(--ink-50);
+  }
+
+  .cell-strong {
+    font-weight: 700;
+    color: var(--ink-900);
+  }
+
+  .cell-mono {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-700);
+  }
+
+  .order-number {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-soft);
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .waiter-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .waiter-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .waiter-name {
+    font-weight: 600;
+    color: var(--ink-900);
+  }
+
+  .money {
+    font-weight: 700;
+    color: var(--ink-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =========================================================
+     STATUS BADGES
+     ========================================================= */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-open {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .status-confirmed {
+    background: var(--info-soft);
+    color: #1e40af;
+  }
+  .status-preparing {
+    background: var(--warning-soft);
+    color: #92400e;
+  }
+  .status-ready {
+    background: var(--success-soft);
+    color: #166534;
+  }
+  .status-served {
+    background: var(--purple-soft);
+    color: #5b21b6;
+  }
+  .status-paid {
+    background: var(--success-soft);
+    color: #166534;
+  }
+  .status-cancelled {
+    background: var(--danger-soft);
+    color: #991b1b;
+  }
+
+  /* =========================================================
+     EMPTY STATE
+     ========================================================= */
+  .empty-state {
+    text-align: center;
+    padding: 56px 24px;
+    color: var(--ink-400);
+  }
+
+  .empty-state svg {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+    color: var(--ink-400);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     RESPONSIVE
+     ========================================================= */
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .order-dashboard {
+      padding: 18px;
+    }
+    .dashboard-title h1 {
+      font-size: 24px;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .filters {
+      width: 100%;
+    }
+    .filter-group {
+      flex: 1;
+    }
+    .filter-control {
+      width: 100%;
+      min-width: 0;
+    }
+    .filter-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="order-dashboard">
+  <!-- ============================= HEADER ============================= -->
+  <div class="dashboard-header">
+    <div class="dashboard-title">
+      <span class="eyebrow">Restaurant Operations</span>
+      <h1>Order Dashboard</h1>
+      <p>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        {{ dashboard_date|date:"l, d F Y" }}
+      </p>
+    </div>
+
+    <form method="get" class="filters" id="filterForm">
+      <div class="filter-group">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <input
+          type="date"
+          name="date"
+          value="{{ selected_date }}"
+          class="filter-control"
+        />
+      </div>
+
+      <div class="filter-group">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <select name="waiter" class="filter-control">
+          <option value="">All Waiters</option>
+          {% for waiter in waiters %}
+          <option
+            value="{{ waiter.id }}"
+            {%
+            if
+            selected_waiter=""
+            ="waiter.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ waiter.full_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="filter-button">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+        Filter
+      </button>
+
+      {% if selected_date or selected_waiter %}
+      <a href="{% url 'order-dashboard' %}" class="filter-reset">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- ============================= STAT CARDS ============================= -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-icon orders">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 7H9v14h6V7z" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_orders }}</div>
+      <div class="stat-extra">
+        <span>{{ total_paid_orders }} paid</span>
+        <span class="dot"></span>
+        <span>{{ active_order_count }} active</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-icon revenue">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value">
+        {{ total_revenue|floatformat:2 }}<span class="unit">TL</span>
+      </div>
+      <div class="stat-extra">
+        Avg. {{ average_order_value|floatformat:2 }} TL / order
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Active Tables</div>
+        <div class="stat-icon tables">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="3" y1="9" x2="21" y2="9" />
+            <line x1="3" y1="15" x2="21" y2="15" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value">{{ active_tables }}</div>
+      <div class="stat-extra">
+        <span>{{ available_tables }} available</span>
+        <span class="dot"></span>
+        <span>{{ total_tables }} total</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Cancelled Orders</div>
+        <div class="stat-icon cancelled">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_cancelled_orders }}</div>
+      <div class="stat-extra">
+        <span>{{ active_order_count }} active orders</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= CHART + TABLES ============================= -->
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-header">
+        <h2>Orders &amp; Revenue</h2>
+        <span class="meta">Last 7 days</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Table Status</h2>
+        <span class="meta">{{ total_tables }} tables</span>
+      </div>
+
+      <div class="table-status-grid">
+        <div class="table-status total">
+          <div class="table-status-name">Total</div>
+          <div class="table-status-number">{{ total_tables }}</div>
+        </div>
+        <div class="table-status available">
+          <div class="table-status-name">Available</div>
+          <div class="table-status-number">{{ available_tables }}</div>
+        </div>
+        <div class="table-status occupied">
+          <div class="table-status-name">Occupied</div>
+          <div class="table-status-number">{{ occupied_tables }}</div>
+        </div>
+        <div class="table-status reserved">
+          <div class="table-status-name">Reserved</div>
+          <div class="table-status-number">{{ reserved_tables }}</div>
+        </div>
+        <div class="table-status payment">
+          <div class="table-status-name">On Payment</div>
+          <div class="table-status-number">{{ on_payment_tables }}</div>
+        </div>
+        <div class="table-status closed">
+          <div class="table-status-name">Closed</div>
+          <div class="table-status-number">{{ closed_tables }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= WAITER PERFORMANCE ============================= -->
+  <div class="card" style="margin-bottom: 20px">
+    <div class="card-header">
+      <h2>Waiter Performance</h2>
+      <span class="meta">{{ dashboard_date|date:"d M Y" }}</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Waiter</th>
+            <th>Paid Orders</th>
+            <th>Tables Served</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for waiter in waiter_stats %}
+          <tr>
+            <td>
+              <div class="waiter-cell">
+                <div class="waiter-avatar">
+                  {{ waiter.full_name|slice:":1" }}
+                </div>
+                <span class="waiter-name">{{ waiter.full_name }}</span>
+              </div>
+            </td>
+            <td class="cell-mono">{{ waiter.order_count }}</td>
+            <td class="cell-mono">{{ waiter.table_count }}</td>
+            <td>
+              <span class="money">{{ waiter.revenue|floatformat:2 }} TL</span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4">
+              <div class="empty-state">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <p>No waiter data for this date.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================= ORDERS ============================= -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Orders</h2>
+      <span class="meta">{{ total_orders }} orders</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Table</th>
+            <th>Waiter</th>
+            <th>Status</th>
+            <th>Subtotal</th>
+            <th>Tax</th>
+            <th>Discount</th>
+            <th>Total</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td><span class="order-number">#{{ order.id }}</span></td>
+            <td class="cell-strong">
+              {% if order.table.name %} {{ order.table.name }} {% else %} Table
+              {{ order.table.table_number }} {% endif %}
+            </td>
+            <td>{{ order.waiter.full_name }}</td>
+            <td>
+              <span class="status status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td class="cell-mono">{{ order.subtotal|floatformat:2 }}</td>
+            <td class="cell-mono">{{ order.tax|floatformat:2 }}</td>
+            <td class="cell-mono">{{ order.discount|floatformat:2 }}</td>
+            <td>
+              <span class="money">{{ order.total|floatformat:2 }} TL</span>
+            </td>
+            <td class="cell-mono">{{ order.created_at|date:"H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M9 11H3v10h6V11zM21 3h-6v18h6V3zM15 7H9v14h6V7z" />
+                </svg>
+                <p>No orders found for this date.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= CHART.JS ============================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    const graphLabels  = {{ graph_labels|safe }};
+    const graphOrders  = {{ graph_order_values|safe }};
+    const graphRevenue = {{ graph_revenue_values|safe }};
+
+    const canvas = document.getElementById("ordersChart");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    // Gradient fills
+    const revenueGradient = ctx.createLinearGradient(0, 0, 0, 340);
+    revenueGradient.addColorStop(0, "rgba(139, 30, 30, 0.22)");
+    revenueGradient.addColorStop(1, "rgba(139, 30, 30, 0)");
+
+    const ordersGradient = ctx.createLinearGradient(0, 0, 0, 340);
+    ordersGradient.addColorStop(0, "rgba(37, 99, 235, 0.18)");
+    ordersGradient.addColorStop(1, "rgba(37, 99, 235, 0)");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: graphLabels,
+        datasets: [
+          {
+            label: "Orders",
+            data: graphOrders,
+            tension: 0.4,
+            borderWidth: 2.5,
+            borderColor: "#2563eb",
+            backgroundColor: ordersGradient,
+            pointBackgroundColor: "#2563eb",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            yAxisID: "orders",
+            fill: true,
+          },
+          {
+            label: "Revenue",
+            data: graphRevenue,
+            tension: 0.4,
+            borderWidth: 2.5,
+            borderColor: "#8b1e1e",
+            backgroundColor: revenueGradient,
+            pointBackgroundColor: "#8b1e1e",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            yAxisID: "revenue",
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            position: "top",
+            align: "end",
+            labels: {
+              usePointStyle: true,
+              pointStyle: "circle",
+              boxWidth: 8,
+              boxHeight: 8,
+              padding: 16,
+              font: { size: 12, weight: "600", family: "Inter, sans-serif" },
+              color: "#64748b",
+            },
+          },
+          tooltip: {
+            backgroundColor: "#0f172a",
+            titleColor: "#fff",
+            bodyColor: "#e2e8f0",
+            padding: 12,
+            cornerRadius: 8,
+            borderColor: "rgba(255,255,255,0.08)",
+            borderWidth: 1,
+            titleFont: { size: 12, weight: "700" },
+            bodyFont: { size: 12 },
+            displayColors: true,
+            boxPadding: 4,
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { size: 11, family: "Inter, sans-serif" },
+            },
+          },
+          orders: {
+            type: "linear",
+            position: "left",
+            beginAtZero: true,
+            grid: { color: "rgba(148, 163, 184, 0.12)" },
+            border: { display: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { size: 11, family: "Inter, sans-serif" },
+              precision: 0,
+            },
+            title: {
+              display: true,
+              text: "Orders",
+              color: "#64748b",
+              font: { size: 11, weight: "600", family: "Inter, sans-serif" },
+            },
+          },
+          revenue: {
+            type: "linear",
+            position: "right",
+            beginAtZero: true,
+            grid: { drawOnChartArea: false },
+            border: { display: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { size: 11, family: "Inter, sans-serif" },
+              callback: (v) => v + " TL",
+            },
+            title: {
+              display: true,
+              text: "Revenue (TL)",
+              color: "#64748b",
+              font: { size: 11, weight: "600", family: "Inter, sans-serif" },
+            },
+          },
+        },
+      },
+    });
+  })();
+</script>
+{% endblock %}

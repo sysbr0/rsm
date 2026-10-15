@@ -1,20 +1,84 @@
-"""
-URL configuration for config project.
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
-from django.urls import path ,include
+from .views import *
+from .api_views import (
+    CategoryStatsAPIView,
+    CategoryViewSet,
+    ProductStatsAPIView,
+    ProductViewSet,
+)
 
 
+router = DefaultRouter()
+router.register("categories", CategoryViewSet, basename="api-category")
+router.register("products", ProductViewSet, basename="api-product")
+
+
+urlpatterns = [
+    # ============================================================
+    # JSON API — stats routes MUST come BEFORE the router
+    # (otherwise the router matches them as <pk> and returns 404)
+    # ============================================================
+    path(
+        "api/categories/stats/",
+        CategoryStatsAPIView.as_view(),
+        name="api-category-stats",
+    ),
+    path(
+        "api/products/stats/",
+        ProductStatsAPIView.as_view(),
+        name="api-product-stats",
+    ),
+
+    # Router-managed CRUD endpoints
+    path("api/", include(router.urls)),
+
+    # ============================================================
+    # Category HTML pages
+    # ============================================================
+    path(
+        "categories/",
+        category_list_page,
+        name="category_list",
+    ),
+    path(
+        "categories/create/",
+        category_create_page,
+        name="category_create",
+    ),
+    path(
+        "categories/<str:pk>/edit/",
+        category_edit_page,
+        name="category_edit",
+    ),
+    path(
+        "categories/<str:pk>/delete/",
+        category_delete_page,
+        name="category_delete",
+    ),
+
+    # ============================================================
+    # Product HTML pages
+    # ============================================================
+    path(
+        "products/",
+        product_list_page,
+        name="product_list",
+    ),
+    path(
+        "products/create/",
+        product_create_page,
+        name="product_create",
+    ),
+    path(
+        "products/<str:pk>/edit/",
+        product_edit_page,
+        name="product_edit",
+    ),
+    path(
+        "products/<str:pk>/delete/",
+        product_delete_page,
+        name="product_delete",
+    ),
+]

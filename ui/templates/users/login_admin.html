@@ -3,881 +3,800 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>Admin Login | Restaurant Management System</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+    />
+
     <style>
-      * {
-        box-sizing: border-box;
+      /* ============================================================
+         LOGIN MANAGER — mirrors .pm / .cm design system
+         ============================================================ */
+      .lm {
+        --lm-ink: #0f172a;
+        --lm-ink-2: #1e293b;
+        --lm-muted: #64748b;
+        --lm-muted-2: #94a3b8;
+        --lm-line: #e2e8f0;
+        --lm-line-2: #f1f5f9;
+        --lm-bg: #f7f8fc;
+        --lm-white: #ffffff;
+        --lm-brand: #6366f1;
+        --lm-brand-2: #8b5cf6;
+        --lm-pink: #ec4899;
+        --lm-grad: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #8b5cf6 55%,
+          #ec4899 100%
+        );
+        --lm-grad-soft: linear-gradient(
+          135deg,
+          #eef2ff 0%,
+          #f5f3ff 50%,
+          #fdf2f8 100%
+        );
+        --lm-ok: #10b981;
+        --lm-warn: #f59e0b;
+        --lm-danger: #ef4444;
+        --lm-info: #3b82f6;
+        --lm-r-xl: 22px;
+        --lm-r-lg: 16px;
+        --lm-r: 12px;
+        --lm-r-sm: 9px;
+
+        color: var(--lm-ink);
+        font-family:
+          "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
-      :root {
-        --primary: #8b1e1e;
-        --primary-dark: #641414;
-        --primary-light: #f8eaea;
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        --text: #171717;
-        --muted: #6b7280;
-        --border: #e5e7eb;
-        --background: #f5f6f8;
-        --white: #ffffff;
-
-        --danger: #b91c1c;
-        --success: #166534;
+      html,
+      body {
+        height: 100%;
       }
 
       body {
-        margin: 0;
         min-height: 100vh;
-
-        font-family:
-          Inter,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          Roboto,
-          Arial,
-          sans-serif;
-
         background:
           radial-gradient(
-            circle at top left,
-            rgba(139, 30, 30, 0.08),
-            transparent 35%
+            circle at 8% 12%,
+            rgba(99, 102, 241, 0.06),
+            transparent 42%
           ),
-          var(--background);
-
+          radial-gradient(
+            circle at 92% 80%,
+            rgba(236, 72, 153, 0.05),
+            transparent 48%
+          ),
+          var(--lm-bg);
         display: flex;
         align-items: center;
         justify-content: center;
-
         padding: 24px;
-
-        color: var(--text);
       }
 
-      /* =====================================================
-         LOGIN CONTAINER
-      ===================================================== */
+      /* ============================================================
+         MATERIAL SYMBOLS
+         ============================================================ */
+      .lm .mat {
+        font-family: "Material Symbols Outlined" !important;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 20px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        user-select: none;
+        vertical-align: middle;
+      }
 
-      .login-container {
+      /* ============================================================
+         LAYOUT — two-column card (hero left, form right)
+         ============================================================ */
+      .lm-shell {
         width: 100%;
-        max-width: 960px;
-        min-height: 560px;
-
+        max-width: 1020px;
+        min-height: 620px;
         display: grid;
-        grid-template-columns: 0.85fr 1.15fr;
-
-        background: var(--white);
-
-        border-radius: 24px;
+        grid-template-columns: 0.9fr 1.1fr;
+        background: var(--lm-white);
+        border-radius: var(--lm-r-xl);
         overflow: hidden;
-
-        border: 1px solid rgba(0, 0, 0, 0.05);
-
+        border: 1px solid var(--lm-line);
         box-shadow:
-          0 30px 80px rgba(0, 0, 0, 0.1),
-          0 5px 20px rgba(0, 0, 0, 0.04);
+          0 24px 60px -28px rgba(99, 102, 241, 0.35),
+          0 4px 16px rgba(15, 23, 42, 0.04);
       }
 
-      /* =====================================================
-         LEFT BRAND PANEL
-      ===================================================== */
-
-      .brand-panel {
+      /* ============================================================
+         BRAND / HERO PANEL — mirrors .pm-hero / .cm-hero
+         ============================================================ */
+      .lm-brand {
         position: relative;
         overflow: hidden;
-
-        background: linear-gradient(
-          145deg,
-          #641414 0%,
-          #8b1e1e 55%,
-          #9d2929 100%
-        );
-
-        color: white;
-
-        padding: 48px;
-
+        padding: 2.2rem 2.1rem;
+        background: var(--lm-grad);
+        color: #fff;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        isolation: isolate;
       }
 
-      .brand-panel::before {
+      .lm-brand::before,
+      .lm-brand::after {
         content: "";
-
         position: absolute;
-
-        width: 330px;
-        height: 330px;
-
         border-radius: 50%;
-
-        border: 1px solid rgba(255, 255, 255, 0.1);
-
-        right: -170px;
-        top: -130px;
+        pointer-events: none;
+        z-index: 0;
       }
 
-      .brand-panel::after {
-        content: "";
-
-        position: absolute;
-
-        width: 420px;
-        height: 420px;
-
-        border-radius: 50%;
-
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
-        left: -300px;
-        bottom: -270px;
+      .lm-brand::before {
+        width: 320px;
+        height: 320px;
+        top: -140px;
+        right: -90px;
+        background: rgba(255, 255, 255, 0.14);
       }
 
-      .brand-content,
-      .brand-footer {
+      .lm-brand::after {
+        width: 220px;
+        height: 220px;
+        bottom: -110px;
+        left: -80px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .lm-brand-inner,
+      .lm-brand-footer {
         position: relative;
-        z-index: 2;
+        z-index: 1;
       }
 
-      /* =====================================================
-         LOGO
-      ===================================================== */
-
-      .logo {
-        width: 58px;
-        height: 58px;
-
-        border-radius: 16px;
-
-        background: rgba(255, 255, 255, 0.12);
-
-        border: 1px solid rgba(255, 255, 255, 0.2);
-
-        display: flex;
+      .lm-logo {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-
-        font-size: 25px;
-
-        margin-bottom: 30px;
-
-        backdrop-filter: blur(8px);
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        backdrop-filter: blur(6px);
+        box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.35);
+        margin-bottom: 1.5rem;
       }
 
-      .brand-label {
-        font-size: 11px;
+      .lm-logo .mat {
+        font-size: 28px;
+        color: #fff;
+      }
 
-        font-weight: 800;
-
-        letter-spacing: 1.8px;
-
+      .lm-crumb {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-
-        color: rgba(255, 255, 255, 0.6);
-
-        margin-bottom: 12px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        margin-bottom: 0.85rem;
+        backdrop-filter: blur(6px);
       }
 
-      .brand-title {
-        margin: 0;
+      .lm-crumb .mat {
+        font-size: 16px;
+      }
 
-        font-size: 34px;
-
+      .lm-brand h1 {
+        font-size: clamp(1.7rem, 2.6vw, 2.15rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
         line-height: 1.12;
-
-        letter-spacing: -1px;
+        margin: 0 0 0.75rem;
+        color: #fff;
       }
 
-      .brand-description {
-        max-width: 350px;
-
-        margin: 20px 0 0;
-
-        color: rgba(255, 255, 255, 0.72);
-
-        font-size: 14px;
-
-        line-height: 1.7;
-      }
-
-      /* =====================================================
-         ADMIN BADGE
-      ===================================================== */
-
-      .admin-badge {
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 8px;
-
-        margin-top: 30px;
-
-        padding: 9px 13px;
-
-        border-radius: 10px;
-
-        background: rgba(255, 255, 255, 0.1);
-
-        border: 1px solid rgba(255, 255, 255, 0.12);
-
-        font-size: 12px;
-
-        font-weight: 600;
-      }
-
-      .admin-badge-dot {
-        width: 7px;
-        height: 7px;
-
-        border-radius: 50%;
-
-        background: #86efac;
-
-        box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.12);
-      }
-
-      .brand-footer {
-        color: rgba(255, 255, 255, 0.45);
-
-        font-size: 11px;
-      }
-
-      /* =====================================================
-         RIGHT LOGIN PANEL
-      ===================================================== */
-
-      .login-panel {
-        padding: 55px;
-
-        display: flex;
-
-        flex-direction: column;
-
-        justify-content: center;
-      }
-
-      .login-header {
-        margin-bottom: 30px;
-      }
-
-      .login-eyebrow {
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 7px;
-
-        color: var(--primary);
-
-        font-size: 11px;
-
-        font-weight: 800;
-
-        letter-spacing: 1.5px;
-
-        text-transform: uppercase;
-
-        margin-bottom: 12px;
-      }
-
-      .login-eyebrow::before {
-        content: "";
-
-        width: 7px;
-        height: 7px;
-
-        border-radius: 50%;
-
-        background: var(--primary);
-      }
-
-      .login-title {
+      .lm-brand p {
         margin: 0;
-
-        font-size: 30px;
-
-        letter-spacing: -0.7px;
-      }
-
-      .login-description {
-        margin: 9px 0 0;
-
-        color: var(--muted);
-
-        font-size: 14px;
-
+        font-size: 0.9rem;
         line-height: 1.6;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 360px;
       }
 
-      /* =====================================================
-         DJANGO ERROR
-      ===================================================== */
-
-      .login-error {
+      /* small stat chips inside brand panel */
+      .lm-chip-row {
         display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+      }
 
+      .lm-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.42rem 0.85rem;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #fff;
+        backdrop-filter: blur(4px);
+        letter-spacing: 0.2px;
+      }
+
+      .lm-chip .mat {
+        font-size: 15px;
+      }
+
+      .lm-chip .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #86efac;
+        box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.22);
+      }
+
+      .lm-brand-footer {
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
+
+      /* ============================================================
+         LOGIN PANEL (right)
+         ============================================================ */
+      .lm-panel {
+        padding: 2.6rem 2.6rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: var(--lm-white);
+      }
+
+      .lm-header {
+        margin-bottom: 1.6rem;
+      }
+
+      .lm-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--lm-brand);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.85rem;
+      }
+
+      .lm-eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--lm-brand);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      }
+
+      .lm-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--lm-ink);
+        margin: 0 0 0.5rem;
+        line-height: 1.15;
+      }
+
+      .lm-desc {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        color: var(--lm-muted);
+        max-width: 400px;
+      }
+
+      /* ============================================================
+         TOAST / ERROR (matches .pm-toast / .cm-toast)
+         ============================================================ */
+      .lm-toast {
+        display: flex;
         align-items: flex-start;
-
-        gap: 11px;
-
-        margin-bottom: 20px;
-
-        padding: 13px 14px;
-
-        border-radius: 12px;
-
-        background: #fef2f2;
-
-        border: 1px solid #fecaca;
-
-        color: var(--danger);
-
-        font-size: 12px;
-
+        gap: 0.65rem;
+        padding: 0.85rem 1.1rem;
+        border-radius: var(--lm-r);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        animation: lmIn 0.28s ease;
         line-height: 1.5;
       }
 
-      .login-error-icon {
-        width: 21px;
-        height: 21px;
-
+      .lm-toast .mat {
+        font-size: 20px;
         flex-shrink: 0;
+        margin-top: 1px;
+      }
 
-        display: flex;
+      .lm-toast.err {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-left: 4px solid var(--lm-danger);
+      }
 
-        align-items: center;
+      .lm-toast.ok {
+        background: #ecfdf5;
+        color: #047857;
+        border-left: 4px solid var(--lm-ok);
+      }
 
-        justify-content: center;
-
-        border-radius: 50%;
-
-        background: #dc2626;
-
-        color: white;
-
-        font-size: 12px;
-
+      .lm-toast strong {
+        display: block;
         font-weight: 800;
-      }
-
-      .login-error-content strong {
-        display: block;
-
         margin-bottom: 2px;
-
-        font-size: 12px;
       }
 
-      .login-error-content p {
-        margin: 0;
-
-        font-size: 12px;
+      @keyframes lmIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
-      /* =====================================================
+      /* ============================================================
          FORM
-      ===================================================== */
-
-      .login-form {
+         ============================================================ */
+      .lm-form {
         width: 100%;
       }
 
-      .form-group {
-        margin-bottom: 19px;
+      .lm-g {
+        margin-bottom: 1.15rem;
       }
 
-      .form-label {
+      .lm-lbl {
         display: block;
-
-        margin-bottom: 8px;
-
-        color: #374151;
-
-        font-size: 13px;
-
+        font-size: 0.72rem;
         font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--lm-muted);
+        margin-bottom: 0.5rem;
       }
 
-      .input-wrapper {
+      .lm-input-wrap {
         position: relative;
-
         display: flex;
-
         align-items: center;
       }
 
-      .input-icon {
+      .lm-input-wrap > .mat {
         position: absolute;
-
-        left: 14px;
-
+        left: 0.95rem;
         top: 50%;
-
         transform: translateY(-50%);
-
-        color: #9ca3af;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
+        color: var(--lm-muted-2);
+        font-size: 18px;
         pointer-events: none;
-
-        transition: color 0.2s ease;
+        transition: color 0.18s ease;
       }
 
-      .form-input {
+      .lm-input-wrap:focus-within > .mat {
+        color: var(--lm-brand);
+      }
+
+      .lm-input {
         width: 100%;
-
-        height: 50px;
-
-        padding: 0 45px;
-
-        border: 1px solid var(--border);
-
-        border-radius: 12px;
-
-        background: #ffffff;
-
-        color: var(--text);
-
-        font-size: 14px;
-
+        min-height: 50px;
+        padding: 0.65rem 3rem 0.65rem 2.85rem;
+        border: 1.5px solid var(--lm-line);
+        border-radius: var(--lm-r);
+        background: var(--lm-white);
+        color: var(--lm-ink);
+        font-size: 0.9rem;
+        font-weight: 500;
+        font-family: inherit;
         outline: none;
-
         transition:
-          border-color 0.2s ease,
-          box-shadow 0.2s ease,
-          background 0.2s ease;
+          border-color 0.18s ease,
+          box-shadow 0.18s ease,
+          background 0.18s ease;
       }
 
-      .form-input:hover {
-        border-color: #d1d5db;
+      .lm-input::placeholder {
+        color: var(--lm-muted-2);
+        font-weight: 400;
       }
 
-      .form-input:focus {
-        border-color: var(--primary);
-
-        background: #ffffff;
-
-        box-shadow: 0 0 0 3px rgba(139, 30, 30, 0.1);
+      .lm-input:hover {
+        border-color: #cbd5e1;
       }
 
-      .input-wrapper:focus-within .input-icon {
-        color: var(--primary);
+      .lm-input:focus {
+        border-color: var(--lm-brand-2);
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
       }
 
-      .form-input::placeholder {
-        color: #9ca3af;
-      }
-
-      /* =====================================================
-         PASSWORD TOGGLE
-      ===================================================== */
-
-      .password-toggle {
+      /* password toggle — matches .pm-ibtn / .cm-ibtn surface */
+      .lm-eye {
         position: absolute;
-
         right: 8px;
-
         top: 50%;
-
         transform: translateY(-50%);
-
-        width: 34px;
-
-        height: 34px;
-
-        border: 0;
-
-        border-radius: 8px;
-
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid transparent;
+        border-radius: var(--lm-r-sm);
         background: transparent;
-
-        color: #6b7280;
-
+        color: var(--lm-muted);
         cursor: pointer;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
         transition:
-          background 0.2s ease,
-          color 0.2s ease;
+          background 0.18s ease,
+          color 0.18s ease,
+          border-color 0.18s ease;
       }
 
-      .password-toggle:hover {
-        background: #f3f4f6;
-
-        color: var(--primary);
+      .lm-eye .mat {
+        font-size: 18px;
       }
 
-      /* =====================================================
-         LOGIN BUTTON
-      ===================================================== */
+      .lm-eye:hover {
+        background: #eef2ff;
+        color: var(--lm-brand);
+        border-color: var(--lm-brand);
+      }
 
-      .login-button {
+      .lm-eye:focus-visible {
+        outline: none;
+        border-color: var(--lm-brand-2);
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+      }
+
+      /* ============================================================
+         BUTTONS — mirrors .pm-btn-grad / .pm-btn-ghost
+         ============================================================ */
+      .lm-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
         width: 100%;
-
-        height: 50px;
-
-        margin-top: 5px;
-
+        min-height: 52px;
+        padding: 0.75rem 1.4rem;
         border: 0;
-
-        border-radius: 12px;
-
-        background: linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary-dark)
-        );
-
-        color: white;
-
-        font-size: 14px;
-
+        border-radius: var(--lm-r);
+        background: var(--lm-grad);
+        color: #fff;
+        font-size: 0.92rem;
         font-weight: 700;
-
+        font-family: inherit;
+        letter-spacing: 0.2px;
         cursor: pointer;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        gap: 9px;
-
-        box-shadow: 0 8px 20px rgba(139, 30, 30, 0.15);
-
+        box-shadow: 0 10px 26px -8px rgba(99, 102, 241, 0.55);
         transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease,
-          opacity 0.2s ease;
+          transform 0.16s ease,
+          box-shadow 0.16s ease,
+          opacity 0.16s ease,
+          filter 0.16s ease;
+        margin-top: 0.4rem;
       }
 
-      .login-button:hover {
-        transform: translateY(-1px);
-
-        box-shadow: 0 12px 25px rgba(139, 30, 30, 0.22);
+      .lm-btn .mat {
+        font-size: 20px;
       }
 
-      .login-button:active {
+      .lm-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px -10px rgba(99, 102, 241, 0.65);
+        filter: brightness(1.04);
+      }
+
+      .lm-btn:active:not(:disabled) {
         transform: translateY(0);
       }
 
-      .login-button:disabled {
+      .lm-btn:disabled {
         cursor: not-allowed;
-
-        opacity: 0.65;
-
+        opacity: 0.7;
         transform: none;
-
         box-shadow: none;
       }
 
-      /* =====================================================
-         LOADING SPINNER
-      ===================================================== */
-
-      .spinner {
-        width: 17px;
-
-        height: 17px;
-
+      /* loading spinner */
+      .lm-spinner {
+        width: 18px;
+        height: 18px;
         border: 2px solid rgba(255, 255, 255, 0.35);
-
-        border-top-color: white;
-
+        border-top-color: #fff;
         border-radius: 50%;
-
-        animation: spin 0.7s linear infinite;
-
+        animation: lmSpin 0.7s linear infinite;
         display: none;
       }
 
-      .login-button.loading .spinner {
+      .lm-btn.loading .lm-spinner {
         display: block;
       }
 
-      .login-button.loading .button-icon {
+      .lm-btn.loading .lm-btn-icon {
         display: none;
       }
 
-      @keyframes spin {
+      @keyframes lmSpin {
         to {
           transform: rotate(360deg);
         }
       }
 
-      /* =====================================================
-         SECURITY
-      ===================================================== */
-
-      .security-note {
+      /* ============================================================
+         SECURITY NOTE — matches the small muted cards
+         ============================================================ */
+      .lm-note {
         display: flex;
-
         align-items: flex-start;
-
-        gap: 9px;
-
-        margin-top: 25px;
-
-        padding: 13px 14px;
-
-        border-radius: 11px;
-
-        background: #f8fafc;
-
-        border: 1px solid var(--border);
+        gap: 0.7rem;
+        margin-top: 1.4rem;
+        padding: 0.9rem 1rem;
+        border-radius: var(--lm-r);
+        background: var(--lm-line-2);
+        border: 1px solid var(--lm-line);
       }
 
-      .security-icon {
-        color: #64748b;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
+      .lm-note .mat {
+        color: var(--lm-muted);
+        font-size: 18px;
         flex-shrink: 0;
+        margin-top: 1px;
       }
 
-      .security-text {
-        color: #64748b;
-
-        font-size: 10px;
-
-        line-height: 1.55;
+      .lm-note p {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.65;
+        color: var(--lm-muted);
+        font-weight: 500;
       }
 
-      /* =====================================================
-         FOOTER
-      ===================================================== */
-
-      .login-footer {
-        margin-top: 25px;
-
+      /* ============================================================
+         FOOTER / BACK LINK
+         ============================================================ */
+      .lm-footer {
+        margin-top: 1.5rem;
         text-align: center;
       }
 
-      .back-link {
+      .lm-back {
         display: inline-flex;
-
         align-items: center;
-
-        gap: 7px;
-
-        color: #6b7280;
-
-        font-size: 12px;
-
+        gap: 0.45rem;
+        color: var(--lm-muted);
+        font-size: 0.8rem;
+        font-weight: 600;
         text-decoration: none;
-
-        transition: color 0.2s ease;
+        letter-spacing: 0.2px;
+        transition:
+          color 0.18s ease,
+          gap 0.18s ease;
       }
 
-      .back-link:hover {
-        color: var(--primary);
+      .lm-back .mat {
+        font-size: 16px;
       }
 
-      /* =====================================================
+      .lm-back:hover {
+        color: var(--lm-brand-2);
+        gap: 0.65rem;
+      }
+
+      /* ============================================================
          RESPONSIVE
-      ===================================================== */
-
-      @media (max-width: 800px) {
-        body {
-          padding: 18px;
-        }
-
-        .login-container {
-          max-width: 520px;
-
+         ============================================================ */
+      @media (max-width: 880px) {
+        .lm-shell {
+          max-width: 560px;
+          min-height: auto;
           grid-template-columns: 1fr;
         }
 
-        .brand-panel {
-          min-height: 280px;
-
-          padding: 35px;
+        .lm-brand {
+          padding: 1.9rem 1.7rem;
         }
 
-        .brand-title {
-          font-size: 29px;
+        .lm-brand p {
+          max-width: 100%;
         }
 
-        .brand-description {
-          margin-top: 15px;
-        }
-
-        .admin-badge {
-          margin-top: 20px;
-        }
-
-        .login-panel {
-          padding: 38px;
+        .lm-panel {
+          padding: 2.1rem 1.9rem;
         }
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 520px) {
         body {
           padding: 0;
+          background: var(--lm-white);
         }
 
-        .login-container {
+        .lm-shell {
           min-height: 100vh;
-
+          max-width: 100%;
           border-radius: 0;
-
           border: 0;
+          box-shadow: none;
         }
 
-        .brand-panel {
-          min-height: 255px;
-
-          padding: 28px 22px;
+        .lm-brand {
+          padding: 1.6rem 1.35rem;
         }
 
-        .logo {
+        .lm-logo {
           width: 50px;
-
           height: 50px;
-
-          margin-bottom: 22px;
+          margin-bottom: 1.1rem;
         }
 
-        .brand-title {
-          font-size: 26px;
+        .lm-brand h1 {
+          font-size: 1.55rem;
         }
 
-        .brand-description {
-          font-size: 12px;
-        }
-
-        .login-panel {
-          padding: 30px 22px;
-
+        .lm-panel {
+          padding: 1.75rem 1.35rem 2rem;
           justify-content: flex-start;
         }
 
-        .login-title {
-          font-size: 26px;
+        .lm-title {
+          font-size: 1.5rem;
+        }
+      }
+
+      /* ============================================================
+         ACCESSIBILITY / MOTION
+         ============================================================ */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
         }
       }
     </style>
   </head>
 
-  <body>
-    <main class="login-container">
-      <!-- ===================================================
-           BRAND PANEL
-      ==================================================== -->
+  <body class="lm">
+    <main class="lm-shell">
+      <!-- ========================================================
+           BRAND / HERO PANEL (left)
+           ======================================================== -->
+      <section class="lm-brand" aria-label="Brand">
+        <div class="lm-brand-inner">
+          <div class="lm-logo" aria-hidden="true">
+            <span class="mat">restaurant</span>
+          </div>
 
-      <section class="brand-panel">
-        <div class="brand-content">
-          <div class="logo">🍽️</div>
+          <span class="lm-crumb">
+            <span class="mat">shield_person</span>
+            Administrator Portal
+          </span>
 
-          <div class="brand-label">Restaurant Management System</div>
+          <h1>Restaurant<br />Management System</h1>
 
-          <h1 class="brand-title">
-            Administrator
-            <br />
-            Portal
-          </h1>
-
-          <p class="brand-description">
-            Manage your restaurant operations, tables, menus, employees, orders,
-            and system settings from one centralized dashboard.
+          <p>
+            Manage tables, menus, employees, orders, and system settings from
+            one centralized dashboard.
           </p>
 
-          <div class="admin-badge">
-            <span class="admin-badge-dot"></span>
-
-            Administrator access
+          <div class="lm-chip-row">
+            <span class="lm-chip">
+              <span class="dot"></span>
+              Administrator access
+            </span>
+            <span class="lm-chip">
+              <span class="mat">lock</span>
+              Encrypted sign-in
+            </span>
           </div>
         </div>
 
-        <div class="brand-footer">Restaurant Management System &copy; 2026</div>
+        <div class="lm-brand-footer">
+          Restaurant Management System &copy; 2026
+        </div>
       </section>
 
-      <!-- ===================================================
-           LOGIN PANEL
-      ==================================================== -->
-
-      <section class="login-panel">
-        <div class="login-header">
-          <div class="login-eyebrow">Secure Access</div>
-
-          <h2 class="login-title">Welcome back</h2>
-
-          <p class="login-description">
+      <!-- ========================================================
+           LOGIN PANEL (right)
+           ======================================================== -->
+      <section class="lm-panel">
+        <div class="lm-header">
+          <div class="lm-eyebrow">Secure Access</div>
+          <h2 class="lm-title">Welcome back</h2>
+          <p class="lm-desc">
             Sign in with your administrator account to continue to the
             dashboard.
           </p>
         </div>
 
-        <!-- =================================================
-             DJANGO ERROR
-        ================================================== -->
-
+        <!-- DJANGO ERROR → styled as .lm-toast.err -->
         {% if error %}
-
-        <div class="login-error">
-          <div class="login-error-icon">!</div>
-
-          <div class="login-error-content">
-            <strong> Sign-in failed </strong>
-
-            <p>{{ error }}</p>
+        <div class="lm-toast err" role="alert">
+          <span class="mat">error</span>
+          <div>
+            <strong>Sign-in failed</strong>
+            {{ error }}
           </div>
         </div>
-
         {% endif %}
 
-        <!-- =================================================
+        <!-- ====================================================
              LOGIN FORM
-        ================================================== -->
-
-        <form method="POST" action="" class="login-form" id="login-form">
+             ==================================================== -->
+        <form
+          method="POST"
+          action=""
+          class="lm-form"
+          id="login-form"
+          novalidate
+        >
           {% csrf_token %}
 
           <!-- USERNAME -->
-
-          <div class="form-group">
-            <label for="username" class="form-label"> Username </label>
-
-            <div class="input-wrapper">
-              <span class="input-icon">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                >
-                  <circle cx="12" cy="7" r="4" />
-
-                  <path d="M4 21a8 8 0 0 1 16 0" />
-                </svg>
-              </span>
-
+          <div class="lm-g">
+            <label for="username" class="lm-lbl">Username</label>
+            <div class="lm-input-wrap">
+              <span class="mat" aria-hidden="true">person</span>
               <input
                 id="username"
                 name="username"
                 type="text"
-                class="form-input"
+                class="lm-input"
                 placeholder="Enter your username"
                 autocomplete="username"
                 required
@@ -887,205 +806,99 @@
           </div>
 
           <!-- PASSWORD -->
-
-          <div class="form-group">
-            <label for="password" class="form-label"> Password </label>
-
-            <div class="input-wrapper">
-              <span class="input-icon">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                >
-                  <rect x="4" y="10" width="16" height="10" rx="2" />
-
-                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                </svg>
-              </span>
-
+          <div class="lm-g">
+            <label for="password" class="lm-lbl">Password</label>
+            <div class="lm-input-wrap">
+              <span class="mat" aria-hidden="true">lock</span>
               <input
                 id="password"
                 name="password"
                 type="password"
-                class="form-input"
+                class="lm-input"
                 placeholder="Enter your password"
                 autocomplete="current-password"
                 required
               />
-
               <button
                 type="button"
-                class="password-toggle"
+                class="lm-eye"
                 id="password-toggle"
                 aria-label="Show password"
+                aria-pressed="false"
               >
-                <svg
-                  id="eye-open"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                >
-                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
-
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-
-                <svg
-                  id="eye-closed"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  style="display: none"
-                >
-                  <path d="M3 3l18 18" />
-
-                  <path
-                    d="M10.6 6.2A9.7 9.7 0 0 1 12 6c6.5 0 10 6 10 6a17.8 17.8 0 0 1-3.1 3.7"
-                  />
-
-                  <path
-                    d="M6.1 6.1C3.4 8 2 12 2 12s3.5 6 10 6c1.5 0 2.8-.3 4-.8"
-                  />
-                </svg>
+                <span class="mat" id="eye-icon">visibility</span>
               </button>
             </div>
           </div>
 
-          <!-- =================================================
-               SUBMIT
-          ================================================== -->
-
-          <button type="submit" class="login-button" id="login-button">
-            <span class="spinner"></span>
-
-            <span class="button-icon">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-
-                <path d="M10 17l5-5-5-5" />
-
-                <path d="M15 12H3" />
-              </svg>
-            </span>
-
-            <span class="button-text"> Sign In as Administrator </span>
+          <!-- SUBMIT -->
+          <button type="submit" class="lm-btn" id="login-button">
+            <span class="lm-spinner"></span>
+            <span class="lm-btn-icon mat">login</span>
+            <span class="lm-btn-text">Sign In as Administrator</span>
           </button>
         </form>
 
-        <!-- =================================================
-             SECURITY
-        ================================================== -->
-
-        <div class="security-note">
-          <div class="security-icon">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-            >
-              <rect x="4" y="10" width="16" height="10" rx="2" />
-
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </svg>
-          </div>
-
-          <div class="security-text">
+        <!-- SECURITY NOTE -->
+        <div class="lm-note">
+          <span class="mat" aria-hidden="true">verified_user</span>
+          <p>
             This area is restricted to authorized administrators. Your account
             permissions determine which restaurant management features you can
             access.
-          </div>
+          </p>
         </div>
 
-        <!-- =================================================
-             BACK
-        ================================================== -->
-
-        <div class="login-footer">
-          <a href="/" class="back-link"> ← Back to role selection </a>
+        <!-- BACK LINK -->
+        <div class="lm-footer">
+          <a href="/" class="lm-back">
+            <span class="mat">arrow_back</span>
+            Back to role selection
+          </a>
         </div>
       </section>
     </main>
 
-    <!-- =====================================================
+    <!-- ========================================================
          JAVASCRIPT
-    ====================================================== -->
-
+         ======================================================== -->
     <script>
-      const form = document.getElementById("login-form");
+      (function () {
+        "use strict";
 
-      const button = document.getElementById("login-button");
+        const form = document.getElementById("login-form");
+        const button = document.getElementById("login-button");
+        const buttonText = button?.querySelector(".lm-btn-text");
+        const passwordInput = document.getElementById("password");
+        const passwordToggle = document.getElementById("password-toggle");
+        const eyeIcon = document.getElementById("eye-icon");
 
-      const buttonText = button?.querySelector(".button-text");
-
-      const passwordInput = document.getElementById("password");
-
-      const passwordToggle = document.getElementById("password-toggle");
-
-      const eyeOpen = document.getElementById("eye-open");
-
-      const eyeClosed = document.getElementById("eye-closed");
-
-      /* =====================================================
-         PASSWORD VISIBILITY
-      ====================================================== */
-
-      passwordToggle?.addEventListener("click", function () {
-        const isPassword = passwordInput.type === "password";
-
-        passwordInput.type = isPassword ? "text" : "password";
-
-        eyeOpen.style.display = isPassword ? "none" : "block";
-
-        eyeClosed.style.display = isPassword ? "block" : "none";
-
-        passwordToggle.setAttribute(
-          "aria-label",
-          isPassword ? "Hide password" : "Show password",
-        );
-      });
-
-      /* =====================================================
-         SUBMIT LOADING STATE
-         
-         IMPORTANT:
-         We do NOT use fetch().
-         
-         Django receives the POST normally.
-      ====================================================== */
-
-      form?.addEventListener("submit", function () {
-        if (!button) {
-          return;
+        /* ---------- PASSWORD VISIBILITY TOGGLE ---------- */
+        if (passwordToggle && passwordInput && eyeIcon) {
+          passwordToggle.addEventListener("click", function () {
+            const isHidden = passwordInput.type === "password";
+            passwordInput.type = isHidden ? "text" : "password";
+            eyeIcon.textContent = isHidden ? "visibility_off" : "visibility";
+            passwordToggle.setAttribute(
+              "aria-label",
+              isHidden ? "Hide password" : "Show password",
+            );
+            passwordToggle.setAttribute(
+              "aria-pressed",
+              isHidden ? "true" : "false",
+            );
+          });
         }
 
-        button.disabled = true;
-
-        button.classList.add("loading");
-
-        if (buttonText) {
-          buttonText.textContent = "Signing in...";
+        /* ---------- SUBMIT LOADING STATE ---------- */
+        if (form && button) {
+          form.addEventListener("submit", function () {
+            button.disabled = true;
+            button.classList.add("loading");
+            if (buttonText) buttonText.textContent = "Signing in…";
+          });
         }
-      });
+      })();
     </script>
   </body>
 </html>

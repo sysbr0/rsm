@@ -1,0 +1,897 @@
+{% extends "ui/admin_base.html" %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     LICENSE ACTIVATION — styled to match TM
+     ============================================ */
+  .la {
+    --la-ink: #0f172a;
+    --la-ink-2: #1e293b;
+    --la-muted: #64748b;
+    --la-muted-2: #94a3b8;
+    --la-line: #e2e8f0;
+    --la-line-2: #f1f5f9;
+    --la-bg: #f7f8fc;
+    --la-white: #ffffff;
+    --la-brand: #6366f1;
+    --la-brand-2: #8b5cf6;
+    --la-pink: #ec4899;
+    --la-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --la-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --la-ok: #10b981;
+    --la-warn: #f59e0b;
+    --la-danger: #ef4444;
+    --la-info: #3b82f6;
+    --la-r-xl: 22px;
+    --la-r-lg: 16px;
+    --la-r: 12px;
+    --la-r-sm: 9px;
+
+    color: var(--la-ink);
+    background: var(--la-bg);
+    padding: 1.75rem;
+    border-radius: var(--la-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    min-height: 500px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .la * {
+    box-sizing: border-box;
+  }
+
+  .la .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* HERO */
+  .la-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.9rem 2.1rem;
+    border-radius: var(--la-r-xl);
+    background: var(--la-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .la-hero::before,
+  .la-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .la-hero::before {
+    width: 280px;
+    height: 280px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .la-hero::after {
+    width: 180px;
+    height: 180px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .la-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .la-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+  }
+  .la-crumb .mat {
+    font-size: 16px;
+  }
+  .la-hero h1 {
+    font-size: clamp(1.55rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .la-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .la-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.15rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .la-hero-badge .mat {
+    font-size: 18px;
+  }
+
+  /* KPI */
+  .la-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .la-kpi {
+    position: relative;
+    overflow: hidden;
+    padding: 1.15rem 1.3rem;
+    background: var(--la-white);
+    border: 1px solid var(--la-line);
+    border-radius: var(--la-r-lg);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
+  }
+  .la-kpi:hover {
+    transform: translateY(-3px);
+    border-color: #c7d2fe;
+    box-shadow: 0 16px 32px -20px rgba(99, 102, 241, 0.45);
+  }
+  .la-kpi::after {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.14;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+  .la-kpi:hover::after {
+    opacity: 0.22;
+    transform: scale(1.1);
+  }
+  .la-kpi.t::after {
+    background: var(--la-brand);
+  }
+  .la-kpi.ok::after {
+    background: var(--la-ok);
+  }
+  .la-kpi.danger::after {
+    background: var(--la-danger);
+  }
+  .la-kpi.warn::after {
+    background: var(--la-warn);
+  }
+  .la-kpi-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.6rem;
+    position: relative;
+    z-index: 1;
+  }
+  .la-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .la-kpi.t .la-dot {
+    background: var(--la-brand);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  }
+  .la-kpi.ok .la-dot {
+    background: var(--la-ok);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  }
+  .la-kpi.danger .la-dot {
+    background: var(--la-danger);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+  .la-kpi.warn .la-dot {
+    background: var(--la-warn);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+  }
+  .la-kpi-lbl {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--la-muted);
+  }
+  .la-kpi-val {
+    position: relative;
+    z-index: 1;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+    color: var(--la-ink);
+    overflow-wrap: anywhere;
+  }
+  .la-kpi-sub {
+    position: relative;
+    z-index: 1;
+    font-size: 0.72rem;
+    color: var(--la-muted-2);
+    margin-top: 0.3rem;
+    font-weight: 600;
+  }
+
+  /* GRID */
+  .la-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 1.35rem;
+    align-items: start;
+  }
+  @media (max-width: 1023px) {
+    .la-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* PANEL */
+  .la-panel {
+    background: var(--la-white);
+    border: 1px solid var(--la-line);
+    border-radius: var(--la-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .la-panel-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--la-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .la-panel-top h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .la-panel-top h2 .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--la-grad-soft);
+    color: var(--la-brand);
+    font-size: 18px;
+  }
+  .la-panel-top .sub {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--la-muted-2);
+  }
+  .la-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    background: var(--la-grad-soft);
+    color: var(--la-brand-2);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .la-pill .mat {
+    font-size: 16px;
+  }
+  .la-pill.ok {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .la-pill.warn {
+    background: #fffbeb;
+    color: #b45309;
+  }
+  .la-pill.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .la-body {
+    padding: 1.5rem;
+  }
+
+  /* FORM */
+  .la-g {
+    margin-bottom: 1.15rem;
+  }
+  .la-lbl {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--la-muted);
+    margin-bottom: 0.5rem;
+  }
+  .la-search {
+    position: relative;
+  }
+  .la-search .mat {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--la-muted-2);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .la-input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.65rem 0.95rem 0.65rem 2.6rem;
+    border: 1.5px solid var(--la-line);
+    border-radius: var(--la-r);
+    background: var(--la-white);
+    color: var(--la-ink);
+    font-size: 0.95rem;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .la-input::placeholder {
+    color: var(--la-muted-2);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: normal;
+  }
+  .la-input:focus {
+    outline: none;
+    border-color: var(--la-brand-2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
+  }
+  .la-hint {
+    display: block;
+    font-size: 0.76rem;
+    color: var(--la-muted-2);
+    margin-top: 0.45rem;
+    line-height: 1.5;
+  }
+
+  /* MACHINE INFO */
+  .la-machine {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.05rem;
+    margin: 0 0 1.35rem;
+    background: var(--la-grad-soft);
+    border: 1px solid #e2e8fb;
+    border-radius: var(--la-r);
+    font-size: 0.84rem;
+    color: var(--la-ink-2);
+    word-break: break-word;
+  }
+  .la-machine .mat {
+    flex-shrink: 0;
+    color: var(--la-brand);
+    font-size: 22px;
+  }
+  .la-machine .lbl {
+    color: var(--la-muted);
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .la-machine .val {
+    font-weight: 800;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.2px;
+  }
+
+  /* BUTTONS */
+  .la-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7rem 1.4rem;
+    border: 0;
+    border-radius: var(--la-r);
+    background: var(--la-grad);
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+    text-decoration: none;
+  }
+  .la-btn-grad .mat {
+    font-size: 19px;
+  }
+  .la-btn-grad:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    color: #fff;
+  }
+  .la-btn-grad:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .la-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0.55rem 1.1rem;
+    border: 1.5px solid var(--la-line);
+    border-radius: var(--la-r);
+    background: var(--la-white);
+    color: var(--la-muted);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .la-btn-ghost .mat {
+    font-size: 18px;
+  }
+  .la-btn-ghost:hover {
+    border-color: var(--la-brand-2);
+    color: var(--la-brand-2);
+    background: #faf5ff;
+  }
+
+  /* TOAST */
+  .la-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--la-r);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+    animation: laIn 0.28s ease;
+    line-height: 1.5;
+  }
+  .la-toast .mat {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  @keyframes laIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .la-toast.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--la-ok);
+  }
+  .la-toast.err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--la-danger);
+  }
+  .la-toast.warn {
+    background: #fffbeb;
+    color: #b45309;
+    border-left: 4px solid var(--la-warn);
+  }
+  .la-toast.info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-left: 4px solid var(--la-info);
+  }
+
+  /* DETAIL LIST */
+  .la-detail {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--la-line-2);
+    font-size: 0.86rem;
+  }
+  .la-detail:last-child {
+    border-bottom: 0;
+  }
+  .la-detail .k {
+    color: var(--la-muted);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+  }
+  .la-detail .k .mat {
+    font-size: 17px;
+    color: var(--la-brand);
+  }
+  .la-detail .v {
+    font-weight: 700;
+    color: var(--la-ink);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .la-detail .v.mono {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0.3px;
+    font-size: 0.82rem;
+  }
+
+  /* STEPS */
+  .la-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .la-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.84rem;
+    color: var(--la-ink-2);
+    line-height: 1.5;
+  }
+  .la-step-num {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--la-grad-soft);
+    color: var(--la-brand);
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  @media (max-width: 640px) {
+    .la {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+    .la-hero {
+      padding: 1.4rem 1.3rem;
+    }
+    .la-body {
+      padding: 1.15rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .la *,
+    .la *::before,
+    .la *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="la" id="license-activation">
+  <!-- HERO -->
+  <header class="la-hero">
+    <div class="la-hero-in">
+      <div>
+        <span class="la-crumb">
+          <span class="mat">verified_user</span> Licensing · Activation
+        </span>
+        <h1>Activate License</h1>
+        <p>
+          Enter your license key to activate this installation and unlock all
+          features.
+        </p>
+      </div>
+      <div class="la-hero-badge">
+        <span class="mat">computer</span>
+        <span>{{ machine_name|default:"This machine" }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  {% if messages %} {% for message in messages %}
+  <div class="la-toast {{ message.tags }}" role="alert">
+    <span class="mat">info</span>
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %} {% endif %}
+
+  <!-- KPI -->
+  <section class="la-kpis">
+    <div class="la-kpi t">
+      <div class="la-kpi-row">
+        <span class="la-dot"></span>
+        <span class="la-kpi-lbl">Status</span>
+      </div>
+      <div class="la-kpi-val">{{existing_license.is_active }}</div>
+      <div class="la-kpi-sub">Local license state</div>
+    </div>
+    <div class="la-kpi ok">
+      <div class="la-kpi-row">
+        <span class="la-dot"></span>
+        <span class="la-kpi-lbl">Plan</span>
+      </div>
+      <div class="la-kpi-val">{{ existing_license.plan|default:"—" }}</div>
+      <div class="la-kpi-sub">Current subscription</div>
+    </div>
+    <div class="la-kpi warn">
+      <div class="la-kpi-row">
+        <span class="la-dot"></span>
+        <span class="la-kpi-lbl">Expires</span>
+      </div>
+      <div class="la-kpi-val" style="font-size: 1.05rem">
+        {{ existing_license.expires_at|date:"M d, Y"|default:"—" }}
+      </div>
+      <div class="la-kpi-sub">License validity</div>
+    </div>
+    <div class="la-kpi danger">
+      <div class="la-kpi-row">
+        <span class="la-dot"></span>
+        <span class="la-kpi-lbl">Installation ID</span>
+      </div>
+      <div
+        class="la-kpi-val"
+        style="
+          font-size: 0.8rem;
+          font-family: ui-monospace, Menlo, monospace;
+          letter-spacing: 0.2px;
+        "
+      >
+        {{ existing_license.installation_id|default:"—"|truncatechars:18 }}
+      </div>
+      <div class="la-kpi-sub">Unique machine fingerprint</div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <div class="la-grid">
+    <!-- ACTIVATION FORM -->
+    <main class="la-panel">
+      <div class="la-panel-top">
+        <div>
+          <h2><span class="mat">key</span> License Key</h2>
+          <p class="sub">Paste the key you received after purchase.</p>
+        </div>
+        <span class="la-pill"> <span class="mat">lock</span> Secure </span>
+      </div>
+
+      <div class="la-body">
+        <form method="post" novalidate id="activate-form">
+          {% csrf_token %}
+
+          <div class="la-g">
+            <label class="la-lbl" for="license_key">License Key</label>
+            <div class="la-search">
+              <span class="mat">vpn_key</span>
+              <input
+                type="text"
+                name="license_key"
+                id="license_key"
+                class="la-input"
+                placeholder="RMS-XXXX-XXXX-XXXX-XXXX"
+                autocomplete="off"
+                spellcheck="false"
+                required
+                maxlength="64"
+                value="{{ request.POST.license_key|default:'' }}"
+              />
+            </div>
+            <small class="la-hint">
+              Format: <strong>RMS-XXXX-XXXX-XXXX-XXXX</strong> —
+              case‑insensitive.
+            </small>
+          </div>
+
+          <div class="la-machine">
+            <span class="mat">desktop_windows</span>
+            <div>
+              <span class="lbl">Machine:</span>
+              <span class="val">{{ machine_name|default:"detecting…" }}</span>
+            </div>
+          </div>
+
+          <button type="submit" class="la-btn-grad" id="activate-btn">
+            <span class="mat">verified</span>
+            Activate License
+          </button>
+        </form>
+      </div>
+    </main>
+
+    <!-- SIDE PANEL -->
+    <aside class="la-panel">
+      <div class="la-panel-top">
+        <div>
+          <h2><span class="mat">help</span> How it works</h2>
+          <p class="sub">Three quick steps to get running.</p>
+        </div>
+      </div>
+      <div class="la-body">
+        <ol class="la-steps">
+          <li class="la-step">
+            <span class="la-step-num">1</span>
+            <span>Enter the license key you received after purchase.</span>
+          </li>
+          <li class="la-step">
+            <span class="la-step-num">2</span>
+            <span>We verify the key with the central license server.</span>
+          </li>
+          <li class="la-step">
+            <span class="la-step-num">3</span>
+            <span>Your installation is activated and ready to use.</span>
+          </li>
+        </ol>
+
+        {% if existing_license %}
+        <div
+          style="
+            margin-top: 1.35rem;
+            padding-top: 1.35rem;
+            border-top: 1px dashed var(--la-line);
+          "
+        >
+          <span class="la-lbl" style="margin-bottom: 0.75rem; display: block"
+            >Current License</span
+          >
+          <div class="la-detail">
+            <span class="k"><span class="mat">badge</span> Key</span>
+            <span class="v mono"
+              >{{ existing_license.license_key|truncatechars:24 }}</span
+            >
+          </div>
+          <div class="la-detail">
+            <span class="k"><span class="mat">person</span> Customer</span>
+            <span class="v"
+              >{{ existing_license.customer_name|default:"—" }}</span
+            >
+          </div>
+          <div class="la-detail">
+            <span class="k"><span class="mat">inventory_2</span> Product</span>
+            <span class="v">{{ existing_license.product|default:"—" }}</span>
+          </div>
+          <div class="la-detail">
+            <span class="k"
+              ><span class="mat">workspace_premium</span> Plan</span
+            >
+            <span class="v">{{ existing_license.plan|default:"—" }}</span>
+          </div>
+          <div class="la-detail">
+            <span class="k"><span class="mat">event</span> Expires</span>
+            <span class="v"
+              >{{ existing_license.expires_at|date:"M d, Y"|default:"—" }}</span
+            >
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+    if (window.__LA_INIT__) return;
+    window.__LA_INIT__ = true;
+
+    const form = document.getElementById("activate-form");
+    const btn = document.getElementById("activate-btn");
+    const keyInput = document.getElementById("license_key");
+
+    if (!form || !btn) return;
+
+    // Auto-format the license key: uppercase + insert dashes
+    if (keyInput) {
+      keyInput.addEventListener("input", () => {
+        let v = keyInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        // Strip leading RMS if present, we re-add
+        if (v.startsWith("RMS")) v = v.slice(3);
+        v = v.slice(0, 16);
+        const parts = v.match(/.{1,4}/g) || [];
+        keyInput.value = parts.length ? "RMS-" + parts.join("-") : "";
+      });
+    }
+
+    form.addEventListener("submit", (e) => {
+      const key = (keyInput && keyInput.value.trim()) || "";
+      if (!key) {
+        e.preventDefault();
+        keyInput.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="mat">hourglass_top</span> Activating…';
+    });
+  })();
+</script>
+
+{% endblock %}

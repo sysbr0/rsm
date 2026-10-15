@@ -16,10 +16,11 @@ Including another URLconf
 """
 
 from django.urls import path ,include
-from .views import activate_license_view
+from .views import activate_license_view , license_status_view
 
 urlpatterns = [
     path("activate/", activate_license_view, name="license_activate"),
+    path("state/",license_status_view , name="license_status")
 ]
 
 

@@ -1,0 +1,1504 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}{% if object %}Edit
+Product{% else %}Create Product{% endif %}{% endblock %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     PRODUCT EDITOR — PROFESSIONAL FORM
+     ============================================ */
+
+  .pe {
+    --cm-ink: #0f172a;
+    --cm-ink-2: #1e293b;
+    --cm-muted: #64748b;
+    --cm-muted-2: #94a3b8;
+    --cm-line: #e2e8f0;
+    --cm-line-2: #f1f5f9;
+    --cm-bg: #f7f8fc;
+    --cm-white: #ffffff;
+    --cm-brand: #6366f1;
+    --cm-brand-2: #8b5cf6;
+    --cm-pink: #ec4899;
+    --cm-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --cm-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --cm-ok: #10b981;
+    --cm-warn: #f59e0b;
+    --cm-danger: #ef4444;
+    --cm-info: #3b82f6;
+    --cm-r-xl: 22px;
+    --cm-r-lg: 16px;
+    --cm-r: 12px;
+    --cm-r-sm: 9px;
+    --cm-ring: 0 0 0 4px rgba(139, 92, 246, 0.14);
+
+    color: var(--cm-ink);
+    background: var(--cm-bg);
+    padding: 1.75rem;
+    border-radius: var(--cm-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-bottom: 2.5rem;
+  }
+  .pe * {
+    box-sizing: border-box;
+  }
+
+  .pe .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* ============================================
+     HERO
+     ============================================ */
+  .pe-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.75rem 2rem;
+    border-radius: var(--cm-r-xl);
+    background: var(--cm-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .pe-hero::before,
+  .pe-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .pe-hero::before {
+    width: 260px;
+    height: 260px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .pe-hero::after {
+    width: 170px;
+    height: 170px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .pe-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .pe-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.18s ease;
+  }
+  .pe-crumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
+  }
+  .pe-crumb .mat {
+    font-size: 16px;
+  }
+  .pe-hero h1 {
+    font-size: clamp(1.5rem, 2.3vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .pe-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+  .pe-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+  }
+  .pe-mode-pill .mat {
+    font-size: 18px;
+  }
+
+  /* ============================================
+     CARD
+     ============================================ */
+  .pe-card {
+    background: var(--cm-white);
+    border: 1px solid var(--cm-line);
+    border-radius: var(--cm-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .pe-card-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.35rem 1.6rem;
+    border-bottom: 1px solid var(--cm-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .pe-card-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--cm-grad);
+    color: #fff;
+    box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.65);
+  }
+  .pe-card-icon .mat {
+    font-size: 26px;
+  }
+  .pe-card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--cm-ink);
+    overflow-wrap: anywhere;
+  }
+  .pe-card-desc {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--cm-muted-2);
+    line-height: 1.55;
+  }
+
+  /* ============================================
+     BODY
+     ============================================ */
+  .pe-body {
+    padding: 1.75rem 1.6rem;
+  }
+  .pe-section {
+    margin-bottom: 1.85rem;
+  }
+  .pe-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .pe-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.5rem;
+    font-size: 0.94rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--cm-ink);
+  }
+  .pe-section-heading .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--cm-grad-soft);
+    color: var(--cm-brand);
+    font-size: 18px;
+  }
+  .pe-divider {
+    height: 1px;
+    border: 0;
+    background: var(--cm-line-2);
+    margin: 0 0 1.85rem;
+  }
+
+  /* ============================================
+     FIELDS
+     ============================================ */
+  .pe-field {
+    margin-bottom: 1.5rem;
+  }
+  .pe-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .pe-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--cm-ink-2);
+  }
+  .pe-label .req {
+    color: var(--cm-danger);
+    margin-left: 0.2rem;
+  }
+  .pe-label .opt {
+    color: var(--cm-muted-2);
+    font-weight: 500;
+    font-size: 0.72rem;
+    margin-left: 0.25rem;
+  }
+
+  .pe-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .pe-input-icon {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cm-muted-2);
+    font-size: 20px;
+    pointer-events: none;
+    transition: color 0.18s ease;
+    z-index: 1;
+  }
+  .pe-input-wrap:focus-within .pe-input-icon {
+    color: var(--cm-brand);
+  }
+
+  .pe .form-control,
+  .pe .form-select {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 0.95rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--cm-r);
+    background: var(--cm-white);
+    color: var(--cm-ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+  }
+  .pe-input-wrap .form-control {
+    padding-left: 3rem;
+  }
+
+  .pe textarea.form-control {
+    min-height: 140px;
+    padding: 0.95rem 1rem;
+    resize: vertical;
+    line-height: 1.65;
+  }
+
+  .pe .form-control::placeholder {
+    color: var(--cm-muted-2);
+    font-weight: 400;
+  }
+
+  .pe .form-control:hover,
+  .pe .form-select:hover {
+    border-color: #94a3b8;
+  }
+
+  .pe .form-control:focus,
+  .pe .form-select:focus {
+    outline: none;
+    border-color: var(--cm-brand-2);
+    background: #fdfdff;
+    box-shadow: var(--cm-ring);
+  }
+
+  .pe .form-control.is-invalid {
+    border-color: var(--cm-danger);
+    background: #fffbfb;
+    background-image: none;
+  }
+  .pe .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14);
+  }
+
+  .pe .form-control[type="number"]::-webkit-outer-spin-button,
+  .pe .form-control[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .pe .form-control[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .pe-input-suffix {
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cm-muted-2);
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    background: #fff;
+    padding: 0 0.35rem;
+  }
+  .pe-input-wrap .form-control.has-suffix {
+    padding-right: 4rem;
+  }
+
+  /* ============================================
+     HELP + ERROR
+     ============================================ */
+  .pe-help {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    line-height: 1.5;
+  }
+  .pe-help .mat {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .pe-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 9px;
+    background: #fef2f2;
+    border-left: 3px solid var(--cm-danger);
+    color: #b91c1c;
+    font-size: 0.79rem;
+    font-weight: 650;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    animation: peIn 0.24s ease;
+  }
+  .pe-error .mat {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ============================================
+     SELECT STYLING (Category & Section)
+     ============================================ */
+  .pe .form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% - 3px),
+      calc(100% - 14px) calc(50% - 3px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  /* ============================================
+     STATUS PANEL
+     ============================================ */
+  .pe-status-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 128px;
+    padding: 1.2rem 1.3rem;
+    border: 1.5px solid var(--cm-line);
+    border-radius: var(--cm-r);
+    background: #fafbff;
+    transition:
+      border-color 0.22s ease,
+      background 0.22s ease;
+  }
+  .pe-status-panel.is-enabled {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+  .pe-status-title {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--cm-ink);
+  }
+  .pe-status-desc {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted);
+    line-height: 1.55;
+  }
+  .pe-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--cm-muted);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+  .pe-status-indicator.is-active {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .pe-status-indicator .mat {
+    font-size: 14px;
+  }
+
+  .pe .form-check {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    min-height: 0;
+  }
+  .pe .form-check-input {
+    float: none;
+    width: 2.9rem;
+    height: 1.55rem;
+    margin: 0;
+    border-color: #cbd5e1;
+    cursor: pointer;
+    box-shadow: none;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .pe .form-check-input:checked {
+    background-color: var(--cm-brand);
+    border-color: var(--cm-brand);
+  }
+  .pe .form-check-input:focus {
+    border-color: var(--cm-brand-2);
+    box-shadow: var(--cm-ring);
+  }
+
+  /* ============================================
+     PRICE PREVIEW
+     ============================================ */
+  .pe-price-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--cm-r);
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    margin-top: 0.75rem;
+  }
+  .pe-price-preview .mat {
+    color: #b45309;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .pe-price-preview-txt {
+    font-size: 0.8rem;
+    color: #78350f;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .pe-price-preview-txt strong {
+    color: #b45309;
+    font-size: 1rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    display: inline-block;
+    margin-left: 0.25rem;
+  }
+
+  /* ============================================
+     ALERTS
+     ============================================ */
+  .pe-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--cm-r);
+    border: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    animation: peIn 0.28s ease;
+  }
+  @keyframes peIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .pe-alert .mat {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .pe-alert.alert-success {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--cm-ok);
+  }
+  .pe-alert.alert-info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-left: 4px solid var(--cm-info);
+  }
+  .pe-alert.alert-warning {
+    background: #fffbeb;
+    color: #b45309;
+    border-left: 4px solid var(--cm-warn);
+  }
+  .pe-alert.alert-danger,
+  .pe-alert.alert-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--cm-danger);
+  }
+  .pe-alert .btn-close {
+    margin-left: auto;
+    font-size: 0.7rem;
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     FOOTER
+     ============================================ */
+  .pe-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.6rem;
+    border-top: 1px solid var(--cm-line);
+    background: #fbfbff;
+  }
+  .pe-foot-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    line-height: 1.55;
+  }
+  .pe-foot-note .mat {
+    font-size: 16px;
+    color: var(--cm-ok);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .pe-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .pe-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1.2rem;
+    border: 1.5px solid transparent;
+    border-radius: var(--cm-r);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      transform 0.15s ease,
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
+  }
+  .pe-btn .mat {
+    font-size: 18px;
+  }
+
+  .pe-btn-cancel {
+    background: var(--cm-white);
+    border-color: #0f172a;
+    color: #0f172a;
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.15);
+  }
+  .pe-btn-cancel:hover {
+    background: #f1f5f9;
+    color: var(--cm-ink);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -6px rgba(15, 23, 42, 0.28);
+  }
+
+  .pe-btn-save {
+    background: var(--cm-grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+  }
+  .pe-btn-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+    filter: brightness(1.05);
+    color: #fff;
+  }
+  .pe-btn-save:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+  }
+  .pe-btn:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.35);
+    outline-offset: 3px;
+  }
+
+  .pe-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 1.25rem 0 0;
+    font-size: 0.78rem;
+    color: var(--cm-muted-2);
+    text-align: center;
+  }
+  .pe-bottom .req {
+    color: var(--cm-danger);
+    margin: 0 0.15rem;
+  }
+  .pe-bottom .mat {
+    font-size: 14px;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 767.98px) {
+    .pe {
+      padding: 1rem;
+      border-radius: 16px;
+      padding-bottom: 1.5rem;
+    }
+    .pe-hero {
+      padding: 1.4rem 1.25rem;
+    }
+    .pe-card-top {
+      padding: 1.1rem 1.15rem;
+    }
+    .pe-body {
+      padding: 1.2rem 1.15rem;
+    }
+    .pe-foot {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 1.1rem 1.15rem;
+    }
+    .pe-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+    }
+    .pe-btn {
+      width: 100%;
+    }
+  }
+  @media (max-width: 480px) {
+    .pe {
+      padding: 0.75rem;
+    }
+    .pe-hero-in {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .pe-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+    .pe-card-icon .mat {
+      font-size: 22px;
+    }
+    .pe-status-panel {
+      min-height: auto;
+      padding: 1rem;
+    }
+    .pe-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pe *,
+    .pe *::before,
+    .pe *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="pe">
+  <!-- HERO -->
+  <header class="pe-hero">
+    <div class="pe-hero-in">
+      <div>
+        <a href="{% url 'product_list' %}" class="pe-crumb">
+          <span class="mat">arrow_back</span> Products
+        </a>
+
+        {% if object %}
+        <h1>Edit Product</h1>
+        <p>Update the product details, pricing, category, and visibility.</p>
+        {% else %}
+        <h1>Create Product</h1>
+        <p>
+          Add a new product to your catalog with pricing and tax information.
+        </p>
+        {% endif %}
+      </div>
+
+      {% if object %}
+      <span class="pe-mode-pill">
+        <span class="mat">edit</span> Editing product
+      </span>
+      {% else %}
+      <span class="pe-mode-pill">
+        <span class="mat">add_box</span> New product
+      </span>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  {% if messages %} {% for message in messages %}
+  <div
+    class="pe-alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+    role="alert"
+  >
+    {% if message.tags == 'success' %}
+    <span class="mat">check_circle</span>
+    {% elif message.tags == 'warning' %}
+    <span class="mat">warning</span>
+    {% elif message.tags == 'error' %}
+    <span class="mat">error</span>
+    {% else %}
+    <span class="mat">info</span>
+    {% endif %}
+    <span>{{ message }}</span>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %} {% endif %}
+
+  <!-- NON-FIELD ERRORS -->
+  {% if form.non_field_errors %}
+  <div class="pe-alert alert-danger" role="alert">
+    <span class="mat">error</span>
+    <div>
+      <strong>Please review the following:</strong>
+      {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- CARD -->
+  <section class="pe-card">
+    <div class="pe-card-top">
+      <div class="pe-card-icon">
+        {% if object %}
+        <span class="mat">edit_note</span>
+        {% else %}
+        <span class="mat">inventory_2</span>
+        {% endif %}
+      </div>
+      <div style="min-width: 0">
+        {% if object %}
+        <h2 class="pe-card-title">
+          {{ object.name|default:"Product Details" }}
+        </h2>
+        {% else %}
+        <h2 class="pe-card-title">Product Details</h2>
+        {% endif %}
+        <p class="pe-card-desc">
+          Fill in the fields below to configure this product.
+        </p>
+      </div>
+    </div>
+
+    <form method="post" id="product-editor-form" autocomplete="off" novalidate>
+      {% csrf_token %}
+
+      <div class="pe-body">
+        <!-- ========== IDENTITY ========== -->
+        <section class="pe-section">
+          <h3 class="pe-section-heading">
+            <span class="mat">badge</span> Identity
+          </h3>
+
+          <!-- SKU -->
+          <div class="pe-field">
+            <label for="{{ form.sku.id_for_label }}" class="pe-label">
+              <span>SKU <span class="req">*</span></span>
+            </label>
+
+            <div class="pe-input-wrap">
+              <span class="mat pe-input-icon">qr_code</span>
+              {{ form.sku }}
+              <span class="pe-input-suffix" id="sku-counter">0 / 100</span>
+            </div>
+
+            {% if form.sku.errors %}
+            <div class="pe-error" id="product-sku-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.sku.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="pe-help">
+              <span class="mat">lightbulb</span>
+              Unique identifier for this product (e.g., BEV-001).
+            </p>
+          </div>
+
+          <!-- Name -->
+          <div class="pe-field">
+            <label for="{{ form.name.id_for_label }}" class="pe-label">
+              <span>Product Name <span class="req">*</span></span>
+            </label>
+
+            <div class="pe-input-wrap">
+              <span class="mat pe-input-icon">sell</span>
+              {{ form.name }}
+            </div>
+
+            {% if form.name.errors %}
+            <div class="pe-error" id="product-name-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.name.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="pe-help">
+              <span class="mat">notes</span>
+              A clear, customer-facing name for this product.
+            </p>
+          </div>
+
+          <!-- Description -->
+          <div class="pe-field" style="margin-bottom: 0">
+            <label for="{{ form.description.id_for_label }}" class="pe-label">
+              <span>Description <span class="opt">(Optional)</span></span>
+            </label>
+
+            {{ form.description }} {% if form.description.errors %}
+            <div class="pe-error">
+              <span class="mat">error</span>
+              <div>
+                {% for error in form.description.errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <p class="pe-help">
+              <span class="mat">description</span>
+              Describe the product, its size, or any distinguishing details.
+            </p>
+          </div>
+        </section>
+
+        <hr class="pe-divider" />
+
+        <!-- ========== CLASSIFICATION ========== -->
+        <section class="pe-section">
+          <h3 class="pe-section-heading">
+            <span class="mat">category</span> Classification
+          </h3>
+
+          <div class="row g-3 g-lg-4">
+            <!-- Category -->
+            <div class="col-12 col-md-6">
+              <div class="pe-field" style="margin-bottom: 0">
+                <label for="{{ form.category.id_for_label }}" class="pe-label">
+                  <span>Category <span class="req">*</span></span>
+                </label>
+
+                {{ form.category }} {% if form.category.errors %}
+                <div class="pe-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.category.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="pe-help">
+                  <span class="mat">folder_open</span>
+                  Which category does this product belong to?
+                </p>
+              </div>
+            </div>
+
+            <!-- Section -->
+            <div class="col-12 col-md-6">
+              <div class="pe-field" style="margin-bottom: 0">
+                <label for="{{ form.section.id_for_label }}" class="pe-label">
+                  <span>Section <span class="req">*</span></span>
+                </label>
+
+                {{ form.section }} {% if form.section.errors %}
+                <div class="pe-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.section.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="pe-help">
+                  <span class="mat">view_module</span>
+                  Which section does this product belong to?
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="pe-divider" />
+
+        <!-- ========== PRICING ========== -->
+        <section class="pe-section">
+          <h3 class="pe-section-heading">
+            <span class="mat">payments</span> Pricing &amp; Tax
+          </h3>
+
+          <div class="row g-3 g-lg-4">
+            <!-- Price -->
+            <div class="col-12 col-md-6">
+              <div class="pe-field" style="margin-bottom: 0">
+                <label for="{{ form.price.id_for_label }}" class="pe-label">
+                  <span>Price <span class="req">*</span></span>
+                </label>
+
+                <div class="pe-input-wrap">
+                  <span class="mat pe-input-icon">attach_money</span>
+                  {{ form.price }}
+                </div>
+
+                {% if form.price.errors %}
+                <div class="pe-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.price.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="pe-help">
+                  <span class="mat">info</span>
+                  Price before tax, in your store's currency.
+                </p>
+              </div>
+            </div>
+
+            <!-- Tax rate -->
+            <div class="col-12 col-md-6">
+              <div class="pe-field" style="margin-bottom: 0">
+                <label for="{{ form.tax_rate.id_for_label }}" class="pe-label">
+                  <span>Tax Rate (%)</span>
+                </label>
+
+                <div class="pe-input-wrap">
+                  <span class="mat pe-input-icon">percent</span>
+                  {{ form.tax_rate }}
+                </div>
+
+                {% if form.tax_rate.errors %}
+                <div class="pe-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.tax_rate.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="pe-help">
+                  <span class="mat">receipt_long</span>
+                  Tax percentage applied to this product (0–100).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live price preview -->
+          <div
+            class="pe-price-preview"
+            id="price-preview"
+            style="display: none"
+          >
+            <span class="mat">calculate</span>
+            <div class="pe-price-preview-txt">
+              Price with tax:
+              <strong id="price-with-tax">$0.00</strong>
+            </div>
+          </div>
+        </section>
+
+        <hr class="pe-divider" />
+
+        <!-- ========== VISIBILITY ========== -->
+        <section class="pe-section" style="margin-bottom: 0">
+          <h3 class="pe-section-heading">
+            <span class="mat">tune</span> Visibility
+          </h3>
+
+          <div class="row g-3 g-lg-4">
+            <!-- Display order -->
+            <div class="col-12 col-md-6">
+              <div class="pe-field" style="margin-bottom: 0">
+                <label
+                  for="{{ form.display_order.id_for_label }}"
+                  class="pe-label"
+                >
+                  <span>Display Order</span>
+                </label>
+
+                <div class="pe-input-wrap">
+                  <span class="mat pe-input-icon">sort</span>
+                  {{ form.display_order }}
+                </div>
+
+                {% if form.display_order.errors %}
+                <div class="pe-error">
+                  <span class="mat">error</span>
+                  <div>
+                    {% for error in form.display_order.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <p class="pe-help">
+                  <span class="mat">arrow_downward</span>
+                  Lower numbers appear first.
+                </p>
+              </div>
+            </div>
+
+            <!-- Status panel -->
+            <div class="col-12 col-md-6">
+              <div class="pe-status-panel" id="product-status-panel">
+                <div>
+                  <div class="pe-status-title">Product Status</div>
+                  <p class="pe-status-desc">
+                    Choose whether this product is active.
+                  </p>
+
+                  <span
+                    id="product-status-label"
+                    class="pe-status-indicator"
+                    aria-live="polite"
+                  >
+                    <span class="mat">circle</span>
+                    <span>Checking status</span>
+                  </span>
+                </div>
+
+                <div class="form-check form-switch">{{ form.is_active }}</div>
+              </div>
+
+              {% if form.is_active.errors %}
+              <div class="pe-error" style="margin-top: 0.6rem">
+                <span class="mat">error</span>
+                <div>
+                  {% for error in form.is_active.errors %}
+                  <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <p class="pe-help" style="margin-top: 0.7rem">
+                <span class="mat">visibility</span>
+                Inactive products may be hidden from the storefront.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="pe-foot">
+        <div class="pe-foot-note">
+          <span class="mat">verified_user</span>
+          <span>Your changes will be saved when you submit the form.</span>
+        </div>
+
+        <div class="pe-actions">
+          <a href="{% url 'product_list' %}" class="pe-btn pe-btn-cancel">
+            <span class="mat">close</span> Cancel
+          </a>
+
+          <button
+            type="submit"
+            class="pe-btn pe-btn-save"
+            id="save-product-btn"
+          >
+            <span class="mat">check</span>
+            {% if object %}
+            <span>Update Product</span>
+            {% else %}
+            <span>Create Product</span>
+            {% endif %}
+          </button>
+        </div>
+      </footer>
+    </form>
+  </section>
+
+  <p class="pe-bottom">
+    <span class="mat">info</span>
+    Fields marked with <span class="req">*</span> are required.
+  </p>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const form = document.getElementById("product-editor-form");
+    if (!form) return;
+
+    const activeCheckbox = form.querySelector(
+      'input[name="{{ form.is_active.html_name|escapejs }}"]',
+    );
+    const skuInput = form.querySelector(
+      'input[name="{{ form.sku.html_name|escapejs }}"]',
+    );
+    const nameInput = form.querySelector(
+      'input[name="{{ form.name.html_name|escapejs }}"]',
+    );
+    const priceInput = form.querySelector(
+      'input[name="{{ form.price.html_name|escapejs }}"]',
+    );
+    const taxInput = form.querySelector(
+      'input[name="{{ form.tax_rate.html_name|escapejs }}"]',
+    );
+    const statusLabel = document.getElementById("product-status-label");
+    const statusPanel = document.getElementById("product-status-panel");
+    const saveButton = document.getElementById("save-product-btn");
+    const skuCounter = document.getElementById("sku-counter");
+    const pricePreview = document.getElementById("price-preview");
+    const priceWithTax = document.getElementById("price-with-tax");
+
+    let isSubmitting = false;
+
+    /* Style Django-generated fields */
+    form
+      .querySelectorAll(
+        'input:not([type="checkbox"]):not([type="hidden"]), textarea, select',
+      )
+      .forEach(function (field) {
+        if (field.type !== "file" && field.type !== "submit") {
+          field.classList.add("form-control");
+        }
+        if (field.tagName === "SELECT") {
+          field.classList.remove("form-control");
+          field.classList.add("form-select");
+        }
+        if (field.type === "number") {
+          field.setAttribute("inputmode", "decimal");
+        }
+        if (
+          field.closest(".pe-input-wrap") &&
+          field.parentElement.querySelector(".pe-input-suffix")
+        ) {
+          field.classList.add("has-suffix");
+        }
+      });
+
+    if (activeCheckbox) {
+      activeCheckbox.classList.add("form-check-input");
+      activeCheckbox.setAttribute("aria-label", "Product active status");
+    }
+
+    if (skuInput) {
+      skuInput.setAttribute("maxlength", "100");
+      skuInput.setAttribute("required", "required");
+      skuInput.setAttribute("autocomplete", "off");
+
+      const updateSkuCounter = () => {
+        if (skuCounter) {
+          skuCounter.textContent = skuInput.value.length + " / 100";
+        }
+      };
+      skuInput.addEventListener("input", updateSkuCounter);
+      updateSkuCounter();
+    }
+
+    if (nameInput) {
+      nameInput.setAttribute("maxlength", "150");
+      nameInput.setAttribute("required", "required");
+      nameInput.setAttribute("autocomplete", "off");
+    }
+
+    /* Status label */
+    function updateStatusLabel() {
+      if (!activeCheckbox || !statusLabel) return;
+      const active = activeCheckbox.checked;
+
+      statusLabel.classList.toggle("is-active", active);
+      if (statusPanel) statusPanel.classList.toggle("is-enabled", active);
+
+      const icon = document.createElement("span");
+      icon.className = "mat";
+      icon.textContent = active ? "check_circle" : "pause_circle";
+
+      const text = document.createElement("span");
+      text.textContent = active ? "Active and available" : "Inactive";
+
+      statusLabel.replaceChildren(icon, text);
+    }
+
+    if (activeCheckbox) {
+      activeCheckbox.addEventListener("change", updateStatusLabel);
+      updateStatusLabel();
+    }
+
+    /* Live price + tax preview */
+    function updatePricePreview() {
+      if (!priceInput || !pricePreview || !priceWithTax) return;
+
+      const price = parseFloat(priceInput.value) || 0;
+      const tax = parseFloat(taxInput ? taxInput.value : 0) || 0;
+
+      if (price <= 0) {
+        pricePreview.style.display = "none";
+        return;
+      }
+
+      const total = price + (price * tax) / 100;
+
+      priceWithTax.textContent =
+        "$" +
+        total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+      pricePreview.style.display = "flex";
+    }
+
+    if (priceInput) {
+      priceInput.addEventListener("input", updatePricePreview);
+    }
+    if (taxInput) {
+      taxInput.addEventListener("input", updatePricePreview);
+    }
+    updatePricePreview();
+
+    /* Clear inline errors on input */
+    function clearError(field, errorId) {
+      if (!field) return;
+      field.classList.remove("is-invalid");
+      field.removeAttribute("aria-invalid");
+      const error = document.getElementById(errorId);
+      if (error) error.remove();
+    }
+
+    if (skuInput) {
+      skuInput.addEventListener("input", function () {
+        if (skuInput.value.trim()) clearError(skuInput, "product-sku-error");
+      });
+    }
+    if (nameInput) {
+      nameInput.addEventListener("input", function () {
+        if (nameInput.value.trim()) clearError(nameInput, "product-name-error");
+      });
+    }
+
+    /* Submit guard */
+    form.addEventListener("submit", function (event) {
+      let blocked = false;
+
+      if (skuInput && !skuInput.value.trim()) {
+        event.preventDefault();
+        skuInput.classList.add("is-invalid");
+        skuInput.setAttribute("aria-invalid", "true");
+
+        let error = document.getElementById("product-sku-error");
+        if (!error) {
+          error = document.createElement("div");
+          error.id = "product-sku-error";
+          error.className = "pe-error";
+
+          const icon = document.createElement("span");
+          icon.className = "mat";
+          icon.textContent = "error";
+
+          const wrap = document.createElement("div");
+          error.appendChild(icon);
+          error.appendChild(wrap);
+
+          const anchor = skuInput.closest(".pe-input-wrap") || skuInput;
+          anchor.insertAdjacentElement("afterend", error);
+        }
+        error.querySelector("div").textContent = "Please enter a SKU.";
+        if (!blocked) skuInput.focus();
+        blocked = true;
+      }
+
+      if (nameInput && !nameInput.value.trim()) {
+        event.preventDefault();
+        nameInput.classList.add("is-invalid");
+        nameInput.setAttribute("aria-invalid", "true");
+
+        let error = document.getElementById("product-name-error");
+        if (!error) {
+          error = document.createElement("div");
+          error.id = "product-name-error";
+          error.className = "pe-error";
+
+          const icon = document.createElement("span");
+          icon.className = "mat";
+          icon.textContent = "error";
+
+          const wrap = document.createElement("div");
+          error.appendChild(icon);
+          error.appendChild(wrap);
+
+          const anchor = nameInput.closest(".pe-input-wrap") || nameInput;
+          anchor.insertAdjacentElement("afterend", error);
+        }
+        error.querySelector("div").textContent = "Please enter a product name.";
+        if (!blocked) nameInput.focus();
+        blocked = true;
+      }
+
+      if (blocked) return;
+
+      if (isSubmitting) {
+        event.preventDefault();
+        return;
+      }
+
+      isSubmitting = true;
+
+      if (saveButton) {
+        saveButton.disabled = true;
+        const icon = saveButton.querySelector(".mat");
+        const text = saveButton.querySelector("span:last-child");
+        if (icon) icon.textContent = "progress_activity";
+        if (text) text.textContent = "Saving...";
+      }
+    });
+  })();
+</script>
+{% endblock %}

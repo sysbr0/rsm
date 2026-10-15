@@ -19,13 +19,17 @@ from django.urls import path ,include
 
 from ui.views import admin_table_detail, admin_tables , test
 
+
 urlpatterns = [
+
    
     path("tables/<int:table_id>/", admin_table_detail, name="admin_table_detail"),
     path("test/",test, name="test"),
 
     path("licensing/", include("licensing.urls")),
     path("tables/", include("tables.urls")),
+     path("online/", include("online_cloud.urls")),
+     path("menu/", include("menu.urls")),
 ]
 
 

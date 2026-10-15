@@ -1,246 +1,131 @@
 import platform
-import requests
 
-from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from .checker import LicenseChecker
 from .models import LocalLicense
 from .services import (
+    get_last_local_license,
     get_license_server_url,
-    parse_server_datetime,
+    sync_license_from_server,
 )
 
 
-def activate_license_view(request):
+# ==========================================================
+# LICENSE STATUS VIEW
+# ==========================================================
 
-    # ==================================================
-    # GET
-    # ==================================================
+def license_status_view(request):
+    license_obj = get_last_local_license()
+
+    if license_obj is None:
+        messages.info(request, "No license found. Please activate one first.")
+        return redirect("license_activate")
+
+    if request.method == "POST" and request.POST.get("action") == "reverify":
+        result = sync_license_from_server()
+
+        if result["valid"]:
+            LicenseChecker.invalidate_cache()
+            messages.success(request, "License successfully verified with server.")
+        elif result["offline"]:
+            messages.warning(
+                request,
+                f"Working offline: {result.get('error', 'Unable to reach server.')}",
+            )
+        else:
+            LicenseChecker.invalidate_cache()
+            messages.error(request, result.get("error", "Verification failed."))
+
+        return redirect("license_status")
+
+    now = timezone.now()
+    days_left = None
+    is_expired = False
+
+    if license_obj.expires_at:
+        delta = license_obj.expires_at - now
+        days_left = delta.days
+        is_expired = delta.total_seconds() <= 0
+
+    return render(
+        request,
+        "licensing/status.html",
+        {
+            "license": license_obj,
+            "machine_name": platform.node(),
+            "server_url": get_license_server_url(),
+            "now": now,
+            "days_left": days_left,
+            "is_expired": is_expired,
+        },
+    )
+
+
+# ==========================================================
+# ACTIVATION VIEW
+# ==========================================================
+
+def activate_license_view(request):
+    existing_license = get_last_local_license()
 
     if request.method == "GET":
         return render(
             request,
             "licensing/activate.html",
+            {
+                "existing_license": existing_license,
+                "machine_name": platform.node(),
+                "license_key_value": "",
+            },
         )
 
-    # ==================================================
-    # POST
-    # ==================================================
-
-    license_key = request.POST.get(
-        "license_key",
-        "",
-    ).strip()
+    license_key = (request.POST.get("license_key") or "").strip()
 
     if not license_key:
-
-        messages.error(
-            request,
-            "Please enter your license key.",
-        )
-
+        messages.error(request, "Please enter your license key.")
         return render(
             request,
             "licensing/activate.html",
+            {
+                "existing_license": existing_license,
+                "machine_name": platform.node(),
+                "license_key_value": license_key,
+            },
         )
 
-    # ==================================================
-    # Prepare installation information
-    # ==================================================
+    result = sync_license_from_server(license_key=license_key)
 
-    # Use the existing installation ID if available.
-    existing_license = (
-        LocalLicense.objects
-        .order_by("-created_at")
-        .first()
-    )
-
-    if existing_license:
-
-        installation_id = str(
-            existing_license.installation_id
-        )
-
-    else:
-
-        # If your LocalLicense model has a default UUID,
-        # this can be replaced with your model's creation
-        # logic.
-        from uuid import uuid4
-
-        installation_id = str(uuid4())
-
-    payload = {
-        "license_key": license_key,
-        "installation_id": installation_id,
-        "machine_name": platform.node(),
-    }
-
-    # ==================================================
-    # Contact central license server
-    # ==================================================
-
-    try:
-
-        response = requests.post(
-            get_license_server_url(),
-            data=payload,
-            timeout=15,
-        )
-
-    except requests.RequestException:
-
+    if not result["valid"]:
         messages.error(
             request,
-            "Unable to connect to the license server. "
-            "Please check your internet connection.",
+            result.get("error", "License activation failed. Please check your key."),
         )
-
         return render(
             request,
             "licensing/activate.html",
+            {
+                "existing_license": existing_license,
+                "machine_name": platform.node(),
+                "license_key_value": license_key,
+            },
         )
 
-    # ==================================================
-    # HTTP error
-    # ==================================================
-
-    if not response.ok:
-
-        try:
-            data = response.json()
-        except ValueError:
-            data = {}
-
-        error_message = data.get(
-            "error",
-            "License activation failed.",
-        )
-
-        messages.error(
-            request,
-            error_message,
-        )
-
-        return render(
-            request,
-            "licensing/activate.html",
-        )
-
-    # ==================================================
-    # Parse response
-    # ==================================================
-
-    try:
-
-        data = response.json()
-
-    except ValueError:
-
-        messages.error(
-            request,
-            "The license server returned an invalid response.",
-        )
-
-        return render(
-            request,
-            "licensing/activate.html",
-        )
-
-    # ==================================================
-    # Check server validity
-    # ==================================================
-
-    if not data.get("valid"):
-
-        messages.error(
-            request,
-            data.get(
-                "error",
-                "The license key is not valid.",
-            ),
-        )
-
-        return render(
-            request,
-            "licensing/activate.html",
-        )
-
-    # ==================================================
-    # Read server data
-    # ==================================================
-
-    server_license_key = data.get(
-        "license_key",
-        license_key,
+    license_obj = result["license"]
+    expires_label = (
+        license_obj.expires_at.strftime("%b %d, %Y")
+        if license_obj.expires_at
+        else "Lifetime / Perpetual"
     )
 
-    server_status = data.get(
-        "status",
-        "ACTIVE",
-    )
-
-    customer_name = data.get(
-        "customer_name",
-        "",
-    )
-
-    product = data.get(
-        "product",
-        "",
-    )
-
-    plan = data.get(
-        "plan",
-        "",
-    )
-
-    expires_at = parse_server_datetime(
-        data.get("expires_at")
-    )
-
-    # ==================================================
-    # Create / update local license
-    # ==================================================
-
-    if existing_license:
-
-        license_obj = existing_license
-
-        license_obj.license_key = server_license_key
-        license_obj.customer_name = customer_name
-        license_obj.product = product
-        license_obj.plan = plan
-        license_obj.status = server_status
-        license_obj.expires_at = expires_at
-        license_obj.is_active = True
-        license_obj.last_verified_at = timezone.now()
-
-        license_obj.save()
-
-    else:
-
-        license_obj = LocalLicense.objects.create(
-            license_key=server_license_key,
-            installation_id=installation_id,
-            customer_name=customer_name,
-            product=product,
-            plan=plan,
-            status=server_status,
-            expires_at=expires_at,
-            is_active=True,
-            last_verified_at=timezone.now(),
-        )
-
-    # ==================================================
-    # Success
-    # ==================================================
+    LicenseChecker.invalidate_cache()
 
     messages.success(
         request,
-        "License activated successfully.",
+        f"License activated successfully! "
+        f"Plan: {license_obj.plan or 'N/A'} · Expires: {expires_label}.",
     )
 
     return redirect("license_status")

@@ -1,0 +1,1320 @@
+{% extends "ui/admin_base.html" %} {% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+/>
+
+<style>
+  /* ============================================
+     MAKE PAYMENT FORM
+     ============================================ */
+  .mp {
+    --mp-ink: #0f172a;
+    --mp-ink-2: #1e293b;
+    --mp-muted: #64748b;
+    --mp-muted-2: #94a3b8;
+    --mp-line: #e2e8f0;
+    --mp-line-2: #f1f5f9;
+    --mp-bg: #f7f8fc;
+    --mp-white: #ffffff;
+    --mp-brand: #6366f1;
+    --mp-brand-2: #8b5cf6;
+    --mp-pink: #ec4899;
+    --mp-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #ec4899 100%);
+    --mp-grad-soft: linear-gradient(
+      135deg,
+      #eef2ff 0%,
+      #f5f3ff 50%,
+      #fdf2f8 100%
+    );
+    --mp-ok: #10b981;
+    --mp-warn: #f59e0b;
+    --mp-danger: #ef4444;
+    --mp-info: #3b82f6;
+    --mp-r-xl: 22px;
+    --mp-r-lg: 16px;
+    --mp-r: 12px;
+    --mp-r-sm: 9px;
+
+    color: var(--mp-ink);
+    background: var(--mp-bg);
+    padding: 1.75rem;
+    border-radius: var(--mp-r-xl);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    min-height: 500px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .mp * {
+    box-sizing: border-box;
+  }
+
+  .mp .mat {
+    font-family: "Material Symbols Outlined" !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+    user-select: none;
+    vertical-align: middle;
+  }
+
+  /* HERO */
+  .mp-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 1.9rem 2.1rem;
+    border-radius: var(--mp-r-xl);
+    background: var(--mp-grad);
+    color: #fff;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 42px -18px rgba(99, 102, 241, 0.55);
+  }
+  .mp-hero::before,
+  .mp-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .mp-hero::before {
+    width: 280px;
+    height: 280px;
+    top: -130px;
+    right: -70px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .mp-hero::after {
+    width: 180px;
+    height: 180px;
+    bottom: -90px;
+    right: 180px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .mp-hero-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+  .mp-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+    backdrop-filter: blur(6px);
+  }
+  .mp-crumb .mat {
+    font-size: 16px;
+  }
+  .mp-hero h1 {
+    font-size: clamp(1.55rem, 2.3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    line-height: 1.15;
+  }
+  .mp-hero p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.92;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+  .mp-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.35rem;
+    background: #fff;
+    color: var(--mp-brand);
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease,
+      color 0.2s ease;
+    white-space: nowrap;
+    border: 0;
+    cursor: pointer;
+  }
+  .mp-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+    color: var(--mp-brand-2);
+  }
+  .mp-cta.ghost {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+  }
+  .mp-cta.ghost:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+  }
+  .mp-cta .mat {
+    font-size: 18px;
+  }
+
+  /* GRID */
+  .mp-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1.35rem;
+    align-items: start;
+  }
+  @media (max-width: 1023px) {
+    .mp-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* CARD */
+  .mp-card {
+    background: var(--mp-white);
+    border: 1px solid var(--mp-line);
+    border-radius: var(--mp-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .mp-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--mp-line);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  }
+  .mp-card-top h2 {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .mp-card-top h2 .mat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--mp-grad-soft);
+    color: var(--mp-brand);
+    font-size: 18px;
+  }
+  .mp-card-body {
+    padding: 1.5rem;
+  }
+
+  /* FORM */
+  .mp-field {
+    margin-bottom: 1.15rem;
+  }
+  .mp-lbl {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--mp-muted);
+    margin-bottom: 0.5rem;
+  }
+  .mp-lbl .req {
+    color: var(--mp-danger);
+    font-size: 0.85rem;
+  }
+  .mp-lbl .mat {
+    font-size: 15px;
+    color: var(--mp-muted-2);
+  }
+
+  .mp-form input[type="text"],
+  .mp-form input[type="number"],
+  .mp-form input[type="date"],
+  .mp-form input[type="search"],
+  .mp-form input[type="email"],
+  .mp-form select,
+  .mp-form textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid var(--mp-line);
+    border-radius: var(--mp-r);
+    background: var(--mp-white);
+    color: var(--mp-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .mp-form textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .mp-form input:focus,
+  .mp-form select:focus,
+  .mp-form textarea:focus {
+    outline: none;
+    border-color: var(--mp-brand-2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
+  }
+  .mp-form input::placeholder,
+  .mp-form textarea::placeholder {
+    color: var(--mp-muted-2);
+  }
+
+  .mp-form select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #64748b 50%),
+      linear-gradient(135deg, #64748b 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% - 3px),
+      calc(100% - 14px) calc(50% - 3px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  .mp-form .mp-error input,
+  .mp-form .mp-error select,
+  .mp-form .mp-error textarea {
+    border-color: var(--mp-danger);
+    background: #fff5f5;
+  }
+  .mp-form .mp-error input:focus,
+  .mp-form .mp-error select:focus,
+  .mp-form .mp-error textarea:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+  .mp-err {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--mp-danger);
+  }
+  .mp-err .mat {
+    font-size: 16px;
+  }
+
+  /* CHIPS */
+  .mp-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.5rem;
+  }
+  .mp-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.8rem 0.5rem;
+    border: 1.5px solid var(--mp-line);
+    border-radius: var(--mp-r);
+    background: var(--mp-white);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+  }
+  .mp-chip:hover {
+    border-color: var(--mp-brand-2);
+    background: #faf5ff;
+  }
+  .mp-chip .mat {
+    font-size: 22px;
+    color: var(--mp-muted);
+  }
+  .mp-chip-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--mp-ink-2);
+  }
+  .mp-chip-input {
+    display: none;
+  }
+  .mp-chip-input:checked + .mp-chip {
+    border-color: var(--mp-brand);
+    background: var(--mp-grad-soft);
+    box-shadow: 0 4px 12px -4px rgba(99, 102, 241, 0.4);
+  }
+  .mp-chip-input:checked + .mp-chip .mat {
+    color: var(--mp-brand);
+  }
+  .mp-chip-input:checked + .mp-chip .mp-chip-name {
+    color: var(--mp-brand);
+  }
+
+  /* SHORTCUTS */
+  .mp-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+  }
+  .mp-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.7rem;
+    border: 1.5px solid var(--mp-line);
+    border-radius: 999px;
+    background: var(--mp-white);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--mp-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .mp-shortcut .mat {
+    font-size: 13px;
+  }
+  .mp-shortcut:hover {
+    border-color: var(--mp-brand-2);
+    color: var(--mp-brand-2);
+    background: #faf5ff;
+  }
+
+  /* ACTIONS */
+  .mp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding-top: 1.15rem;
+    margin-top: 1.15rem;
+    border-top: 1px dashed var(--mp-line);
+  }
+  .mp-btn-grad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 46px;
+    padding: 0.75rem 1.5rem;
+    border: 0;
+    border-radius: var(--mp-r);
+    background: var(--mp-grad);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.55);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+    flex: 1;
+    min-width: 160px;
+  }
+  .mp-btn-grad:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -8px rgba(99, 102, 241, 0.65);
+  }
+  .mp-btn-grad:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  .mp-btn-grad .mat {
+    font-size: 18px;
+  }
+
+  .mp-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 46px;
+    padding: 0.75rem 1.35rem;
+    border: 1.5px solid var(--mp-line);
+    border-radius: var(--mp-r);
+    background: var(--mp-white);
+    color: var(--mp-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .mp-btn-ghost .mat {
+    font-size: 18px;
+  }
+  .mp-btn-ghost:hover {
+    border-color: var(--mp-brand-2);
+    color: var(--mp-brand-2);
+    background: #faf5ff;
+  }
+
+  /* SUMMARY */
+  .mp-summary {
+    position: sticky;
+    top: 1.25rem;
+    background: var(--mp-white);
+    border: 1px solid var(--mp-line);
+    border-radius: var(--mp-r-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  }
+  .mp-summary-top {
+    padding: 1.25rem 1.35rem;
+    background: var(--mp-grad);
+    color: #fff;
+  }
+  .mp-summary-top h3 {
+    margin: 0 0 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+  .mp-summary-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .mp-summary-currency {
+    font-size: 1rem;
+    font-weight: 700;
+    opacity: 0.85;
+    margin-left: 0.35rem;
+  }
+  .mp-summary-body {
+    padding: 1.1rem 1.35rem;
+  }
+  .mp-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px dashed var(--mp-line);
+  }
+  .mp-summary-row:last-child {
+    border-bottom: 0;
+  }
+  .mp-summary-lbl {
+    color: var(--mp-muted);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .mp-summary-lbl .mat {
+    font-size: 16px;
+    color: var(--mp-muted-2);
+  }
+  .mp-summary-val {
+    font-weight: 800;
+    color: var(--mp-ink);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .mp-summary-val.ok {
+    color: var(--mp-ok);
+  }
+  .mp-summary-val.warn {
+    color: var(--mp-warn);
+  }
+  .mp-summary-val.danger {
+    color: var(--mp-danger);
+  }
+
+  .mp-summary-note {
+    padding: 0.8rem 1.1rem;
+    background: #fffbeb;
+    color: #b45309;
+    font-size: 0.76rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-top: 1px solid #fde68a;
+  }
+  .mp-summary-note .mat {
+    font-size: 16px;
+  }
+  .mp-summary-note.d-none {
+    display: none !important;
+  }
+
+  /* TOAST */
+  .mp-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: var(--mp-r);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+    animation: mpIn 0.28s ease;
+  }
+  .mp-toast .mat {
+    font-size: 20px;
+  }
+  @keyframes mpIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .mp-toast.ok {
+    background: #ecfdf5;
+    color: #047857;
+    border-left: 4px solid var(--mp-ok);
+  }
+  .mp-toast.err {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-left: 4px solid var(--mp-danger);
+  }
+  .d-none {
+    display: none !important;
+  }
+
+  /* MODAL */
+  .mp-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    animation: mpFade 0.2s ease;
+  }
+  @keyframes mpFade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .mp-modal {
+    background: #fff;
+    border-radius: var(--mp-r-lg);
+    max-width: 460px;
+    width: 100%;
+    padding: 1.6rem;
+    box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.5);
+    animation: mpPop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes mpPop {
+    from {
+      opacity: 0;
+      transform: scale(0.94) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  .mp-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: #fffbeb;
+    color: var(--mp-warn);
+    margin-bottom: 1rem;
+  }
+  .mp-modal-icon .mat {
+    font-size: 28px;
+  }
+  .mp-modal h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .mp-modal p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--mp-muted);
+    line-height: 1.55;
+  }
+  .mp-modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin-top: 1.35rem;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .mp {
+      padding: 1rem;
+      border-radius: 16px;
+    }
+    .mp-hero {
+      padding: 1.4rem 1.3rem;
+    }
+    .mp-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .mp-card-body {
+      padding: 1.15rem;
+    }
+    .mp-actions {
+      flex-direction: column;
+    }
+    .mp-btn-grad,
+    .mp-btn-ghost {
+      width: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mp *,
+    .mp *::before,
+    .mp *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="mp" id="make-payment-page">
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}" />
+
+  <!-- HERO -->
+  <header class="mp-hero">
+    <div class="mp-hero-in">
+      <div>
+        <span class="mp-crumb">
+          <span class="mat">north_east</span> Finance · Make Payment
+        </span>
+        <h1>Record a Payment</h1>
+        <p>
+          Pay an employee, supplier, or expense. The balance is deducted
+          immediately and logged in the transaction history.
+        </p>
+      </div>
+      <a href="{% url 'financial:make_list' %}" class="mp-cta ghost">
+        <span class="mat">arrow_back</span> Back to List
+      </a>
+    </div>
+  </header>
+
+  <!-- SERVER TOASTS -->
+  {% if messages %} {% for m in messages %}
+  <div
+    class="mp-toast {% if m.tags == 'success' %}ok{% else %}err{% endif %}"
+    role="alert"
+  >
+    <span class="mat"
+      >{% if m.tags == 'success' %}check_circle{% else %}error{% endif %}</span
+    >
+    <span>{{ m }}</span>
+  </div>
+  {% endfor %} {% endif %}
+
+  <!-- CLIENT TOAST -->
+  <div id="client-alert" class="mp-toast d-none" role="alert"></div>
+
+  <div class="mp-grid">
+    <!-- FORM -->
+    <form method="post" novalidate id="payment-form" class="mp-form">
+      {% csrf_token %}
+
+      <div class="mp-card">
+        <div class="mp-card-top">
+          <h2><span class="mat">payments</span> Payment Details</h2>
+        </div>
+        <div class="mp-card-body">
+          <!-- SOURCE -->
+          <div class="mp-field {% if form.source.errors %}mp-error{% endif %}">
+            <label class="mp-lbl" for="{{ form.source.id_for_label }}">
+              <span class="mat">account_balance_wallet</span>
+              Money Source <span class="req">*</span>
+            </label>
+            {{ form.source }} {% if form.source.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.source.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- PAYMENT TYPE CHIPS -->
+          <div
+            class="mp-field {% if form.payment_type.errors %}mp-error{% endif %}"
+          >
+            <label class="mp-lbl">
+              <span class="mat">category</span>
+              Payment Type <span class="req">*</span>
+            </label>
+
+            <div class="mp-chips">
+              <input
+                type="radio"
+                name="payment_type"
+                id="pt-EMPLOYEE"
+                value="EMPLOYEE"
+                class="mp-chip-input"
+                {%
+                if
+                form.payment_type.value=""
+                ="EMPLOYEE"
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="mp-chip" for="pt-EMPLOYEE">
+                <span class="mat">badge</span>
+                <span class="mp-chip-name">Employee</span>
+              </label>
+
+              <input
+                type="radio"
+                name="payment_type"
+                id="pt-SUPPLIER"
+                value="SUPPLIER"
+                class="mp-chip-input"
+                {%
+                if
+                form.payment_type.value=""
+                ="SUPPLIER"
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="mp-chip" for="pt-SUPPLIER">
+                <span class="mat">local_shipping</span>
+                <span class="mp-chip-name">Supplier</span>
+              </label>
+
+              <input
+                type="radio"
+                name="payment_type"
+                id="pt-CLIENT"
+                value="CLIENT"
+                class="mp-chip-input"
+                {%
+                if
+                form.payment_type.value=""
+                ="CLIENT"
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="mp-chip" for="pt-CLIENT">
+                <span class="mat">person</span>
+                <span class="mp-chip-name">Client</span>
+              </label>
+
+              <input
+                type="radio"
+                name="payment_type"
+                id="pt-EXPENSE"
+                value="EXPENSE"
+                class="mp-chip-input"
+                {%
+                if
+                form.payment_type.value=""
+                ="EXPENSE"
+                or
+                not
+                form.payment_type.value
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="mp-chip" for="pt-EXPENSE">
+                <span class="mat">receipt</span>
+                <span class="mp-chip-name">Expense</span>
+              </label>
+
+              <input
+                type="radio"
+                name="payment_type"
+                id="pt-OTHER"
+                value="OTHER"
+                class="mp-chip-input"
+                {%
+                if
+                form.payment_type.value=""
+                ="OTHER"
+                %}checked{%
+                endif
+                %}
+              />
+              <label class="mp-chip" for="pt-OTHER">
+                <span class="mat">more_horiz</span>
+                <span class="mp-chip-name">Other</span>
+              </label>
+            </div>
+
+            {% if form.payment_type.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.payment_type.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- RECEIVER -->
+          <div
+            class="mp-field {% if form.receiver_name.errors %}mp-error{% endif %}"
+          >
+            <label class="mp-lbl" for="{{ form.receiver_name.id_for_label }}">
+              <span class="mat">person</span>
+              Receiver <span class="req">*</span>
+            </label>
+            {{ form.receiver_name }} {% if form.receiver_name.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.receiver_name.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- AMOUNT -->
+          <div class="mp-field {% if form.amount.errors %}mp-error{% endif %}">
+            <label class="mp-lbl" for="{{ form.amount.id_for_label }}">
+              <span class="mat">payments</span>
+              Amount <span class="req">*</span>
+            </label>
+            {{ form.amount }}
+            <div class="mp-shortcuts" id="amount-shortcuts">
+              <button type="button" class="mp-shortcut" data-fill="100">
+                <span class="mat">bolt</span> 100
+              </button>
+              <button type="button" class="mp-shortcut" data-fill="500">
+                <span class="mat">bolt</span> 500
+              </button>
+              <button type="button" class="mp-shortcut" data-fill="1000">
+                <span class="mat">bolt</span> 1,000
+              </button>
+              <button type="button" class="mp-shortcut" data-fill="half">
+                <span class="mat">pie_chart</span> Half
+              </button>
+              <button type="button" class="mp-shortcut" data-fill="all">
+                <span class="mat">all_inclusive</span> All
+              </button>
+            </div>
+            {% if form.amount.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.amount.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- REFERENCE -->
+          <div
+            class="mp-field {% if form.reference.errors %}mp-error{% endif %}"
+          >
+            <label class="mp-lbl" for="{{ form.reference.id_for_label }}">
+              <span class="mat">tag</span> Reference
+            </label>
+            {{ form.reference }} {% if form.reference.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.reference.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- NOTES -->
+          <div class="mp-field {% if form.notes.errors %}mp-error{% endif %}">
+            <label class="mp-lbl" for="{{ form.notes.id_for_label }}">
+              <span class="mat">notes</span> Notes
+            </label>
+            {{ form.notes }} {% if form.notes.errors %}
+            <div class="mp-err">
+              <span class="mat">error</span>
+              {% for e in form.notes.errors %}{{ e }}{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- NON-FIELD ERRORS -->
+          {% if form.non_field_errors %}
+          <div class="mp-err" style="margin-bottom: 1rem">
+            <span class="mat">error</span>
+            {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- ACTIONS -->
+          <div class="mp-actions">
+            <button type="submit" class="mp-btn-grad" id="submit-btn">
+              <span class="mat">check_circle</span> Record Payment
+            </button>
+            <a href="{% url 'financial:make_list' %}" class="mp-btn-ghost">
+              <span class="mat">close</span> Cancel
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- SUMMARY -->
+    <aside class="mp-summary">
+      <div class="mp-summary-top">
+        <h3>Amount to Pay</h3>
+        <div>
+          <span class="mp-summary-amount" id="sum-amount">0.00</span>
+          <span class="mp-summary-currency" id="sum-currency">₺</span>
+        </div>
+      </div>
+
+      <div class="mp-summary-body">
+        <div class="mp-summary-row">
+          <span class="mp-summary-lbl">
+            <span class="mat">account_balance_wallet</span> Source
+          </span>
+          <span class="mp-summary-val" id="sum-source">—</span>
+        </div>
+        <div class="mp-summary-row">
+          <span class="mp-summary-lbl">
+            <span class="mat">savings</span> Current balance
+          </span>
+          <span class="mp-summary-val" id="sum-balance">—</span>
+        </div>
+        <div class="mp-summary-row">
+          <span class="mp-summary-lbl">
+            <span class="mat">trending_down</span> After payment
+          </span>
+          <span class="mp-summary-val" id="sum-after">—</span>
+        </div>
+        <div class="mp-summary-row">
+          <span class="mp-summary-lbl">
+            <span class="mat">category</span> Type
+          </span>
+          <span class="mp-summary-val" id="sum-type">—</span>
+        </div>
+        <div class="mp-summary-row">
+          <span class="mp-summary-lbl">
+            <span class="mat">person</span> Receiver
+          </span>
+          <span class="mp-summary-val" id="sum-receiver">—</span>
+        </div>
+      </div>
+
+      <div class="mp-summary-note d-none" id="balance-warning">
+        <span class="mat">warning</span>
+        Insufficient balance for this payment.
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+  (function () {
+    "use strict";
+
+    if (window.__MP_FORM_INIT__) return;
+    window.__MP_FORM_INIT__ = true;
+
+    const PREFIX = "%c[MP]";
+    const S = {
+      info: "color:#6366f1;font-weight:bold",
+      ok: "color:#10b981;font-weight:bold",
+      warn: "color:#f59e0b;font-weight:bold",
+      err: "color:#ef4444;font-weight:bold",
+    };
+    const log = {
+      info: (...a) => console.log(PREFIX, S.info, ...a),
+      ok: (...a) => console.log(PREFIX, S.ok, ...a),
+      warn: (...a) => console.warn(PREFIX, S.warn, ...a),
+      err: (...a) => console.error(PREFIX, S.err, ...a),
+    };
+
+    log.info("🚀 Make Payment Form booting…");
+
+    const page = document.getElementById("make-payment-page");
+    const form = document.getElementById("payment-form");
+    const sourceIn = form.querySelector('[name="source"]');
+    const amountIn = form.querySelector('[name="amount"]');
+    const recvIn = form.querySelector('[name="receiver_name"]');
+    const submit = document.getElementById("submit-btn");
+    const alertEl = document.getElementById("client-alert");
+
+    const sumAmount = document.getElementById("sum-amount");
+    const sumCurrency = document.getElementById("sum-currency");
+    const sumSource = document.getElementById("sum-source");
+    const sumBalance = document.getElementById("sum-balance");
+    const sumAfter = document.getElementById("sum-after");
+    const sumType = document.getElementById("sum-type");
+    const sumReceiver = document.getElementById("sum-receiver");
+    const warnBox = document.getElementById("balance-warning");
+
+    const modalRoot = document.getElementById("modal-root");
+
+    if (!form) {
+      log.err("Form not found.");
+      return;
+    }
+
+    // Parse source balances from option labels: "Main Cash (1200.00 ₺)"
+    const sources = {};
+    Array.from(sourceIn.options).forEach((opt) => {
+      if (!opt.value) return;
+      const match = opt.textContent.match(/\(([\d.,]+)\s*([^\s)]*)\)/);
+      if (match) {
+        sources[opt.value] = {
+          name: opt.textContent.replace(/\s*\(.*\)\s*$/, "").trim(),
+          balance: parseFloat(match[1].replace(/,/g, "")) || 0,
+          currency: match[2] || "₺",
+        };
+      } else {
+        sources[opt.value] = {
+          name: opt.textContent.trim(),
+          balance: 0,
+          currency: "₺",
+        };
+      }
+    });
+
+    log.info("Parsed sources:", sources);
+
+    const fmt = (n) =>
+      (Number(n) || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          })[c],
+      );
+
+    function toast(msg, kind = "err") {
+      alertEl.className = `mp-toast ${kind === "ok" ? "ok" : "err"}`;
+      alertEl.innerHTML = `<span class="mat">${kind === "ok" ? "check_circle" : "error"}</span><span>${esc(msg)}</span>`;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => {
+        alertEl.className = "mp-toast d-none";
+      }, 5000);
+    }
+
+    function updateSummary() {
+      const srcId = sourceIn.value;
+      const src = sources[srcId] || { name: "—", balance: 0, currency: "₺" };
+      const amount = parseFloat(amountIn.value) || 0;
+      const receiver = recvIn.value.trim() || "—";
+
+      const typeInput = form.querySelector(
+        'input[name="payment_type"]:checked',
+      );
+      const typeLabel = typeInput
+        ? typeInput.nextElementSibling?.querySelector(".mp-chip-name")
+            ?.textContent || typeInput.value
+        : "—";
+
+      sumAmount.textContent = fmt(amount);
+      sumCurrency.textContent = src.currency;
+      sumSource.textContent = src.name;
+      sumBalance.textContent = `${fmt(src.balance)} ${src.currency}`;
+      sumType.textContent = typeLabel;
+      sumReceiver.textContent = receiver;
+
+      const after = src.balance - amount;
+      sumAfter.textContent = `${fmt(after)} ${src.currency}`;
+
+      sumAfter.classList.remove("ok", "warn", "danger");
+      if (amount === 0) sumAfter.classList.add("ok");
+      else if (after < 0) sumAfter.classList.add("danger");
+      else if (after < src.balance * 0.1) sumAfter.classList.add("warn");
+      else sumAfter.classList.add("ok");
+
+      if (after < 0) warnBox.classList.remove("d-none");
+      else warnBox.classList.add("d-none");
+    }
+
+    sourceIn.addEventListener("change", updateSummary);
+    amountIn.addEventListener("input", updateSummary);
+    recvIn.addEventListener("input", updateSummary);
+
+    form
+      .querySelectorAll('input[name="payment_type"]')
+      .forEach((r) => r.addEventListener("change", updateSummary));
+
+    document
+      .getElementById("amount-shortcuts")
+      .addEventListener("click", (e) => {
+        const btn = e.target.closest(".mp-shortcut");
+        if (!btn) return;
+        const fill = btn.dataset.fill;
+        const src = sources[sourceIn.value] || { balance: 0 };
+
+        if (fill === "half") amountIn.value = (src.balance / 2).toFixed(2);
+        else if (fill === "all") amountIn.value = src.balance.toFixed(2);
+        else amountIn.value = fill;
+
+        updateSummary();
+      });
+
+    function confirmLarge(amount, currency, receiver, cb) {
+      modalRoot.innerHTML = `
+        <div class="mp-backdrop" role="dialog" aria-modal="true">
+          <div class="mp-modal">
+            <div class="mp-modal-icon"><span class="mat">warning</span></div>
+            <h3>Confirm large payment</h3>
+            <p>
+              You are about to pay
+              <strong>${fmt(amount)} ${esc(currency)}</strong>
+              to <strong>${esc(receiver)}</strong>.
+              This action cannot be undone.
+            </p>
+            <div class="mp-modal-foot">
+              <button type="button" class="mp-btn-ghost" data-modal="cancel">Cancel</button>
+              <button type="button" class="mp-btn-grad" data-modal="confirm" style="min-width:auto;">
+                <span class="mat">check</span> Confirm
+              </button>
+            </div>
+          </div>
+        </div>`;
+
+      const backdrop = modalRoot.querySelector(".mp-backdrop");
+      const cancel = modalRoot.querySelector('[data-modal="cancel"]');
+      const confirm = modalRoot.querySelector('[data-modal="confirm"]');
+      const close = () => (modalRoot.innerHTML = "");
+
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) close();
+      });
+      cancel.addEventListener("click", close);
+      confirm.addEventListener("click", () => {
+        close();
+        cb();
+      });
+    }
+
+    form.addEventListener("submit", (e) => {
+      const amount = parseFloat(amountIn.value) || 0;
+      const srcId = sourceIn.value;
+      const src = sources[srcId] || { balance: 0, currency: "₺" };
+      const receiver = recvIn.value.trim();
+
+      if (!srcId) {
+        e.preventDefault();
+        toast("Please select a money source.", "err");
+        sourceIn.focus();
+        return;
+      }
+      if (!receiver) {
+        e.preventDefault();
+        toast("Please enter a receiver name.", "err");
+        recvIn.focus();
+        return;
+      }
+      if (amount <= 0) {
+        e.preventDefault();
+        toast("Amount must be greater than zero.", "err");
+        amountIn.focus();
+        return;
+      }
+      if (amount > src.balance) {
+        e.preventDefault();
+        toast(
+          `Insufficient balance. Available: ${fmt(src.balance)} ${src.currency}`,
+          "err",
+        );
+        return;
+      }
+
+      if (amount >= 10000) {
+        e.preventDefault();
+        confirmLarge(amount, src.currency, receiver, () => {
+          submit.disabled = true;
+          submit.innerHTML =
+            '<span class="mat">progress_activity</span> Submitting…';
+          form.submit();
+        });
+        return;
+      }
+
+      submit.disabled = true;
+      submit.innerHTML =
+        '<span class="mat">progress_activity</span> Submitting…';
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalRoot.innerHTML) {
+        modalRoot.innerHTML = "";
+      }
+    });
+
+    updateSummary();
+    log.ok("✅ Make Payment Form ready.");
+  })();
+</script>
+
+{% endblock %}

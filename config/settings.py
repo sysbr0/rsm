@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from pathlib import Path 
+from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,14 +28,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 LICENSE_SERVER_URL = "https://admin.sysbr.net"
-CURRENCY = os.getenv(
-    "CURRENCY",
-    "₺",
-)
-TRY = os.getenv(
-    "TRY",
-    "TRY",
-)
+CURRENCY = os.getenv("CURRENCY", "₺")
+TRY = os.getenv("TRY", "TRY")
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,19 +41,21 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
     "rest_framework",
-   "rest_framework.authtoken",
+    "rest_framework.authtoken",
+
+    "online_cloud",
 
     "menu",
     "users",
     "orders",
-   "printers.apps.PrintersConfig",
+    "printers.apps.PrintersConfig",
     "tables",
     "ui",
     "licensing",
     "common",
-    "Financial"
-    
+    "Financial",
 ]
 
 MIDDLEWARE = [
@@ -68,9 +66,22 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "licensing.middleware.LicenseMiddleware",   # after auth
 ]
 
 ROOT_URLCONF = "config.urls"
+LOGIN_REDIRECT_URL = "users/login/as/admin/"
+# settings.py
+
+# Development (fine for your machine)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "rsm-license",
+    }
+}
+
+# Production (recommended)
 
 TEMPLATES = [
     {
@@ -83,6 +94,11 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+              
+
+                "licensing.context_processors.license_context",
+
+
             ],
         },
     },
@@ -102,6 +118,8 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "users.User"
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -138,7 +156,33 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# -------------------------------------------------------------------
+# Django REST Framework
+# -------------------------------------------------------------------
+REST_FRAMEWORK = {
+    # Authentication
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+
+    # Permissions
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+
+    # Pagination — REQUIRED for the financial templates
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
