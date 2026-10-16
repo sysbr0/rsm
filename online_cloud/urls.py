@@ -105,7 +105,7 @@ urlpatterns = [
     # API — COMBINED (categories + products)
     # ======================================================
     path(
-        "api/sync/all/",
+        "sync/",
         CombinedSyncAPIView.as_view(),
         name="api-sync-all",
     ),

@@ -704,6 +704,171 @@
       }
 
       /* =====================================================
+         MESSAGE POPUP / ALERTS
+         ===================================================== */
+      .message-popup-stack {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 420px;
+        width: calc(100% - 48px);
+        pointer-events: none;
+      }
+
+      .cd-alert {
+        pointer-events: auto;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: var(--r-lg);
+        background: #fff;
+        box-shadow:
+          0 20px 40px -16px rgba(15, 23, 42, 0.25),
+          0 8px 16px -8px rgba(15, 23, 42, 0.1);
+        border-left: 6px solid var(--info);
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        animation: slideIn 0.25s ease forwards;
+        transition: all 0.2s ease;
+        position: relative;
+        backdrop-filter: blur(4px);
+      }
+
+      .cd-alert.closing {
+        animation: slideOut 0.2s ease forwards;
+      }
+
+      .cd-alert .mat {
+        font-size: 22px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      .cd-alert-content {
+        flex: 1;
+        font-size: 0.9rem;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #1e293b;
+        padding-right: 8px;
+        word-break: break-word;
+      }
+
+      .cd-alert-close {
+        flex-shrink: 0;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        transition: all 0.15s ease;
+        line-height: 1;
+        margin: -4px -4px 0 0;
+      }
+
+      .cd-alert-close:hover {
+        background: rgba(15, 23, 42, 0.06);
+        color: #0f172a;
+      }
+
+      .cd-alert-close .mat {
+        font-size: 18px;
+      }
+
+      /* ---------- SUCCESS (green) ---------- */
+      .cd-alert-success {
+        background: #ecfdf5;
+        border-left-color: var(--ok);
+        color: #065f46;
+      }
+      .cd-alert-success .mat {
+        color: var(--ok);
+      }
+      .cd-alert-success .cd-alert-content {
+        color: #065f46;
+      }
+
+      /* ---------- WARNING (yellow) ---------- */
+      .cd-alert-warning {
+        background: #fffbeb;
+        border-left-color: var(--warn);
+        color: #92400e;
+      }
+      .cd-alert-warning .mat {
+        color: var(--warn);
+      }
+      .cd-alert-warning .cd-alert-content {
+        color: #92400e;
+      }
+
+      /* ---------- ERROR / DANGER (red) ---------- */
+      .cd-alert-error {
+        background: #fef2f2;
+        border-left-color: var(--danger);
+        color: #991b1b;
+      }
+      .cd-alert-error .mat {
+        color: var(--danger);
+      }
+      .cd-alert-error .cd-alert-content {
+        color: #991b1b;
+      }
+
+      /* ---------- INFO (blue) ---------- */
+      .cd-alert-info {
+        background: #eff6ff;
+        border-left-color: var(--info);
+        color: #1e40af;
+      }
+      .cd-alert-info .mat {
+        color: var(--info);
+      }
+      .cd-alert-info .cd-alert-content {
+        color: #1e40af;
+      }
+
+      /* ---------- DEFAULT (neutral) ---------- */
+      .cd-alert-default {
+        background: #f8fafc;
+        border-left-color: var(--muted);
+        color: var(--ink-2);
+      }
+      .cd-alert-default .mat {
+        color: var(--muted);
+      }
+
+      /* animations */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(100%) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+        }
+      }
+
+      @keyframes slideOut {
+        from {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(100%) scale(0.95);
+        }
+      }
+
+      /* =====================================================
          RESPONSIVE
          ===================================================== */
       @media (max-width: 960px) {
@@ -733,6 +898,14 @@
         .app-shell {
           padding-top: 14px;
         }
+
+        .message-popup-stack {
+          top: 76px;
+          right: 12px;
+          left: 12px;
+          max-width: none;
+          width: auto;
+        }
       }
 
       @media (max-width: 480px) {
@@ -753,6 +926,13 @@
         .gate-btn {
           width: 100%;
         }
+
+        .cd-alert {
+          padding: 12px 14px;
+        }
+        .cd-alert-content {
+          font-size: 0.82rem;
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -763,6 +943,11 @@
           animation-iteration-count: 1 !important;
           transition-duration: 0.01ms !important;
         }
+        .cd-alert {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
       }
     </style>
 
@@ -770,7 +955,44 @@
   </head>
 
   <body>
-    {% if not request.user.is_authenticated %}
+    <!-- ===================================================== -->
+    <!-- MESSAGE POPUPS (Django messages) - fixed top-right stack -->
+    <!-- ===================================================== -->
+    {% if messages %}
+    <div class="message-popup-stack" id="messagePopupStack">
+      {% for message in messages %}
+      <div
+        class="cd-alert cd-alert-{{ message.tags|default:'info' }}"
+        role="alert"
+        data-message-id="{{ forloop.counter0 }}"
+      >
+        <!-- icon based on tag -->
+        {% if message.tags == 'success' %}
+        <span class="mat">check_circle</span>
+        {% elif message.tags == 'warning' %}
+        <span class="mat">warning</span>
+        {% elif message.tags == 'error' or message.tags == 'danger' %}
+        <span class="mat">error</span>
+        {% else %}
+        <span class="mat">info</span>
+        {% endif %}
+
+        <!-- message text -->
+        <div class="cd-alert-content">{{ message }}</div>
+
+        <!-- close button -->
+        <button
+          class="cd-alert-close"
+          type="button"
+          aria-label="Close message"
+          onclick="closeMessage(this)"
+        >
+          <span class="mat">close</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% if not request.user.is_authenticated %}
     <!-- ===================================================== -->
     <!-- NOT LOGGED IN → styled gate card (matches login look) -->
     <!-- ===================================================== -->
@@ -1040,6 +1262,64 @@
           if (window.innerWidth > 960) {
             closeSidebar();
           }
+        });
+      })();
+
+      /* =====================================================
+         MESSAGE POPUP AUTO-DISMISS & CLOSE
+         ===================================================== */
+      function closeMessage(btn) {
+        var alert = btn.closest(".cd-alert");
+        if (!alert) return;
+        alert.classList.add("closing");
+        alert.addEventListener(
+          "animationend",
+          function () {
+            alert.remove();
+            // if stack is empty, remove it
+            var stack = document.getElementById("messagePopupStack");
+            if (stack && stack.children.length === 0) {
+              stack.remove();
+            }
+          },
+          { once: true },
+        );
+      }
+
+      (function autoDismissMessages() {
+        var stack = document.getElementById("messagePopupStack");
+        if (!stack) return;
+        var alerts = stack.querySelectorAll(".cd-alert");
+        var delays = {
+          success: 4000,
+          info: 5000,
+          warning: 6000,
+          error: 7000,
+          danger: 7000,
+        };
+        alerts.forEach(function (alert) {
+          // find tag from class
+          var tag = "info";
+          if (alert.classList.contains("cd-alert-success")) tag = "success";
+          else if (alert.classList.contains("cd-alert-warning"))
+            tag = "warning";
+          else if (
+            alert.classList.contains("cd-alert-error") ||
+            alert.classList.contains("cd-alert-danger")
+          )
+            tag = "error";
+          else if (alert.classList.contains("cd-alert-info")) tag = "info";
+
+          var delay = delays[tag] || 5000;
+          setTimeout(function () {
+            var closeBtn = alert.querySelector(".cd-alert-close");
+            if (closeBtn) {
+              closeMessage(closeBtn);
+            } else {
+              alert.remove();
+              if (stack.children.length === 0) stack.remove();
+            }
+          }, delay);
         });
       })();
     </script>
