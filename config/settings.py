@@ -13,16 +13,62 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+
+
+
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+RESTAURANT_UUID = os.getenv("RESTAURANT_UUID", "3bf4739a-e7e4-40ef-b232-12b44c179600")
+
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me-in-production")
+CLOUD_API_URL = os.getenv("CLOUD_API_URL", "https://admin.sysbr.net")
+CLOUD_API_KEY = os.getenv("CLOUD_API_KEY", "")
+LICENSE_SERVER_URL = os.getenv("LICENSE_SERVER_URL", CLOUD_API_URL)
+
+PUBLIC_API_URL = os.getenv("PUBLIC_API_URL", "https://admin.sysbr.net")
+LOCAL_API_URL = os.getenv("LOCAL_API_URL", "http://127.0.0.1:8001")
+
+DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
+
+allowed_hosts = os.getenv(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1,0.0.0.0"
+)
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(",") if host.strip()]
+
+public_host = PUBLIC_API_URL.replace("https://", "").replace("http://", "")
+if public_host and public_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(public_host)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", PUBLIC_API_URL).split(",")
+    if origin.strip()
+]
+
+CURRENCY = os.getenv("CURRENCY", "₺")
+TRY = os.getenv("TRY", "TRY")
+# Path where the web login can persist an access token for CLI/management tools.
+CLOUD_TOKEN_FILE = os.getenv("CLOUD_TOKEN_FILE", str(BASE_DIR / ".cloud_token"))
+
+
+
+
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+RESTAURANT_UUID ="3bf4739a-e7e4-40ef-b232-12b44c179600"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-tf(cr#uy6xzmck$1_4*g8cmc&+&w*2#h!l=b_-rcc%79o-!#sk"
-
+CLOUD_API_KEY = "90054bfeed678b1ea252e4ba228b78a298e66cb5f1a6afa3e52151298ef27811"
+CLOUD_API_URL = "https://admin.sysbr.net"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

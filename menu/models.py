@@ -162,43 +162,32 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    sku = models.CharField(
-        max_length=100,
-        unique=True,
-    )
+    # ... all your existing fields stay untouched ...
 
+    sku = models.CharField(max_length=100, unique=True)
     uuid = models.CharField(
-    max_length=36,
-    default=generate_uuid_str,
-    editable=False,
-    unique=True,
-    db_index=True,     # optional — see note below
-)
-
-    name = models.CharField(
-        max_length=150,
+        max_length=36,
+        default=generate_uuid_str,
+        editable=False,
+        unique=True,
+        db_index=True,
     )
-
+    name = models.CharField(max_length=150)
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
         related_name="products",
     )
-
     section = models.ForeignKey(
         Section,
         on_delete=models.PROTECT,
         related_name="products",
     )
-
     price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[
-            MinValueValidator(Decimal("0.00")),
-        ],
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
-
     tax_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -208,26 +197,27 @@ class Product(models.Model):
             MaxValueValidator(Decimal("100.00")),
         ],
     )
+    description = models.TextField(blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=0)
 
-    description = models.TextField(
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # ==================================================
+    # NEW — sync metadata
+    # ==================================================
+    is_synced = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+    last_synced_at = models.DateTimeField(
+        null=True,
         blank=True,
-        default="",
     )
-
-    is_active = models.BooleanField(
-        default=True,
-    )
-
-    display_order = models.PositiveIntegerField(
-        default=0,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
+    local_version = models.PositiveBigIntegerField(
+        default=1,
+        help_text="Incremented on every local change.",
     )
 
     class Meta:

@@ -1,0 +1,1137 @@
+{% extends "ui/admin_base.html" %}
+
+{% block content %}
+<style>
+  /* ============================================================
+     Design tokens
+     ============================================================ */
+  .rl-page {
+    --rl-bg: #f6f7f9;
+    --rl-surface: #ffffff;
+    --rl-border: #e6e8ec;
+    --rl-border-strong: #d1d5db;
+    --rl-text: #111827;
+    --rl-text-muted: #6b7280;
+    --rl-text-soft: #9ca3af;
+    --rl-primary: #4f46e5;
+    --rl-primary-hover: #4338ca;
+    --rl-primary-soft: #eef2ff;
+    --rl-success: #047857;
+    --rl-success-soft: #ecfdf5;
+    --rl-success-border: #a7f3d0;
+    --rl-danger: #b91c1c;
+    --rl-danger-soft: #fef2f2;
+    --rl-danger-border: #fecaca;
+    --rl-warning: #b45309;
+    --rl-warning-soft: #fffbeb;
+    --rl-radius: 12px;
+    --rl-radius-sm: 8px;
+    --rl-shadow-sm: 0 1px 2px rgba(16, 24, 40, .04);
+    --rl-shadow-md: 0 4px 12px rgba(16, 24, 40, .08);
+    --rl-shadow-lg: 0 20px 50px rgba(16, 24, 40, .18);
+    --rl-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--rl-font);
+    color: var(--rl-text);
+    background: var(--rl-bg);
+    min-height: 100vh;
+  }
+
+  /* ============================================================
+     Page header
+     ============================================================ */
+  .rl-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .rl-breadcrumb {
+    font-size: .78rem;
+    color: var(--rl-text-soft);
+    margin-bottom: .4rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .rl-breadcrumb a {
+    color: var(--rl-text-muted);
+    text-decoration: none;
+  }
+  .rl-breadcrumb a:hover { color: var(--rl-primary); }
+  .rl-breadcrumb .sep { opacity: .5; }
+
+  .rl-page-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin: 0 0 .25rem;
+    color: var(--rl-text);
+  }
+  .rl-page-subtitle {
+    color: var(--rl-text-muted);
+    font-size: .9rem;
+    margin: 0;
+  }
+
+  /* ============================================================
+     Buttons
+     ============================================================ */
+  .rl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border-radius: var(--rl-radius-sm);
+    font-weight: 500;
+    font-size: .875rem;
+    padding: .55rem 1rem;
+    border: 1px solid transparent;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .05s ease;
+    cursor: pointer;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .rl-btn:active { transform: translateY(1px); }
+  .rl-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+  }
+
+  .rl-btn-primary {
+    background: var(--rl-primary);
+    color: #fff;
+    border-color: var(--rl-primary);
+  }
+  .rl-btn-primary:hover { background: var(--rl-primary-hover); border-color: var(--rl-primary-hover); color: #fff; }
+
+  .rl-btn-secondary {
+    background: var(--rl-surface);
+    color: var(--rl-text);
+    border-color: var(--rl-border-strong);
+  }
+  .rl-btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; color: var(--rl-text); }
+
+  .rl-btn-ghost {
+    background: transparent;
+    color: var(--rl-text-muted);
+    border-color: transparent;
+    padding: .45rem .7rem;
+  }
+  .rl-btn-ghost:hover { background: #f3f4f6; color: var(--rl-text); }
+
+  .rl-btn-danger {
+    background: var(--rl-surface);
+    color: var(--rl-danger);
+    border-color: var(--rl-danger-border);
+  }
+  .rl-btn-danger:hover { background: var(--rl-danger-soft); }
+
+  .rl-btn-success {
+    background: var(--rl-surface);
+    color: var(--rl-success);
+    border-color: var(--rl-success-border);
+  }
+  .rl-btn-success:hover { background: var(--rl-success-soft); }
+
+  .rl-btn-sm { padding: .4rem .7rem; font-size: .8rem; }
+
+  /* ============================================================
+     Stats row
+     ============================================================ */
+  .rl-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .9rem;
+    margin-bottom: 1.5rem;
+  }
+  .rl-stat {
+    background: var(--rl-surface);
+    border: 1px solid var(--rl-border);
+    border-radius: var(--rl-radius);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--rl-shadow-sm);
+  }
+  .rl-stat-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--rl-text-soft);
+    font-weight: 600;
+    margin-bottom: .4rem;
+  }
+  .rl-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--rl-text);
+    line-height: 1.1;
+  }
+  .rl-stat-meta {
+    font-size: .75rem;
+    color: var(--rl-text-muted);
+    margin-top: .35rem;
+  }
+
+  /* ============================================================
+     Card
+     ============================================================ */
+  .rl-card {
+    background: var(--rl-surface);
+    border: 1px solid var(--rl-border);
+    border-radius: var(--rl-radius);
+    box-shadow: var(--rl-shadow-sm);
+    overflow: hidden;
+  }
+
+  .rl-card-toolbar {
+    padding: .9rem 1.25rem;
+    border-bottom: 1px solid var(--rl-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    background: var(--rl-surface);
+  }
+
+  .rl-card-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--rl-text);
+    margin: 0;
+  }
+  .rl-card-title svg { color: var(--rl-primary); }
+
+  .rl-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+
+  .rl-search {
+    position: relative;
+  }
+  .rl-search input {
+    width: 220px;
+    border: 1px solid var(--rl-border-strong);
+    border-radius: var(--rl-radius-sm);
+    padding: .45rem .7rem .45rem 2rem;
+    font-size: .85rem;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    background: #fff;
+    color: var(--rl-text);
+  }
+  .rl-search input:focus {
+    border-color: var(--rl-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+  }
+  .rl-search svg {
+    position: absolute;
+    left: .6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--rl-text-soft);
+    pointer-events: none;
+  }
+
+  .rl-filter {
+    border: 1px solid var(--rl-border-strong);
+    border-radius: var(--rl-radius-sm);
+    padding: .45rem .7rem;
+    font-size: .85rem;
+    background: #fff;
+    color: var(--rl-text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .rl-filter:focus {
+    border-color: var(--rl-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+  }
+
+  /* ============================================================
+     Table
+     ============================================================ */
+  .rl-table-wrap { width: 100%; overflow-x: auto; }
+
+  .rl-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .9rem;
+  }
+
+  .rl-table thead th {
+    text-align: left;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--rl-text-soft);
+    font-weight: 600;
+    padding: .75rem 1.1rem;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--rl-border);
+    white-space: nowrap;
+  }
+  .rl-table thead th.right { text-align: right; }
+  .rl-table thead th.center { text-align: center; }
+
+  .rl-table tbody td {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--rl-border);
+    vertical-align: middle;
+    color: var(--rl-text);
+  }
+  .rl-table tbody tr:last-child td { border-bottom: none; }
+  .rl-table tbody tr { transition: background .1s; }
+  .rl-table tbody tr:hover { background: #fafbfc; }
+
+  .rl-table tbody td.center { text-align: center; }
+  .rl-table tbody td.right { text-align: right; }
+
+  /* Language cell */
+  .rl-lang {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+  .rl-lang-flag {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--rl-primary-soft);
+    color: var(--rl-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .78rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .rl-lang-name {
+    font-weight: 600;
+    color: var(--rl-text);
+    line-height: 1.2;
+  }
+  .rl-lang-code {
+    font-size: .72rem;
+    color: var(--rl-text-soft);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-top: 2px;
+  }
+
+  /* Pills */
+  .rl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .rl-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+  }
+  .rl-pill-active   { background: var(--rl-success-soft); color: var(--rl-success); border-color: var(--rl-success-border); }
+  .rl-pill-inactive { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+  .rl-pill-default  { background: var(--rl-primary-soft); color: #3730a3; border-color: #c7d2fe; }
+
+  .rl-muted { color: var(--rl-text-soft); }
+
+  /* Row actions */
+  .rl-row-actions {
+    display: flex;
+    gap: .35rem;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+  .rl-row-actions form { display: inline; margin: 0; }
+
+  /* ============================================================
+     Empty state
+     ============================================================ */
+  .rl-empty {
+    text-align: center;
+    padding: 4rem 1.5rem;
+  }
+  .rl-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--rl-primary-soft);
+    color: var(--rl-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .rl-empty-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 .35rem;
+    color: var(--rl-text);
+  }
+  .rl-empty-text {
+    color: var(--rl-text-muted);
+    font-size: .875rem;
+    margin: 0 0 1.25rem;
+  }
+
+  /* ============================================================
+     Modal dialog (centered, elevated)
+     ============================================================ */
+  .rl-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, .55);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+    z-index: 1050;
+    overflow-y: auto;
+  }
+  .rl-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rl-modal {
+    background: var(--rl-surface);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow:
+      0 0 0 1px rgba(16, 24, 40, .05),
+      0 24px 60px -12px rgba(16, 24, 40, .28),
+      0 8px 24px -8px rgba(16, 24, 40, .18);
+    transform: scale(.96) translateY(8px);
+    opacity: 0;
+    transition: transform .22s cubic-bezier(.2, .8, .2, 1),
+                opacity .18s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2.5rem);
+  }
+  .rl-modal-backdrop.open .rl-modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  .rl-modal-head {
+    padding: 1.25rem 1.5rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--rl-border);
+    background: linear-gradient(180deg, #ffffff 0%, #fcfcfe 100%);
+  }
+  .rl-modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    min-width: 0;
+  }
+  .rl-modal-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--rl-primary-soft);
+    color: var(--rl-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .rl-modal-head h5 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--rl-text);
+    line-height: 1.2;
+  }
+  .rl-modal-head p {
+    margin: .2rem 0 0;
+    font-size: .8rem;
+    color: var(--rl-text-muted);
+    line-height: 1.35;
+  }
+
+  .rl-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--rl-text-soft);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
+    margin-top: -2px;
+  }
+  .rl-close:hover { background: #f3f4f6; color: var(--rl-text); }
+  .rl-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+  }
+
+  .rl-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .rl-modal-foot {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--rl-border);
+    background: #fafbfc;
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+  }
+
+  /* Form fields */
+  .rl-field { margin-bottom: 1.1rem; }
+  .rl-field:last-child { margin-bottom: 0; }
+
+  .rl-field label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--rl-text);
+    margin-bottom: .4rem;
+  }
+  .rl-field .req { color: var(--rl-danger); margin-left: 2px; }
+
+  .rl-field select,
+  .rl-field input[type="text"] {
+    width: 100%;
+    border: 1px solid var(--rl-border-strong);
+    border-radius: var(--rl-radius-sm);
+    padding: .6rem .8rem;
+    font-size: .9rem;
+    color: var(--rl-text);
+    background: #fff;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .rl-field select:focus,
+  .rl-field input[type="text"]:focus {
+    border-color: var(--rl-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+  }
+  .rl-field select:disabled {
+    background: #f9fafb;
+    color: var(--rl-text-soft);
+    cursor: not-allowed;
+  }
+
+  .rl-hint {
+    font-size: .75rem;
+    color: var(--rl-text-muted);
+    margin-top: .35rem;
+    line-height: 1.4;
+  }
+
+  /* Toggle switch for boolean fields */
+  .rl-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .8rem 1rem;
+    border: 1px solid var(--rl-border-strong);
+    border-radius: var(--rl-radius-sm);
+    background: #fff;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+  }
+  .rl-switch:hover { border-color: #9ca3af; }
+  .rl-switch-text {
+    font-size: .875rem;
+    color: var(--rl-text);
+    font-weight: 500;
+  }
+  .rl-switch-sub {
+    font-size: .75rem;
+    color: var(--rl-text-muted);
+    margin-top: 2px;
+  }
+  .rl-switch input[type="checkbox"] {
+    appearance: none;
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: #d1d5db;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .rl-switch input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    transition: transform .15s;
+  }
+  .rl-switch input[type="checkbox"]:checked { background: var(--rl-primary); }
+  .rl-switch input[type="checkbox"]:checked::after { transform: translateX(18px); }
+
+  /* ============================================================
+     Inline alert
+     ============================================================ */
+  .rl-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .85rem 1.1rem;
+    border-radius: var(--rl-radius-sm);
+    font-size: .875rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid;
+  }
+  .rl-alert-danger {
+    background: var(--rl-danger-soft);
+    border-color: var(--rl-danger-border);
+    color: #7f1d1d;
+  }
+  .rl-alert-success {
+    background: var(--rl-success-soft);
+    border-color: var(--rl-success-border);
+    color: #064e3b;
+  }
+  .rl-alert-info {
+    background: var(--rl-primary-soft);
+    border-color: #c7d2fe;
+    color: #3730a3;
+  }
+
+  /* ============================================================
+     Responsive
+     ============================================================ */
+  @media (max-width: 720px) {
+    .rl-page-title { font-size: 1.3rem; }
+    .rl-search input { width: 160px; }
+    .rl-row-actions { flex-wrap: wrap; justify-content: flex-start; }
+    .rl-table thead th, .rl-table tbody td { padding: .7rem .75rem; }
+    .rl-modal { max-width: 100%; border-radius: 14px; }
+    .rl-modal-head { padding: 1rem 1.1rem .85rem; }
+    .rl-modal-body { padding: 1.1rem; }
+    .rl-modal-foot { padding: .85rem 1.1rem; }
+  }
+</style>
+
+<div class="rl-page">
+  <div class="container-fluid py-4">
+
+    {# ==================== Flash messages ==================== #}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="rl-alert {% if message.tags == 'success' %}rl-alert-success{% elif message.tags == 'error' %}rl-alert-danger{% else %}rl-alert-info{% endif %}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;">
+            {% if message.tags == 'success' %}
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            {% elif message.tags == 'error' %}
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            {% else %}
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            {% endif %}
+          </svg>
+          <div>{{ message }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {# ==================== Page header ==================== #}
+    <div class="rl-page-header">
+      <div>
+        <div class="rl-breadcrumb">
+          <a href="/">Dashboard</a>
+          <span class="sep">/</span>
+          <a href="#">Online</a>
+          <span class="sep">/</span>
+          <span>Languages</span>
+        </div>
+        <h1 class="rl-page-title">Restaurant Languages</h1>
+        <p class="rl-page-subtitle">
+          Manage which languages your customers can browse your menu in.
+        </p>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="rl-btn rl-btn-primary" onclick="rlOpenAdd()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Language
+        </button>
+      </div>
+    </div>
+
+    {# ==================== Context error ==================== #}
+    {% if error %}
+      <div class="rl-alert rl-alert-danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>{{ error }}</div>
+      </div>
+    {% endif %}
+
+    {# ==================== Stats ==================== #}
+    <div class="rl-stats">
+      <div class="rl-stat">
+        <div class="rl-stat-label">Total Languages</div>
+        <div class="rl-stat-value">{{ languages|length }}</div>
+        <div class="rl-stat-meta">Configured for this restaurant</div>
+      </div>
+      <div class="rl-stat">
+        <div class="rl-stat-label">Active</div>
+        <div class="rl-stat-value" id="rlStatActive">0</div>
+        <div class="rl-stat-meta">Visible on the public menu</div>
+      </div>
+      <div class="rl-stat">
+        <div class="rl-stat-label">Default</div>
+        <div class="rl-stat-value" id="rlStatDefault">—</div>
+        <div class="rl-stat-meta">Shown first to customers</div>
+      </div>
+    </div>
+
+    {# ==================== Table card ==================== #}
+    <div class="rl-card">
+      <div class="rl-card-toolbar">
+        <h5 class="rl-card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Configured Languages
+        </h5>
+
+        {% if languages %}
+        <div class="rl-toolbar-right">
+          <div class="rl-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="rlSearch" placeholder="Search languages…" oninput="rlFilter()">
+          </div>
+          <select class="rl-filter" id="rlStatusFilter" onchange="rlFilter()">
+            <option value="">All statuses</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if languages %}
+      <div class="rl-table-wrap">
+        <table class="rl-table" id="rlTable">
+          <thead>
+            <tr>
+              <th>Language</th>
+              <th class="center">Default</th>
+              <th class="center">Status</th>
+              <th class="right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for language in languages %}
+            <tr data-search="{{ language.language_name|default:language.language_code|lower }} {{ language.language_code|lower }}"
+                data-status="{% if language.is_active %}active{% else %}inactive{% endif %}">
+              <td>
+                <div class="rl-lang">
+                  <div class="rl-lang-flag">{{ language.language_code }}</div>
+                  <div>
+                    <div class="rl-lang-name">
+                      {{ language.language_name|default:language.language_code }}
+                    </div>
+                    <div class="rl-lang-code">{{ language.language_code }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="center">
+                {% if language.is_default %}
+                  <span class="rl-pill rl-pill-default">Default</span>
+                {% else %}
+                  <span class="rl-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="center">
+                {% if language.is_active %}
+                  <span class="rl-pill rl-pill-active"><span class="dot"></span>Active</span>
+                {% else %}
+                  <span class="rl-pill rl-pill-inactive"><span class="dot"></span>Inactive</span>
+                {% endif %}
+              </td>
+              <td class="right">
+                <div class="rl-row-actions">
+                  <button type="button"
+                          class="rl-btn rl-btn-ghost rl-btn-sm"
+                          data-rl-edit="{{ language.id }}"
+                          title="Edit">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit
+                  </button>
+
+                  <form method="post"
+                        onsubmit="return confirm('{{ language.is_active|yesno:"Deactivate,Activate" }} this language?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="id" value="{{ language.id }}">
+                    <input type="hidden" name="language_code" value="{{ language.language_code }}">
+                    <input type="hidden" name="is_default" value="{{ language.is_default|yesno:'true,false' }}">
+                    <input type="hidden" name="is_active" value="{{ language.is_active|yesno:'false,true' }}">
+                    {% if language.is_active %}
+                      <button type="submit" class="rl-btn rl-btn-danger rl-btn-sm" title="Deactivate">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        Deactivate
+                      </button>
+                    {% else %}
+                      <button type="submit" class="rl-btn rl-btn-success rl-btn-sm" title="Activate">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Activate
+                      </button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div id="rlNoResults" style="display:none;">
+        <div class="rl-empty">
+          <div class="rl-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h6 class="rl-empty-title">No matches found</h6>
+          <p class="rl-empty-text">Try adjusting your search or filter.</p>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="rl-empty">
+        <div class="rl-empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h6 class="rl-empty-title">No languages configured yet</h6>
+        <p class="rl-empty-text">
+          Add your first language so customers can browse your menu in their preferred language.
+        </p>
+        <button type="button" class="rl-btn rl-btn-primary" onclick="rlOpenAdd()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add your first language
+        </button>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{# ==================== MODAL (Add / Edit) ==================== #}
+<div class="rl-modal-backdrop" id="rlModalBackdrop" onclick="if(event.target===this)rlCloseDrawer()">
+  <div class="rl-modal" role="dialog" aria-modal="true" aria-labelledby="rlDrawerTitle">
+    <form method="post" id="rlDrawerForm">
+      {% csrf_token %}
+      <input type="hidden" name="action" id="rlAction" value="create">
+      <input type="hidden" name="id" id="rlId" value="">
+
+      <div class="rl-modal-head">
+        <div class="rl-modal-title-wrap">
+          <div class="rl-modal-icon">
+            <svg id="rlModalIconSvg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <div>
+            <h5 id="rlDrawerTitle">Add Language</h5>
+            <p id="rlDrawerSubtitle">Add a new language to your menu</p>
+          </div>
+        </div>
+        <button type="button" class="rl-close" onclick="rlCloseDrawer()" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="rl-modal-body">
+        <div class="rl-field">
+          <label for="rlLanguageCode">Language Code <span class="req">*</span></label>
+          <select id="rlLanguageCode" name="language_code" required>
+            <option value="" disabled selected>Select a language…</option>
+            <option value="en">English (en)</option>
+            <option value="tr">Turkish (tr)</option>
+            <option value="ar">Arabic (ar)</option>
+            <option value="de">German (de)</option>
+            <option value="fr">French (fr)</option>
+            <option value="ru">Russian (ru)</option>
+            <option value="es">Spanish (es)</option>
+            <option value="it">Italian (it)</option>
+            <option value="nl">Dutch (nl)</option>
+            <option value="pt">Portuguese (pt)</option>
+            <option value="zh-hans">Chinese (Simplified)</option>
+          </select>
+          <div class="rl-hint" id="rlCodeHint">
+            The language your customers will see on the menu.
+          </div>
+        </div>
+
+        <div class="rl-field">
+          <label class="rl-switch">
+            <div>
+              <div class="rl-switch-text">Set as default language</div>
+              <div class="rl-switch-sub">Shown first when a customer opens your menu</div>
+            </div>
+            <input type="checkbox" id="rlIsDefaultToggle">
+            <input type="hidden" name="is_default" id="rlIsDefault" value="false">
+          </label>
+        </div>
+
+        <div class="rl-field">
+          <label class="rl-switch">
+            <div>
+              <div class="rl-switch-text">Active</div>
+              <div class="rl-switch-sub">Inactive languages are hidden from the public menu</div>
+            </div>
+            <input type="checkbox" id="rlIsActiveToggle">
+            <input type="hidden" name="is_active" id="rlIsActive" value="true">
+          </label>
+        </div>
+      </div>
+
+      <div class="rl-modal-foot">
+        <button type="button" class="rl-btn rl-btn-secondary" onclick="rlCloseDrawer()">Cancel</button>
+        <button type="submit" class="rl-btn rl-btn-primary" id="rlSubmitBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Save Language
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ==================== DATA FOR JS ==================== #}
+{{ languages|json_script:"rl-languages-data" }}
+
+<script>
+(function () {
+  "use strict";
+
+  // -------- Data --------
+  var RAW = JSON.parse(document.getElementById('rl-languages-data').textContent);
+  var LANGUAGES = Array.isArray(RAW) ? RAW : (RAW && Array.isArray(RAW.results) ? RAW.results : []);
+  var BY_ID = {};
+  LANGUAGES.forEach(function (l) { BY_ID[String(l.id)] = l; });
+
+  // -------- Stats --------
+  var activeCount = LANGUAGES.filter(function (l) { return l.is_active; }).length;
+  var defaultLang = LANGUAGES.find(function (l) { return l.is_default; });
+
+  var statActive = document.getElementById('rlStatActive');
+  if (statActive) statActive.textContent = activeCount;
+
+  var statDefault = document.getElementById('rlStatDefault');
+  if (statDefault) {
+    statDefault.textContent = defaultLang
+      ? (defaultLang.language_name || defaultLang.language_code).toUpperCase()
+      : 'None';
+  }
+
+  // -------- Toggle switch <-> hidden input sync --------
+  function bindToggle(toggleId, hiddenId) {
+    var toggle = document.getElementById(toggleId);
+    var hidden = document.getElementById(hiddenId);
+    if (!toggle || !hidden) return;
+
+    toggle.addEventListener('change', function () {
+      hidden.value = toggle.checked ? 'true' : 'false';
+    });
+  }
+  bindToggle('rlIsDefaultToggle', 'rlIsDefault');
+  bindToggle('rlIsActiveToggle', 'rlIsActive');
+
+  function setToggle(toggleId, hiddenId, value) {
+    var toggle = document.getElementById(toggleId);
+    var hidden = document.getElementById(hiddenId);
+    if (!toggle || !hidden) return;
+    toggle.checked = !!value;
+    hidden.value = value ? 'true' : 'false';
+  }
+
+  // -------- Modal --------
+  var backdrop = document.getElementById('rlModalBackdrop');
+  var lastFocused = null;
+
+  var ICON_ADD = '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
+  var ICON_EDIT = '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>';
+
+  function setModalIcon(kind) {
+    var el = document.getElementById('rlModalIconSvg');
+    if (el) el.innerHTML = (kind === 'edit') ? ICON_EDIT : ICON_ADD;
+  }
+
+  function openModal() {
+    lastFocused = document.activeElement;
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(function () {
+      var first = document.getElementById('rlLanguageCode');
+      if (first) first.focus();
+    }, 60);
+  }
+
+  window.rlOpenAdd = function () {
+    document.getElementById('rlDrawerTitle').textContent = 'Add Language';
+    document.getElementById('rlDrawerSubtitle').textContent = 'Add a new language to your menu';
+    document.getElementById('rlSubmitBtn').lastChild.textContent = ' Save Language';
+    document.getElementById('rlAction').value = 'create';
+    document.getElementById('rlId').value = '';
+
+    setModalIcon('add');
+
+    var sel = document.getElementById('rlLanguageCode');
+    sel.disabled = false;
+    sel.value = '';
+
+    setToggle('rlIsDefaultToggle', 'rlIsDefault', false);
+    setToggle('rlIsActiveToggle',  'rlIsActive',  true);
+
+    document.getElementById('rlCodeHint').textContent =
+      'The language your customers will see on the menu.';
+
+    openModal();
+  };
+
+  window.rlOpenEdit = function (lang) {
+    document.getElementById('rlDrawerTitle').textContent = 'Edit Language';
+    document.getElementById('rlDrawerSubtitle').textContent = 'Update settings for this language';
+    document.getElementById('rlSubmitBtn').lastChild.textContent = ' Update Language';
+    document.getElementById('rlAction').value = 'update';
+    document.getElementById('rlId').value = lang.id || '';
+
+    setModalIcon('edit');
+
+    var sel = document.getElementById('rlLanguageCode');
+    sel.disabled = false;
+    sel.value = lang.language_code || '';
+
+    setToggle('rlIsDefaultToggle', 'rlIsDefault', !!lang.is_default);
+    setToggle('rlIsActiveToggle',  'rlIsActive',  !!lang.is_active);
+
+    document.getElementById('rlCodeHint').textContent =
+      'The language code cannot be changed once created.';
+
+    openModal();
+  };
+
+  window.rlCloseDrawer = function () {
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+    if (lastFocused && typeof lastFocused.focus === 'function') {
+      lastFocused.focus();
+    }
+  };
+
+  // -------- Focus trap + Escape --------
+  document.addEventListener('keydown', function (e) {
+    if (!backdrop.classList.contains('open')) return;
+
+    if (e.key === 'Escape') {
+      window.rlCloseDrawer();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      var focusables = backdrop.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  // -------- Row Edit buttons --------
+  document.querySelectorAll('[data-rl-edit]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var lang = BY_ID[String(btn.dataset.rlEdit)];
+      if (lang) window.rlOpenEdit(lang);
+    });
+  });
+
+  // -------- Search + filter --------
+  window.rlFilter = function () {
+    var q = (document.getElementById('rlSearch').value || '').toLowerCase().trim();
+    var status = document.getElementById('rlStatusFilter').value;
+    var rows = document.querySelectorAll('#rlTable tbody tr');
+    var visible = 0;
+
+    rows.forEach(function (row) {
+      var haystack = row.dataset.search || '';
+      var rowStatus = row.dataset.status || '';
+
+      var matchSearch = !q || haystack.indexOf(q) !== -1;
+      var matchStatus = !status || rowStatus === status;
+
+      if (matchSearch && matchStatus) {
+        row.style.display = '';
+        visible++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    document.getElementById('rlNoResults').style.display = visible === 0 ? '' : 'none';
+  };
+
+  // -------- Auto-open modal if URL has ?edit=<id> --------
+  var params = new URLSearchParams(window.location.search);
+  var editId = params.get('edit');
+  if (editId && BY_ID[editId]) {
+    window.rlOpenEdit(BY_ID[editId]);
+  }
+})();
+</script>
+{% endblock %}

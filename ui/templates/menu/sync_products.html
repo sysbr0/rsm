@@ -1,0 +1,539 @@
+{% extends "ui/admin_base.html" %} {% block mobile_title %}Cloud Dashboard{%
+endblock %} {% block content %}
+
+<style>
+  /* ---- Page wrapper ---- */
+  .cs-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+    color: #1f2937;
+  }
+
+  /* ---- Breadcrumb ---- */
+  .cs-breadcrumb {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: #6b7280;
+  }
+  .cs-breadcrumb a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+  .cs-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+  .cs-breadcrumb li + li::before {
+    content: "/";
+    margin-right: 0.5rem;
+    color: #d1d5db;
+  }
+
+  /* ---- Header ---- */
+  .cs-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .cs-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+  }
+  .cs-subtitle {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  /* ---- Buttons ---- */
+  .cs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.05s ease;
+  }
+  .cs-btn:active {
+    transform: translateY(1px);
+  }
+
+  .cs-btn-primary {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
+  }
+  .cs-btn-primary:hover {
+    background: #1d4ed8;
+  }
+
+  .cs-btn-outline {
+    background: transparent;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  .cs-btn-outline:hover {
+    background: #eff6ff;
+  }
+
+  /* ---- Alerts ---- */
+  .cs-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+  }
+  .cs-alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #bbf7d0;
+  }
+  .cs-alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+  }
+  .cs-alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+  }
+  .cs-alert-info {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #bfdbfe;
+  }
+
+  /* ---- Stat cards ---- */
+  .cs-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .cs-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.06),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .cs-stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+  .cs-stat-icon.warning {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  .cs-stat-icon.success {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .cs-stat-icon.primary {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .cs-stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: #6b7280;
+  }
+  .cs-stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .cs-stat-value.small {
+    font-size: 1rem;
+  }
+
+  /* ---- Cards ---- */
+  .cs-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.06),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .cs-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .cs-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+  }
+  .cs-card-title i {
+    color: #6b7280;
+  }
+  .cs-count-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  /* ---- Table ---- */
+  .cs-table-wrap {
+    overflow-x: auto;
+  }
+  .cs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .cs-table thead th {
+    text-align: left;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: #6b7280;
+    background: #f9fafb;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+  }
+  .cs-table tbody td {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .cs-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .cs-table tbody tr:hover {
+    background: #f9fafb;
+  }
+  .cs-table .name {
+    font-weight: 600;
+    color: #111827;
+  }
+  .cs-table .uuid {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .cs-table .center {
+    text-align: center;
+  }
+  .cs-table .right {
+    text-align: right;
+  }
+  .cs-version-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+  .cs-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #6b7280;
+    font-size: 0.82rem;
+  }
+
+  /* ---- Empty state ---- */
+  .cs-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+  .cs-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.6rem;
+  }
+  .cs-empty-icon.success {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  .cs-empty-icon.muted {
+    background: #f3f4f6;
+    color: #9ca3af;
+  }
+  .cs-empty h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+  }
+  .cs-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  /* ---- Responsive tweaks ---- */
+  @media (max-width: 640px) {
+    .cs-page {
+      padding: 1.25rem 0.75rem 2rem;
+    }
+    .cs-title {
+      font-size: 1.25rem;
+    }
+    .cs-table thead th,
+    .cs-table tbody td {
+      padding: 0.65rem 0.75rem;
+    }
+  }
+</style>
+
+<div class="cs-page">
+  <nav aria-label="breadcrumb">
+    <ol class="cs-breadcrumb">
+      <li>
+        <a href="{% url 'restaurant_dashboard' %}">Dashboard</a>
+      </li>
+      <li>Product Sync</li>
+    </ol>
+  </nav>
+
+  <div class="cs-header">
+    <div>
+      <h1 class="cs-title">Product Sync</h1>
+      <p class="cs-subtitle">
+        Push menu products to the cloud and monitor their sync status.
+      </p>
+    </div>
+
+    {% if unsynced_products %}
+    <form
+      method="post"
+      action="{% url 'product-sync-page' %}"
+      style="margin: 0"
+    >
+      {% csrf_token %}
+      <button type="submit" class="cs-btn cs-btn-primary">
+        <i class="bi bi-cloud-arrow-up"></i>
+        <span>Sync All Unsynced</span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+  <div style="margin-bottom: 1rem">
+    {% for message in messages %}
+    <div
+      class="cs-alert cs-alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags|default:'info' }}{% endif %}"
+    >
+      <i
+        class="bi {% if message.tags == 'success' %}bi-check-circle-fill {% elif message.tags == 'error' %}bi-exclamation-octagon-fill {% elif message.tags == 'warning' %}bi-exclamation-triangle-fill {% else %}bi-info-circle-fill{% endif %}"
+      ></i>
+      <div style="flex: 1">{{ message }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="cs-stats">
+    <div class="cs-stat">
+      <div class="cs-stat-icon warning">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div>
+        <div class="cs-stat-label">Pending</div>
+        <p class="cs-stat-value">{{ unsynced_count }}</p>
+      </div>
+    </div>
+
+    <div class="cs-stat">
+      <div class="cs-stat-icon success">
+        <i class="bi bi-cloud-check-fill"></i>
+      </div>
+      <div>
+        <div class="cs-stat-label">Synced</div>
+        <p class="cs-stat-value">{{ synced_products|length }}</p>
+      </div>
+    </div>
+
+    <div class="cs-stat">
+      <div class="cs-stat-icon primary">
+        <i class="bi bi-arrow-repeat"></i>
+      </div>
+      <div>
+        <div class="cs-stat-label">Status</div>
+        <p class="cs-stat-value small">
+          {% if unsynced_count %}
+          <span style="color: #b45309">Needs attention</span>
+          {% else %}
+          <span style="color: #15803d">All up to date</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cs-card">
+    <div class="cs-card-header">
+      <h2 class="cs-card-title">
+        <i class="bi bi-hourglass-split"></i>
+        Unsynced Products
+        <span class="cs-count-badge">{{ unsynced_count }}</span>
+      </h2>
+    </div>
+
+    {% if unsynced_products %}
+    <div class="cs-table-wrap">
+      <table class="cs-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>UUID</th>
+            <th class="center">Version</th>
+            <th class="right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prod in unsynced_products %}
+          <tr>
+            <td class="name">{{ prod.name }}</td>
+            <td><span class="uuid">{{ prod.sku }}</span></td>
+            <td><span class="uuid">{{ prod.uuid }}</span></td>
+            <td class="center">
+              <span class="cs-version-badge">v{{ prod.local_version }}</span>
+            </td>
+            <td class="right">
+              <form
+                method="post"
+                action="{% url 'product-sync-one-page' prod.uuid %}"
+                style="display: inline"
+              >
+                {% csrf_token %}
+                <button type="submit" class="cs-btn cs-btn-outline">
+                  <i class="bi bi-cloud-arrow-up"></i>
+                  <span>Sync</span>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="cs-empty">
+      <div class="cs-empty-icon success">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h3>All products are in sync</h3>
+      <p>There is nothing to publish at the moment.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="cs-card">
+    <div class="cs-card-header">
+      <h2 class="cs-card-title">
+        <i class="bi bi-clock-history"></i>
+        Recently Synced
+      </h2>
+    </div>
+
+    {% if synced_products %}
+    <div class="cs-table-wrap">
+      <table class="cs-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>UUID</th>
+            <th class="right">Last Synced</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prod in synced_products %}
+          <tr>
+            <td class="name">{{ prod.name }}</td>
+            <td><span class="uuid">{{ prod.sku }}</span></td>
+            <td><span class="uuid">{{ prod.uuid }}</span></td>
+            <td class="right">
+              <span class="cs-time">
+                <i class="bi bi-clock"></i>
+                {{ prod.last_synced_at|date:"Y-m-d H:i" }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="cs-empty">
+      <div class="cs-empty-icon muted">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h3>No synced products yet</h3>
+      <p>Products will appear here once they are published.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}{% endblock %}

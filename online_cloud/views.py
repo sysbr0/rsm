@@ -3,11 +3,23 @@ import json
 import logging
 
 import requests
+import os
+from django.conf import settings
 
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods, require_POST
+from django.contrib import messages
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
+from django.views import View
+
+from menu.models import Category
+from menu.category_sync import (
+    publish_category,
+    publish_unsynced_categories,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +35,7 @@ RESTAURANT_ME_API = f"{CLOUD_API_BASE}/me/"
 RESTAURANT_LOGOUT_API = f"{CLOUD_API_BASE}/logout/"
 
 LOGIN_TEMPLATE = "online/account/login.html"
-DASHBOARD_TEMPLATE = "online/dasboard.html"
+DASHBOARD_TEMPLATE = "online/dashboard.html"
 
 
 # ============================================================
@@ -69,7 +81,7 @@ def safe_response_json(response):
     try:
         data = response.json()
         return data if isinstance(data, dict) else {}
-    except (ValueError, requests.exceptions.JSONDecodeError):
+    except (ValueError, json.JSONDecodeError, requests.exceptions.JSONDecodeError):
         return {}
 
 
@@ -139,6 +151,7 @@ def cloud_headers(access_token):
 # CLOUD LOGIN
 # ============================================================
 
+
 @csrf_protect
 @require_http_methods(["GET", "POST"])
 def restaurant_login(request):
@@ -201,8 +214,51 @@ def restaurant_login(request):
         if refresh_token:
             request.session["restaurant_refresh_token"] = refresh_token
 
-        request.session["restaurant_user"] = data.get("user") or {}
-        request.session["restaurant_profile"] = data.get("restaurant") or {}
+        # Store cloud user information.
+        restaurant_user = data.get("user") or {}
+        request.session["restaurant_user"] = restaurant_user
+
+        # Store the restaurant profile.
+        restaurant = data.get("restaurant") or {}
+        request.session["restaurant_profile"] = restaurant
+
+        # Store the restaurant profile ID and UUID.
+        request.session["restaurant_profile_id"] = restaurant.get("id")
+        request.session["restaurant_uuid"] = restaurant.get("uuid")
+
+        logger.info(
+            "Restaurant login successful. Profile ID: %s, UUID: %s",
+            restaurant.get("id"),
+            restaurant.get("uuid"),
+        )
+
+        # Persist a copy of the access token for management/CLI tools if configured.
+        token_file = getattr(
+            settings,
+            "CLOUD_TOKEN_FILE",
+            os.getenv("CLOUD_TOKEN_FILE"),
+        )
+
+        if token_file and access_token:
+            try:
+                parent = os.path.dirname(token_file)
+
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+
+                with open(token_file, "w") as f:
+                    f.write(access_token)
+
+                try:
+                    os.chmod(token_file, 0o600)
+                except OSError:
+                    pass
+
+            except OSError:
+                logger.exception(
+                    "Could not write cloud token file %s",
+                    token_file,
+                )
 
         return redirect("restaurant_dashboard")
 
@@ -290,6 +346,8 @@ def restaurant_dashboard(request):
         # Refresh the cached profile with the latest cloud response.
         request.session["restaurant_user"] = restaurant_user
         request.session["restaurant_profile"] = restaurant
+
+        
 
         return render(
             request,
@@ -474,12 +532,751 @@ def restaurant_logout(request):
                 )
 
         except requests.RequestException:
-            # Clear the local session even if the cloud is unreachable.
             logger.warning(
                 "Could not contact cloud API during logout.",
                 exc_info=True,
             )
 
+    # Clear local session, including restaurant ID and UUID.
     request.session.flush()
+
     messages.success(request, "You have been logged out.")
     return redirect("restaurant_login")
+
+
+
+
+
+
+
+
+from django.contrib import messages
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
+from django.views import View
+
+from menu.models import Category, Product
+from menu.category_sync import (
+    publish_category,
+    publish_unsynced_categories,
+)
+from menu.product_sync import (
+    publish_product,
+    publish_unsynced_products,
+)
+
+
+# ==========================================================
+# COMBINED SYNC PAGE  (categories + products)
+# ==========================================================
+
+class CategorySyncPageView(View):
+    """
+    GET  /menu/sync/                     -> dashboard (categories + products)
+    POST /menu/sync/                     -> sync ALL unsynced categories + products
+    POST /menu/sync/category/<uuid>/     -> sync ONE category
+    POST /menu/sync/product/<uuid>/      -> sync ONE product
+    """
+
+    template_name = "menu/sync_categories.html"
+
+    # ------------------------------------------------------
+    # GET
+    # ------------------------------------------------------
+    def get(self, request, category_uuid=None, product_uuid=None):
+        unsynced_categories = Category.objects.filter(
+            is_synced=False
+        ).order_by("created_at")
+
+        synced_categories = (
+            Category.objects.filter(is_synced=True)
+            .order_by("-last_synced_at")[:20]
+        )
+
+        unsynced_products = Product.objects.filter(
+            is_synced=False
+        ).order_by("created_at")
+
+        synced_products = (
+            Product.objects.filter(is_synced=True)
+            .order_by("-last_synced_at")[:20]
+        )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                # categories
+                "unsynced_categories": unsynced_categories,
+                "synced_categories": synced_categories,
+                "unsynced_count": unsynced_categories.count(),
+
+                # products
+                "unsynced_products": unsynced_products,
+                "synced_products": synced_products,
+                "unsynced_product_count": unsynced_products.count(),
+            },
+        )
+
+    # ------------------------------------------------------
+    # POST
+    # ------------------------------------------------------
+    def post(self, request, category_uuid=None, product_uuid=None):
+
+        # ---------- sync one category ----------
+        if category_uuid:
+            category = get_object_or_404(Category, uuid=category_uuid)
+            success = publish_category(category)
+
+            if success:
+                messages.success(
+                    request,
+                    f"Category '{category.name}' synced successfully.",
+                )
+            else:
+                messages.error(
+                    request,
+                    f"Failed to sync category '{category.name}'. "
+                    f"Check server logs for details.",
+                )
+            return redirect(reverse("category-sync-page"))
+
+        # ---------- sync one product ----------
+        if product_uuid:
+            product = get_object_or_404(Product, uuid=product_uuid)
+            success = publish_product(product)
+
+            if success:
+                messages.success(
+                    request,
+                    f"Product '{product.name}' synced successfully.",
+                )
+            else:
+                messages.error(
+                    request,
+                    f"Failed to sync product '{product.name}'. "
+                    f"Check server logs for details.",
+                )
+            return redirect(reverse("category-sync-page"))
+
+        # ---------- sync all ----------
+        categories_published = publish_unsynced_categories()
+        products_published = publish_unsynced_products()
+
+        total = categories_published + products_published
+
+        if total == 0:
+            messages.info(
+                request,
+                "Nothing synced. Either there are no unsynced items, "
+                "or all attempts failed — check logs.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Synced {categories_published} "
+                f"categor{'y' if categories_published == 1 else 'ies'} "
+                f"and {products_published} "
+                f"product{'s' if products_published != 1 else ''}.",
+            )
+
+        return redirect(reverse("category-sync-page"))
+
+
+# ==========================================================
+# DEDICATED PRODUCT SYNC PAGE
+# ==========================================================
+
+class ProductSyncPageView(View):
+    """
+    GET  /menu/sync/products/            -> page with unsynced + recently synced products
+    POST /menu/sync/products/            -> sync ALL unsynced, redirect back with flash
+    POST /menu/sync/products/<uuid>/     -> sync ONE, redirect back with flash
+    """
+
+    template_name = "menu/sync_products.html"
+
+    # ------------------------------------------------------
+    # GET
+    # ------------------------------------------------------
+    def get(self, request, product_uuid=None):
+        unsynced = Product.objects.filter(
+            is_synced=False
+        ).order_by("created_at")
+
+        synced = (
+            Product.objects.filter(is_synced=True)
+            .order_by("-last_synced_at")[:20]
+        )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "unsynced_products": unsynced,
+                "synced_products": synced,
+                "unsynced_count": unsynced.count(),
+            },
+        )
+
+    # ------------------------------------------------------
+    # POST
+    # ------------------------------------------------------
+    def post(self, request, product_uuid=None):
+
+        # ---------- sync one ----------
+        if product_uuid:
+            product = get_object_or_404(Product, uuid=product_uuid)
+            success = publish_product(product)
+
+            if success:
+                messages.success(
+                    request,
+                    f"'{product.name}' synced successfully.",
+                )
+            else:
+                messages.error(
+                    request,
+                    f"Failed to sync '{product.name}'. "
+                    f"Check server logs for details.",
+                )
+            return redirect(reverse("product-sync-page"))
+
+        # ---------- sync all ----------
+        published = publish_unsynced_products()
+
+        if published == 0:
+            messages.info(
+                request,
+                "Nothing synced. Either no unsynced products, "
+                "or all attempts failed — check logs.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Synced {published} product"
+                f"{'s' if published != 1 else ''} successfully.",
+            )
+
+        return redirect(reverse("product-sync-page"))
+
+
+
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views import View
+
+from menu.category_sync import publish_all_categories
+from menu.product_sync import publish_all_products
+
+
+
+def sync_all(request):
+
+    access_token = request.session.get("restaurant_access_token")
+    
+
+    
+    restaurant_profile_id = request.session.get("restaurant_profile_id")
+   
+
+
+    
+
+
+
+    
+    
+
+    if not access_token:
+        messages.error(request, "Please log in to your cloud account.")
+        return redirect("restaurant_login")
+
+    """
+    GET  /manager/online/sync/           -> combined dashboard (categories + products)
+    POST /manager/online/sync/           -> Sync All Unsynced
+    POST /manager/online/sync/  mode=full -> Full Refresh (force push everything)
+    """
+
+    # ------------------------------------------------------
+    # POST — handle both sync modes
+    # ------------------------------------------------------
+    if request.method == "POST":
+        mode = request.POST.get("mode", "unsynced")
+
+        # ---------- FULL REFRESH ----------
+        if mode == "full":
+            c_pub, c_fail, c_total = publish_all_categories(
+                token=access_token,
+            )
+            p_pub, p_fail, p_total = publish_all_products(
+                token=access_token,
+            )
+
+            total_published = c_pub + p_pub
+            total_failed = c_fail + p_fail
+            total_items = c_total + p_total
+
+            if total_items == 0:
+                messages.info(
+                    request,
+                    "Nothing to refresh — there are no local items.",
+                )
+            elif total_failed == 0:
+                messages.success(
+                    request,
+                    f"Full refresh complete: pushed {total_published} "
+                    f"item{'s' if total_published != 1 else ''} "
+                    f"({c_pub} categor"
+                    f"{'y' if c_pub == 1 else 'ies'}, "
+                    f"{p_pub} product"
+                    f"{'s' if p_pub != 1 else ''}).",
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"Refresh pushed {total_published} of {total_items} "
+                    f"items. {total_failed} failed — check server logs.",
+                )
+
+            return redirect(reverse("sync_all"))
+
+        # ---------- SYNC ALL UNSYNCED ----------
+        categories_published = publish_unsynced_categories(
+            token=access_token,
+        )
+        products_published = publish_unsynced_products(
+            token=access_token,
+        )
+
+        total = categories_published + products_published
+
+        if total == 0:
+            messages.info(
+                request,
+                "Nothing synced. Either there are no unsynced items, "
+                "or all attempts failed — check logs.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Synced {categories_published} "
+                f"categor{'y' if categories_published == 1 else 'ies'} "
+                f"and {products_published} "
+                f"product{'s' if products_published != 1 else ''}.",
+            )
+
+        return redirect(reverse("sync_all"))
+
+    # ------------------------------------------------------
+    # GET — render dashboard
+    # ------------------------------------------------------
+    unsynced_categories = Category.objects.filter(
+        is_synced=False
+    ).order_by("created_at")
+
+    synced_categories = (
+        Category.objects.filter(is_synced=True)
+        .order_by("-last_synced_at")[:20]
+    )
+
+    unsynced_products = Product.objects.filter(
+        is_synced=False
+    ).order_by("created_at")
+
+    synced_products = (
+        Product.objects.filter(is_synced=True)
+        .order_by("-last_synced_at")[:20]
+    )
+
+    return render(
+        request,
+        "menu/sync_all.html",
+        {
+            # categories
+            "unsynced_categories": unsynced_categories,
+            "synced_categories": synced_categories,
+            "unsynced_count": unsynced_categories.count(),
+
+            # products
+            "unsynced_products": unsynced_products,
+            "synced_products": synced_products,
+            "unsynced_product_count": unsynced_products.count(),
+        },
+    )
+
+
+
+
+
+
+import requests
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+
+
+# Configure these in your local Django settings.
+CLOUD_API_BASE_URL = getattr(
+    settings,
+    "CLOUD_API_BASE_URL",
+    "https://admin.sysbr.net/api",
+)
+
+
+def get_cloud_headers(request):
+    """
+    Replace this with the method your local RMS uses
+    to store and retrieve the cloud access token.
+    """
+    token = request.session.get("restaurant_access_token")
+
+   
+    
+
+    
+   
+   
+
+
+    if not token:
+        return {}
+
+    return {
+        "Authorization": f"Bearer {token}",
+    }
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def restaurant_translations_page(request):
+    uuid = request.session.get("restaurant_profile_id")
+   
+
+    # IMPORTANT:
+    # Adapt this ownership check if your local model uses
+    # a different relationship to the logged-in user.
+  
+     
+
+    api_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{uuid}/translations/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+
+    if request.method == "POST":
+        payload = {
+            "language_code": request.POST.get("language_code", "").strip(),
+            "name": request.POST.get("name", "").strip(),
+            "description": request.POST.get("description", "").strip(),
+            "slogan": request.POST.get("slogan", "").strip(),
+        }
+
+        try:
+            response = requests.post(
+                api_url,
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+
+            if response.status_code in (200, 201):
+                messages.success(
+                    request,
+                    "Translation saved to the cloud.",
+                )
+            else:
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{response.text}"
+                )
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    translations = []
+
+    try:
+        response = requests.get(api_url, timeout=15)
+
+        if response.ok:
+            translations = response.json()
+        else:
+            error = (
+                f"Could not load translations "
+                f"({response.status_code})."
+            )
+
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+
+    return render(
+        request,
+        "online/translation/restaurant_translations.html",
+        {
+           
+            "translations": translations,
+            "error": error,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def restaurant_languages_page(request):
+    uuid = request.session.get("restaurant_profile_id")
+    
+    api_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{uuid}/languages/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+
+    if request.method == "POST":
+        payload = {
+            "language_code": request.POST.get("language_code", "").strip(),
+            "is_default": request.POST.get("is_default") == "true",
+            "is_active": request.POST.get("is_active") == "true",
+        }
+
+        try:
+            response = requests.post(
+                api_url,
+                json=payload,
+                headers=headers,
+                timeout=15,
+            )
+
+            if response.status_code in (200, 201):
+                messages.success(
+                    request,
+                    "Language saved to the cloud.",
+                )
+            else:
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{response.text}"
+                )
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    languages = []
+
+    try:
+        response = requests.get(api_url, timeout=15)
+
+        if response.ok:
+            languages = response.json()
+        else:
+            error = (
+                f"Could not load languages "
+                f"({response.status_code})."
+            )
+
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+
+    return render(
+        request,
+        "online/translation/restaurant_languages.html",
+        {
+       
+            "languages": languages,
+            "error": error,
+        },
+    )
+
+
+
+import requests
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods
+
+
+CLOUD_API_BASE_URL = getattr(
+    settings,
+    "CLOUD_API_BASE_URL",
+    "https://admin.sysbr.net/api",
+)
+
+
+def get_cloud_headers(request):
+    """
+    Replace this with however your local RMS stores the cloud token.
+    """
+    token = request.session.get("restaurant_access_token")
+    if not token:
+        return {}
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _cloud_error(response):
+    """
+    Turn a cloud API error response into a short, template-friendly string.
+    Never returns an entire Django debug HTML page.
+    """
+    try:
+        data = response.json()
+        if isinstance(data, dict):
+            if "detail" in data:
+                return str(data["detail"])
+            # DRF field errors: {"field": ["msg", ...]}
+            parts = []
+            for field, msgs in data.items():
+                if isinstance(msgs, list):
+                    parts.append(f"{field}: {', '.join(map(str, msgs))}")
+                else:
+                    parts.append(f"{field}: {msgs}")
+            if parts:
+                return "; ".join(parts)
+    except ValueError:
+        pass
+
+    text = response.text.strip()
+    # If it looks like HTML (e.g. a Django debug page), don't dump it all.
+    if text.lower().startswith("<!doctype") or text.lower().startswith("<html"):
+        return f"HTTP {response.status_code} from cloud API (see server logs)."
+    return text[:300]
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def restaurant_languages_page(request):
+    uuid = request.session.get("restaurant_profile_id")
+    if not uuid:
+        messages.error(request, "No restaurant selected for this session.")
+        return redirect("restaurant_dashboard")  # adjust to your actual dashboard URL name
+
+    api_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/languages/"
+    headers = get_cloud_headers(request)
+    error = None
+
+    # ---------------------------------------------------------------
+    # POST: create / update / toggle
+    # ---------------------------------------------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "create").strip()
+        language_code = request.POST.get("language_code", "").strip()
+        is_default = request.POST.get("is_default") == "true"
+        is_active = request.POST.get("is_active") == "true"
+        lang_id = request.POST.get("id", "").strip()
+
+        payload = {
+            "language_code": language_code,
+            "is_default": is_default,
+            "is_active": is_active,
+        }
+
+        try:
+            if action == "create":
+                response = requests.post(
+                    api_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=15,
+                )
+                success_msg = "Language added to the cloud."
+
+            elif action == "update":
+                if not lang_id:
+                    error = "Missing language id for update."
+                    response = None
+                else:
+                    response = requests.patch(
+                        f"{api_url}{lang_id}/",
+                        json=payload,
+                        headers=headers,
+                        timeout=15,
+                    )
+                    success_msg = "Language updated on the cloud."
+
+            elif action == "toggle":
+                if not lang_id:
+                    error = "Missing language id for toggle."
+                    response = None
+                else:
+                    # Only send the field we want to change
+                    response = requests.patch(
+                        f"{api_url}{lang_id}/",
+                        json={"is_active": is_active},
+                        headers=headers,
+                        timeout=15,
+                    )
+                    success_msg = (
+                        "Language activated."
+                        if is_active
+                        else "Language deactivated."
+                    )
+
+            else:
+                error = f"Unknown action: {action}"
+                response = None
+
+            if response is not None:
+                if response.status_code in (200, 201):
+                    messages.success(request, success_msg)
+                elif response.status_code == 404:
+                    error = "Language not found on the cloud."
+                else:
+                    error = (
+                        f"Cloud API error ({response.status_code}): "
+                        f"{_cloud_error(response)}"
+                    )
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+        # Avoid resubmission on refresh
+        if error is None:
+            return redirect("restaurant_languages_page")
+
+    # ---------------------------------------------------------------
+    # GET: list
+    # ---------------------------------------------------------------
+    languages = []
+
+    try:
+        response = requests.get(api_url, headers=headers, timeout=15)
+
+        if response.ok:
+            data = response.json()
+            # Handle either a bare list or DRF pagination
+            if isinstance(data, dict) and "results" in data:
+                languages = data["results"]
+            elif isinstance(data, list):
+                languages = data
+            else:
+                languages = []
+        else:
+            error = (
+                f"Could not load languages "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    return render(
+        request,
+        "online/translation/restaurant_languages.html",
+        {
+            "languages": languages,
+            "error": error,
+        },
+    )
