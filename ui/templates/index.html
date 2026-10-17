@@ -3,756 +3,683 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>Portal Access | Restaurant Management System</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+    />
+
     <style>
-      * {
-        box-sizing: border-box;
+      /* ============================================================
+         PORTAL — mirrors .lm design system (same tokens & gradients)
+         ============================================================ */
+      .pt {
+        --pt-ink: #0f172a;
+        --pt-ink-2: #1e293b;
+        --pt-muted: #64748b;
+        --pt-muted-2: #94a3b8;
+        --pt-line: #e2e8f0;
+        --pt-line-2: #f1f5f9;
+        --pt-bg: #f7f8fc;
+        --pt-white: #ffffff;
+        --pt-brand: #6366f1;
+        --pt-brand-2: #8b5cf6;
+        --pt-pink: #ec4899;
+        --pt-grad: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #8b5cf6 55%,
+          #ec4899 100%
+        );
+        --pt-ok: #10b981;
+        --pt-warn: #f59e0b;
+        --pt-danger: #ef4444;
+        --pt-r-xl: 22px;
+        --pt-r-lg: 16px;
+        --pt-r: 12px;
+        --pt-r-sm: 9px;
+
+        color: var(--pt-ink);
+        font-family:
+          "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
-      :root {
-        --primary: #8b1e1e;
-        --primary-dark: #641414;
-        --primary-light: #f8eaea;
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-        --text: #171717;
-        --muted: #6b7280;
-        --border: #e5e7eb;
-        --background: #f5f6f8;
-        --white: #ffffff;
-
-        --danger: #b91c1c;
-        --success: #166534;
+      html,
+      body {
+        height: 100%;
       }
 
       body {
-        margin: 0;
         min-height: 100vh;
-
-        font-family:
-          Inter,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          Roboto,
-          Arial,
-          sans-serif;
-
         background:
           radial-gradient(
-            circle at top left,
-            rgba(139, 30, 30, 0.08),
-            transparent 35%
+            circle at 8% 12%,
+            rgba(99, 102, 241, 0.06),
+            transparent 42%
           ),
-          var(--background);
-
+          radial-gradient(
+            circle at 92% 80%,
+            rgba(236, 72, 153, 0.05),
+            transparent 48%
+          ),
+          var(--pt-bg);
         display: flex;
         align-items: center;
         justify-content: center;
-
         padding: 24px;
-
-        color: var(--text);
       }
 
-      /* =====================================================
-         MAIN PORTAL CONTAINER
-      ===================================================== */
-
-      .portal-container {
-        width: 100%;
-        max-width: 1040px;
-
-        background: var(--white);
-
-        border-radius: 24px;
-        overflow: hidden;
-
-        border: 1px solid rgba(0, 0, 0, 0.05);
-
-        box-shadow:
-          0 30px 80px rgba(0, 0, 0, 0.1),
-          0 5px 20px rgba(0, 0, 0, 0.04);
-
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* =====================================================
-         BRAND HEADER BANNER
-      ===================================================== */
-
-      .brand-banner {
-        position: relative;
-        overflow: hidden;
-
-        background: linear-gradient(
-          145deg,
-          #641414 0%,
-          #8b1e1e 55%,
-          #9d2929 100%
-        );
-
-        color: white;
-
-        padding: 48px;
-
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        gap: 20px;
-      }
-
-      .brand-banner::before {
-        content: "";
-
-        position: absolute;
-
-        width: 330px;
-        height: 330px;
-
-        border-radius: 50%;
-
-        border: 1px solid rgba(255, 255, 255, 0.1);
-
-        right: -100px;
-        top: -130px;
-
-        pointer-events: none;
-      }
-
-      .brand-banner::after {
-        content: "";
-
-        position: absolute;
-
-        width: 420px;
-        height: 420px;
-
-        border-radius: 50%;
-
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
-        left: -200px;
-        bottom: -270px;
-
-        pointer-events: none;
-      }
-
-      .banner-content {
-        position: relative;
-        z-index: 2;
-        max-width: 600px;
-      }
-
-      .logo {
-        width: 58px;
-        height: 58px;
-
-        border-radius: 16px;
-
-        background: rgba(255, 255, 255, 0.12);
-
-        border: 1px solid rgba(255, 255, 255, 0.2);
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 25px;
-
-        margin-bottom: 24px;
-
-        backdrop-filter: blur(8px);
-      }
-
-      .brand-label {
-        font-size: 11px;
-
-        font-weight: 800;
-
-        letter-spacing: 1.8px;
-
-        text-transform: uppercase;
-
-        color: rgba(255, 255, 255, 0.6);
-
-        margin-bottom: 10px;
-      }
-
-      .brand-title {
-        margin: 0;
-
-        font-size: 32px;
-
-        line-height: 1.15;
-
-        letter-spacing: -0.8px;
-      }
-
-      .brand-description {
-        margin: 12px 0 0;
-
-        color: rgba(255, 255, 255, 0.75);
-
-        font-size: 14px;
-
-        line-height: 1.6;
-      }
-
-      .banner-status {
-        position: relative;
-        z-index: 2;
-
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 8px;
-
-        padding: 9px 14px;
-
-        border-radius: 10px;
-
-        background: rgba(255, 255, 255, 0.1);
-
-        border: 1px solid rgba(255, 255, 255, 0.12);
-
-        font-size: 12px;
-
-        font-weight: 600;
-
+      /* ============================================================
+         MATERIAL SYMBOLS
+         ============================================================ */
+      .pt .mat {
+        font-family: "Material Symbols Outlined" !important;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 20px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
         white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        user-select: none;
+        vertical-align: middle;
       }
 
-      .banner-status-dot {
-        width: 7px;
-        height: 7px;
-
-        border-radius: 50%;
-
-        background: #86efac;
-
-        box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.12);
-      }
-
-      /* =====================================================
-         ROLES SECTION
-      ===================================================== */
-
-      .roles-section {
-        padding: 48px;
-
-        background: var(--white);
-      }
-
-      .section-header {
-        margin-bottom: 32px;
-      }
-
-      .section-eyebrow {
-        display: inline-flex;
-
-        align-items: center;
-
-        gap: 7px;
-
-        color: var(--primary);
-
-        font-size: 11px;
-
-        font-weight: 800;
-
-        letter-spacing: 1.5px;
-
-        text-transform: uppercase;
-
-        margin-bottom: 8px;
-      }
-
-      .section-eyebrow::before {
-        content: "";
-
-        width: 7px;
-        height: 7px;
-
-        border-radius: 50%;
-
-        background: var(--primary);
-      }
-
-      .section-title {
-        margin: 0;
-
-        font-size: 24px;
-
-        letter-spacing: -0.5px;
-      }
-
-      .section-description {
-        margin: 6px 0 0;
-
-        color: var(--muted);
-
-        font-size: 14px;
-      }
-
-      /* =====================================================
-         GRID LAYOUT FOR ROLES
-      ===================================================== */
-
-      .roles-grid {
+      /* ============================================================
+         LAYOUT — two-column card (hero left, roles right)
+         ============================================================ */
+      .pt-shell {
+        width: 100%;
+        max-width: 1060px;
+        min-height: 640px;
         display: grid;
-
-        grid-template-columns: repeat(3, 1fr);
-
-        gap: 20px;
-      }
-
-      .role-card {
-        display: flex;
-
-        flex-direction: column;
-
-        justify-content: space-between;
-
-        padding: 28px 24px;
-
-        border-radius: 18px;
-
-        border: 1px solid var(--border);
-
-        background: var(--white);
-
-        text-decoration: none;
-
-        color: var(--text);
-
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease,
-          border-color 0.2s ease;
-      }
-
-      .role-card:hover {
-        transform: translateY(-4px);
-
-        border-color: rgba(139, 30, 30, 0.3);
-
+        grid-template-columns: 0.85fr 1.15fr;
+        background: var(--pt-white);
+        border-radius: var(--pt-r-xl);
+        overflow: hidden;
+        border: 1px solid var(--pt-line);
         box-shadow:
-          0 16px 32px rgba(139, 30, 30, 0.08),
-          0 4px 12px rgba(0, 0, 0, 0.03);
+          0 24px 60px -28px rgba(99, 102, 241, 0.35),
+          0 4px 16px rgba(15, 23, 42, 0.04);
       }
 
-      .role-icon {
-        width: 48px;
-
-        height: 48px;
-
-        border-radius: 12px;
-
-        background: var(--primary-light);
-
-        color: var(--primary);
-
+      /* ============================================================
+         BRAND / HERO PANEL (left) — same as login panel
+         ============================================================ */
+      .pt-brand {
+        position: relative;
+        overflow: hidden;
+        padding: 2.2rem 2.1rem;
+        background: var(--pt-grad);
+        color: #fff;
         display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        isolation: isolate;
+      }
 
+      .pt-brand::before,
+      .pt-brand::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .pt-brand::before {
+        width: 320px;
+        height: 320px;
+        top: -140px;
+        right: -90px;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .pt-brand::after {
+        width: 220px;
+        height: 220px;
+        bottom: -110px;
+        left: -80px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .pt-brand-inner,
+      .pt-brand-footer {
+        position: relative;
+        z-index: 1;
+      }
+
+      .pt-logo {
+        display: inline-flex;
         align-items: center;
-
         justify-content: center;
-
-        margin-bottom: 20px;
-
-        transition:
-          background 0.2s ease,
-          color 0.2s ease;
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        backdrop-filter: blur(6px);
+        box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.35);
+        margin-bottom: 1.5rem;
       }
 
-      .role-card:hover .role-icon {
-        background: var(--primary);
-
-        color: white;
+      .pt-logo .mat {
+        font-size: 28px;
+        color: #fff;
       }
 
-      .role-title {
-        margin: 0 0 8px 0;
-
-        font-size: 18px;
-
+      .pt-crumb {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.72rem;
         font-weight: 700;
-
-        letter-spacing: -0.3px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        margin-bottom: 0.85rem;
+        backdrop-filter: blur(6px);
       }
 
-      .role-description {
+      .pt-crumb .mat {
+        font-size: 16px;
+      }
+
+      .pt-brand h1 {
+        font-size: clamp(1.7rem, 2.6vw, 2.15rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.12;
+        margin: 0 0 0.75rem;
+        color: #fff;
+      }
+
+      .pt-brand p {
         margin: 0;
-
-        color: var(--muted);
-
-        font-size: 13px;
-
-        line-height: 1.55;
-
-        flex-grow: 1;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 340px;
       }
 
-      .role-action {
-        margin-top: 24px;
-
+      /* stat chips */
+      .pt-chip-row {
         display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+      }
 
+      .pt-chip {
+        display: inline-flex;
         align-items: center;
-
-        gap: 6px;
-
-        color: var(--primary);
-
-        font-size: 13px;
-
+        gap: 0.4rem;
+        padding: 0.42rem 0.85rem;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        font-size: 0.72rem;
         font-weight: 700;
-
-        transition: gap 0.2s ease;
+        color: #fff;
+        backdrop-filter: blur(4px);
+        letter-spacing: 0.2px;
       }
 
-      .role-card:hover .role-action {
-        gap: 10px;
+      .pt-chip .mat {
+        font-size: 15px;
       }
 
-      /* =====================================================
-         FOOTER & SECURITY
-      ===================================================== */
-
-      .portal-footer {
-        padding: 0 48px 36px;
+      .pt-chip .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #86efac;
+        box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.22);
       }
 
-      .security-note {
+      .pt-brand-footer {
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
+
+      /* ============================================================
+         ROLES PANEL (right)
+         ============================================================ */
+      .pt-panel {
+        padding: 2.6rem 2.6rem;
         display: flex;
-
-        align-items: flex-start;
-
-        gap: 10px;
-
-        padding: 14px 16px;
-
-        border-radius: 12px;
-
-        background: #f8fafc;
-
-        border: 1px solid var(--border);
-      }
-
-      .security-icon {
-        color: #64748b;
-
-        display: flex;
-
-        align-items: center;
-
+        flex-direction: column;
         justify-content: center;
+        background: var(--pt-white);
+      }
 
+      .pt-header {
+        margin-bottom: 1.6rem;
+      }
+
+      .pt-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--pt-brand);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.85rem;
+      }
+
+      .pt-eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--pt-brand);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      }
+
+      .pt-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--pt-ink);
+        margin: 0 0 0.5rem;
+        line-height: 1.15;
+      }
+
+      .pt-desc {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        color: var(--pt-muted);
+        max-width: 420px;
+      }
+
+      /* ============================================================
+         ROLE CARDS — surface like .lm-input / .lm-toast
+         ============================================================ */
+      .pt-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .pt-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.05rem 1.2rem;
+        border: 1.5px solid var(--pt-line);
+        border-radius: var(--pt-r);
+        background: var(--pt-white);
+        text-decoration: none;
+        color: var(--pt-ink);
+        transition:
+          border-color 0.18s ease,
+          box-shadow 0.18s ease,
+          transform 0.18s ease,
+          background 0.18s ease;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+      }
+
+      .pt-card:hover {
+        border-color: var(--pt-brand-2);
+        background: #faf9ff;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .pt-card:focus-visible {
+        outline: none;
+        border-color: var(--pt-brand-2);
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+      }
+
+      .pt-card-icon {
+        width: 48px;
+        height: 48px;
         flex-shrink: 0;
+        border-radius: var(--pt-r-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.1) 0%,
+          rgba(139, 92, 246, 0.12) 55%,
+          rgba(236, 72, 153, 0.1) 100%
+        );
+        color: var(--pt-brand-2);
+        transition:
+          background 0.18s ease,
+          color 0.18s ease;
+      }
 
+      .pt-card:hover .pt-card-icon {
+        background: var(--pt-grad);
+        color: #fff;
+      }
+
+      .pt-card-icon .mat {
+        font-size: 24px;
+      }
+
+      .pt-card-body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .pt-card-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 0 0 0.2rem;
+        color: var(--pt-ink);
+      }
+
+      .pt-card-desc {
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: var(--pt-muted);
+        margin: 0;
+      }
+
+      .pt-card-arrow {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--pt-r-sm);
+        color: var(--pt-muted-2);
+        transition:
+          color 0.18s ease,
+          transform 0.18s ease,
+          background 0.18s ease;
+      }
+
+      .pt-card:hover .pt-card-arrow {
+        color: var(--pt-brand-2);
+        background: rgba(139, 92, 246, 0.08);
+        transform: translateX(2px);
+      }
+
+      .pt-card-arrow .mat {
+        font-size: 18px;
+      }
+
+      /* ============================================================
+         SECURITY NOTE — matches .lm-note
+         ============================================================ */
+      .pt-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        padding: 0.9rem 1rem;
+        border-radius: var(--pt-r);
+        background: var(--pt-line-2);
+        border: 1px solid var(--pt-line);
+      }
+
+      .pt-note .mat {
+        color: var(--pt-muted);
+        font-size: 18px;
+        flex-shrink: 0;
         margin-top: 1px;
       }
 
-      .security-text {
-        color: #64748b;
-
-        font-size: 11px;
-
-        line-height: 1.55;
+      .pt-note p {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.65;
+        color: var(--pt-muted);
+        font-weight: 500;
       }
 
-      .copyright {
-        margin-top: 20px;
-
-        text-align: center;
-
-        color: var(--muted);
-
-        font-size: 12px;
-      }
-
-      /* =====================================================
+      /* ============================================================
          RESPONSIVE
-      ===================================================== */
-
-      @media (max-width: 900px) {
-        .roles-grid {
+         ============================================================ */
+      @media (max-width: 880px) {
+        .pt-shell {
+          max-width: 560px;
+          min-height: auto;
           grid-template-columns: 1fr;
         }
 
-        .brand-banner {
-          flex-direction: column;
-
-          align-items: flex-start;
-
-          padding: 36px 32px;
+        .pt-brand {
+          padding: 1.9rem 1.7rem;
         }
 
-        .roles-section {
-          padding: 32px;
+        .pt-brand p {
+          max-width: 100%;
         }
 
-        .portal-footer {
-          padding: 0 32px 32px;
+        .pt-panel {
+          padding: 2.1rem 1.9rem;
         }
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 520px) {
         body {
           padding: 0;
+          background: var(--pt-white);
         }
 
-        .portal-container {
+        .pt-shell {
           min-height: 100vh;
-
+          max-width: 100%;
           border-radius: 0;
-
           border: 0;
+          box-shadow: none;
         }
 
-        .brand-banner {
-          padding: 28px 22px;
+        .pt-brand {
+          padding: 1.6rem 1.35rem;
         }
 
-        .brand-title {
-          font-size: 26px;
+        .pt-logo {
+          width: 50px;
+          height: 50px;
+          margin-bottom: 1.1rem;
         }
 
-        .roles-section {
-          padding: 28px 22px;
+        .pt-brand h1 {
+          font-size: 1.55rem;
         }
 
-        .portal-footer {
-          padding: 0 22px 28px;
+        .pt-panel {
+          padding: 1.75rem 1.35rem 2rem;
+          justify-content: flex-start;
+        }
+
+        .pt-title {
+          font-size: 1.5rem;
+        }
+
+        .pt-card {
+          padding: 0.95rem 1rem;
+        }
+
+        .pt-card-icon {
+          width: 42px;
+          height: 42px;
+        }
+
+        .pt-card-icon .mat {
+          font-size: 21px;
+        }
+
+        .pt-card-desc {
+          font-size: 0.75rem;
+        }
+      }
+
+      /* ============================================================
+         ACCESSIBILITY / MOTION
+         ============================================================ */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
         }
       }
     </style>
   </head>
 
-  <body>
-    <main class="portal-container">
-      <!-- ===================================================
-           BRAND HEADER BANNER
-      ==================================================== -->
+  <body class="pt">
+    <main class="pt-shell">
+      <!-- ========================================================
+           BRAND / HERO PANEL (left)
+           ======================================================== -->
+      <section class="pt-brand" aria-label="Brand">
+        <div class="pt-brand-inner">
+          <div class="pt-logo" aria-hidden="true">
+            <span class="mat">restaurant</span>
+          </div>
 
-      <section class="brand-banner">
-        <div class="banner-content">
-          <div class="logo">🍽️</div>
+          <span class="pt-crumb">
+            <span class="mat">badge</span>
+            Operational Portal
+          </span>
 
-          <div class="brand-label">Restaurant Management System</div>
+          <h1>Restaurant<br />Management System</h1>
 
-          <h1 class="brand-title">Welcome to Operational Portal</h1>
-
-          <p class="brand-description">
-            Please select your role to proceed to your designated login screen
-            and access system features.
+          <p>
+            Select your role to proceed to your designated login screen and
+            access system features.
           </p>
+
+          <div class="pt-chip-row">
+            <span class="pt-chip">
+              <span class="dot"></span>
+              System Online
+            </span>
+            <span class="pt-chip">
+              <span class="mat">lock</span>
+              Encrypted access
+            </span>
+          </div>
         </div>
 
-        <div class="banner-status">
-          <span class="banner-status-dot"></span>
-
-          System Online
+        <div class="pt-brand-footer">
+          Restaurant Management System &copy; 2026
         </div>
       </section>
 
-      <!-- ===================================================
-           ROLES SELECTION SECTION
-      ==================================================== -->
-
-      <section class="roles-section">
-        <div class="section-header">
-          <div class="section-eyebrow">Authentication</div>
-
-          <h2 class="section-title">Select Access Level</h2>
-
-          <p class="section-description">
+      <!-- ========================================================
+           ROLES PANEL (right)
+           ======================================================== -->
+      <section class="pt-panel">
+        <div class="pt-header">
+          <div class="pt-eyebrow">Authentication</div>
+          <h2 class="pt-title">Select Access Level</h2>
+          <p class="pt-desc">
             Choose your role to log into your workspace dashboard.
           </p>
         </div>
 
-        <div class="roles-grid">
-          <!-- MANAGER CARD -->
-
-          <a href="% url 'admin_login' %}" class="role-card">
-            <div>
-              <div class="role-icon">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </div>
-
-              <h3 class="role-title">Manager Portal</h3>
-
-              <p class="role-description">
-                Access administrative controls, reports, inventory management,
-                user configuration, and system settings.
+        <div class="pt-grid">
+          <!-- MANAGER -->
+          <a href="{% url 'admin_login' %}" class="pt-card">
+            <div class="pt-card-icon">
+              <span class="mat" aria-hidden="true">shield_person</span>
+            </div>
+            <div class="pt-card-body">
+              <h3 class="pt-card-title">Manager Portal</h3>
+              <p class="pt-card-desc">
+                Administrative controls, reports, inventory management, and
+                system settings.
               </p>
             </div>
-
-            <div class="role-action">
-              <span>Manager Login</span>
-
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M5 12h14" />
-
-                <path d="M12 5l7 7-7 7" />
-              </svg>
+            <div class="pt-card-arrow">
+              <span class="mat" aria-hidden="true">arrow_forward</span>
             </div>
           </a>
 
-          <!-- WAITER CARD -->
-
-          <a href="% url 'login_waiter' %}" class="role-card">
-            <div>
-              <div class="role-icon">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-
-                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-
-                  <line x1="6" y1="1" x2="6" y2="4" />
-
-                  <line x1="10" y1="1" x2="10" y2="4" />
-
-                  <line x1="14" y1="1" x2="14" y2="4" />
-                </svg>
-              </div>
-
-              <h3 class="role-title">Waiter Portal</h3>
-
-              <p class="role-description">
-                Manage floor tables, take guest orders, process active billing,
-                and handle real-time table statuses.
+          <!-- WAITER -->
+          <a href="% url 'login_waiter' %" class="pt-card">
+            <div class="pt-card-icon">
+              <span class="mat" aria-hidden="true">room_service</span>
+            </div>
+            <div class="pt-card-body">
+              <h3 class="pt-card-title">Waiter Portal</h3>
+              <p class="pt-card-desc">
+                Manage floor tables, take guest orders, and process active
+                billing.
               </p>
             </div>
-
-            <div class="role-action">
-              <span>Waiter Login</span>
-
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M5 12h14" />
-
-                <path d="M12 5l7 7-7 7" />
-              </svg>
+            <div class="pt-card-arrow">
+              <span class="mat" aria-hidden="true">arrow_forward</span>
             </div>
           </a>
 
-          <!-- EMPLOYEE CARD -->
-
-          <a href="% url 'login_employee' %}" class="role-card">
-            <div>
-              <div class="role-icon">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-
-                  <circle cx="9" cy="7" r="4" />
-
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-
-              <h3 class="role-title">Employee Portal</h3>
-
-              <p class="role-description">
-                View shift schedules, manage staff task lists, access
-                kitchen/prep order status, and check clock-in status.
+          <!-- EMPLOYEE -->
+          <a href="% url 'login_employee' %" class="pt-card">
+            <div class="pt-card-icon">
+              <span class="mat" aria-hidden="true">groups</span>
+            </div>
+            <div class="pt-card-body">
+              <h3 class="pt-card-title">Employee Portal</h3>
+              <p class="pt-card-desc">
+                View shift schedules, manage staff tasks, and check clock-in
+                status.
               </p>
             </div>
-
-            <div class="role-action">
-              <span>Employee Login</span>
-
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M5 12h14" />
-
-                <path d="M12 5l7 7-7 7" />
-              </svg>
+            <div class="pt-card-arrow">
+              <span class="mat" aria-hidden="true">arrow_forward</span>
             </div>
           </a>
         </div>
-      </section>
 
-      <!-- ===================================================
-           FOOTER
-      ==================================================== -->
-
-      <footer class="portal-footer">
-        <div class="security-note">
-          <div class="security-icon">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-            >
-              <rect x="4" y="10" width="16" height="10" rx="2" />
-
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-            </svg>
-          </div>
-
-          <div class="security-text">
+        <!-- SECURITY NOTE -->
+        <div class="pt-note">
+          <span class="mat" aria-hidden="true">verified_user</span>
+          <p>
             Unauthorized access is strictly prohibited. All activities are
             monitored and logged for system security and audit logging purposes.
-          </div>
+          </p>
         </div>
-
-        <div class="copyright">Restaurant Management System &copy; 2026</div>
-      </footer>
+      </section>
     </main>
   </body>
 </html>

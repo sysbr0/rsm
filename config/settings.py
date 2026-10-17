@@ -66,7 +66,8 @@ RESTAURANT_UUID ="3bf4739a-e7e4-40ef-b232-12b44c179600"
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-tf(cr#uy6xzmck$1_4*g8cmc&+&w*2#h!l=b_-rcc%79o-!#sk"
+SECRET_KEY = os.getenv("SECRET_KEY")
+
 CLOUD_API_KEY = "90054bfeed678b1ea252e4ba228b78a298e66cb5f1a6afa3e52151298ef27811"
 CLOUD_API_URL = "https://admin.sysbr.net"
 # SECURITY WARNING: don't run with debug turned on in production!

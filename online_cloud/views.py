@@ -905,22 +905,18 @@ def sync_all(request):
             "unsynced_product_count": unsynced_products.count(),
         },
     )
-
-
-
-
-
-
 import requests
 
 from django.conf import settings
+from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
-from django.contrib import messages
 
 
-# Configure these in your local Django settings.
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
 CLOUD_API_BASE_URL = getattr(
     settings,
     "CLOUD_API_BASE_URL",
@@ -928,196 +924,11 @@ CLOUD_API_BASE_URL = getattr(
 )
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 def get_cloud_headers(request):
-    """
-    Replace this with the method your local RMS uses
-    to store and retrieve the cloud access token.
-    """
-    token = request.session.get("restaurant_access_token")
-
-   
-    
-
-    
-   
-   
-
-
-    if not token:
-        return {}
-
-    return {
-        "Authorization": f"Bearer {token}",
-    }
-
-
-@login_required
-@require_http_methods(["GET", "POST"])
-def restaurant_translations_page(request):
-    uuid = request.session.get("restaurant_profile_id")
-   
-
-    # IMPORTANT:
-    # Adapt this ownership check if your local model uses
-    # a different relationship to the logged-in user.
-  
-     
-
-    api_url = (
-        f"{CLOUD_API_BASE_URL}/restaurants/"
-        f"{uuid}/translations/"
-    )
-
-    headers = get_cloud_headers(request)
-    error = None
-
-    if request.method == "POST":
-        payload = {
-            "language_code": request.POST.get("language_code", "").strip(),
-            "name": request.POST.get("name", "").strip(),
-            "description": request.POST.get("description", "").strip(),
-            "slogan": request.POST.get("slogan", "").strip(),
-        }
-
-        try:
-            response = requests.post(
-                api_url,
-                json=payload,
-                headers=headers,
-                timeout=15,
-            )
-
-            if response.status_code in (200, 201):
-                messages.success(
-                    request,
-                    "Translation saved to the cloud.",
-                )
-            else:
-                error = (
-                    f"Cloud API error ({response.status_code}): "
-                    f"{response.text}"
-                )
-
-        except requests.RequestException as exc:
-            error = f"Could not connect to the cloud API: {exc}"
-
-    translations = []
-
-    try:
-        response = requests.get(api_url, timeout=15)
-
-        if response.ok:
-            translations = response.json()
-        else:
-            error = (
-                f"Could not load translations "
-                f"({response.status_code})."
-            )
-
-    except requests.RequestException as exc:
-        error = f"Could not connect to the cloud API: {exc}"
-
-    return render(
-        request,
-        "online/translation/restaurant_translations.html",
-        {
-           
-            "translations": translations,
-            "error": error,
-        },
-    )
-
-
-@login_required
-@require_http_methods(["GET", "POST"])
-def restaurant_languages_page(request):
-    uuid = request.session.get("restaurant_profile_id")
-    
-    api_url = (
-        f"{CLOUD_API_BASE_URL}/restaurants/"
-        f"{uuid}/languages/"
-    )
-
-    headers = get_cloud_headers(request)
-    error = None
-
-    if request.method == "POST":
-        payload = {
-            "language_code": request.POST.get("language_code", "").strip(),
-            "is_default": request.POST.get("is_default") == "true",
-            "is_active": request.POST.get("is_active") == "true",
-        }
-
-        try:
-            response = requests.post(
-                api_url,
-                json=payload,
-                headers=headers,
-                timeout=15,
-            )
-
-            if response.status_code in (200, 201):
-                messages.success(
-                    request,
-                    "Language saved to the cloud.",
-                )
-            else:
-                error = (
-                    f"Cloud API error ({response.status_code}): "
-                    f"{response.text}"
-                )
-
-        except requests.RequestException as exc:
-            error = f"Could not connect to the cloud API: {exc}"
-
-    languages = []
-
-    try:
-        response = requests.get(api_url, timeout=15)
-
-        if response.ok:
-            languages = response.json()
-        else:
-            error = (
-                f"Could not load languages "
-                f"({response.status_code})."
-            )
-
-    except requests.RequestException as exc:
-        error = f"Could not connect to the cloud API: {exc}"
-
-    return render(
-        request,
-        "online/translation/restaurant_languages.html",
-        {
-       
-            "languages": languages,
-            "error": error,
-        },
-    )
-
-
-
-import requests
-
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from django.views.decorators.http import require_http_methods
-
-
-CLOUD_API_BASE_URL = getattr(
-    settings,
-    "CLOUD_API_BASE_URL",
-    "https://admin.sysbr.net/api",
-)
-
-
-def get_cloud_headers(request):
-    """
-    Replace this with however your local RMS stores the cloud token.
-    """
+    """Build the auth headers for the cloud API from the current session."""
     token = request.session.get("restaurant_access_token")
     if not token:
         return {}
@@ -1125,16 +936,12 @@ def get_cloud_headers(request):
 
 
 def _cloud_error(response):
-    """
-    Turn a cloud API error response into a short, template-friendly string.
-    Never returns an entire Django debug HTML page.
-    """
+    """Short, template-friendly string from a cloud API error response."""
     try:
         data = response.json()
         if isinstance(data, dict):
             if "detail" in data:
                 return str(data["detail"])
-            # DRF field errors: {"field": ["msg", ...]}
             parts = []
             for field, msgs in data.items():
                 if isinstance(msgs, list):
@@ -1147,27 +954,58 @@ def _cloud_error(response):
         pass
 
     text = response.text.strip()
-    # If it looks like HTML (e.g. a Django debug page), don't dump it all.
     if text.lower().startswith("<!doctype") or text.lower().startswith("<html"):
         return f"HTTP {response.status_code} from cloud API (see server logs)."
     return text[:300]
 
 
+def _extract_list(data):
+    """Accept either a bare list or a DRF paginated dict."""
+    if isinstance(data, dict) and "results" in data:
+        return data["results"]
+    if isinstance(data, list):
+        return data
+    return []
+
+
+def _get_restaurant_uuid(request, error_message="No restaurant selected for this session."):
+    uuid = request.session.get("restaurant_profile_id")
+    if not uuid:
+        django_messages.error(request, error_message)
+    return uuid
+
+
+def _collect_messages(request):
+    """
+    Pull every pending Django message into a plain list of dicts so the
+    template can render them explicitly. Each item has:
+        { 'tags': 'success' | 'error' | 'info' | 'warning', 'text': '...' }
+    Reading the iterator drains the storage, which is what we want here —
+    it prevents the base template from rendering them a second time.
+    """
+    collected = []
+    for m in django_messages.get_messages(request):
+        collected.append({
+            "tags": m.tags or "info",
+            "text": str(m),
+        })
+    return collected
+
+
+# ---------------------------------------------------------------------------
+# Languages
+# ---------------------------------------------------------------------------
 @login_required
 @require_http_methods(["GET", "POST"])
 def restaurant_languages_page(request):
-    uuid = request.session.get("restaurant_profile_id")
+    uuid = _get_restaurant_uuid(request)
     if not uuid:
-        messages.error(request, "No restaurant selected for this session.")
-        return redirect("restaurant_dashboard")  # adjust to your actual dashboard URL name
+        return redirect("restaurant_dashboard")
 
     api_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/languages/"
     headers = get_cloud_headers(request)
     error = None
 
-    # ---------------------------------------------------------------
-    # POST: create / update / toggle
-    # ---------------------------------------------------------------
     if request.method == "POST":
         action = request.POST.get("action", "create").strip()
         language_code = request.POST.get("language_code", "").strip()
@@ -1184,51 +1022,40 @@ def restaurant_languages_page(request):
         try:
             if action == "create":
                 response = requests.post(
-                    api_url,
-                    json=payload,
-                    headers=headers,
-                    timeout=15,
+                    api_url, json=payload, headers=headers, timeout=15,
                 )
                 success_msg = "Language added to the cloud."
 
             elif action == "update":
                 if not lang_id:
-                    error = "Missing language id for update."
-                    response = None
+                    error, response = "Missing language id for update.", None
                 else:
                     response = requests.patch(
                         f"{api_url}{lang_id}/",
-                        json=payload,
-                        headers=headers,
-                        timeout=15,
+                        json=payload, headers=headers, timeout=15,
                     )
                     success_msg = "Language updated on the cloud."
 
             elif action == "toggle":
                 if not lang_id:
-                    error = "Missing language id for toggle."
-                    response = None
+                    error, response = "Missing language id for toggle.", None
                 else:
-                    # Only send the field we want to change
                     response = requests.patch(
                         f"{api_url}{lang_id}/",
                         json={"is_active": is_active},
-                        headers=headers,
-                        timeout=15,
+                        headers=headers, timeout=15,
                     )
                     success_msg = (
-                        "Language activated."
-                        if is_active
+                        "Language activated." if is_active
                         else "Language deactivated."
                     )
 
             else:
-                error = f"Unknown action: {action}"
-                response = None
+                error, response = f"Unknown action: {action}", None
 
             if response is not None:
                 if response.status_code in (200, 201):
-                    messages.success(request, success_msg)
+                    django_messages.success(request, success_msg)
                 elif response.status_code == 404:
                     error = "Language not found on the cloud."
                 else:
@@ -1240,33 +1067,19 @@ def restaurant_languages_page(request):
         except requests.RequestException as exc:
             error = f"Could not connect to the cloud API: {exc}"
 
-        # Avoid resubmission on refresh
         if error is None:
             return redirect("restaurant_languages_page")
 
-    # ---------------------------------------------------------------
-    # GET: list
-    # ---------------------------------------------------------------
     languages = []
-
     try:
         response = requests.get(api_url, headers=headers, timeout=15)
-
         if response.ok:
-            data = response.json()
-            # Handle either a bare list or DRF pagination
-            if isinstance(data, dict) and "results" in data:
-                languages = data["results"]
-            elif isinstance(data, list):
-                languages = data
-            else:
-                languages = []
+            languages = _extract_list(response.json())
         else:
             error = (
                 f"Could not load languages "
                 f"({response.status_code}): {_cloud_error(response)}"
             )
-
     except requests.RequestException as exc:
         error = f"Could not connect to the cloud API: {exc}"
     except ValueError:
@@ -1278,5 +1091,442 @@ def restaurant_languages_page(request):
         {
             "languages": languages,
             "error": error,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Translations
+# ---------------------------------------------------------------------------
+@login_required
+@require_http_methods(["GET", "POST"])
+def restaurant_translations_page(request):
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    translations_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/translations/"
+    languages_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/languages/"
+
+    headers = get_cloud_headers(request)
+    error = None
+    flash_messages = []
+
+    # --------------------------- POST ---------------------------
+    if request.method == "POST":
+        payload = {
+            "language_code": request.POST.get("language_code", "").strip(),
+            "name": request.POST.get("name", "").strip(),
+            "description": request.POST.get("description", "").strip(),
+            "slogan": request.POST.get("slogan", "").strip(),
+        }
+
+        try:
+            response = requests.post(
+                translations_url, json=payload, headers=headers, timeout=15,
+            )
+            if response.status_code in (200, 201):
+                django_messages.success(request, "Translation saved to the cloud.")
+                return redirect("restaurant_translations_page")
+            error = (
+                f"Cloud API error ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET ---------------------------
+    translations = []
+    configured_languages = []
+
+    try:
+        response = requests.get(translations_url, headers=headers, timeout=15)
+        if response.ok:
+            translations = _extract_list(response.json())
+        else:
+            error = (
+                f"Could not load translations "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(languages_url, headers=headers, timeout=15)
+        if response.ok:
+            configured_languages = _extract_list(response.json())
+    except (requests.RequestException, ValueError):
+        pass
+
+    translated_codes = {
+        t.get("language_code")
+        for t in translations
+        if t.get("language_code")
+    }
+
+    available_languages = [
+        lang for lang in configured_languages
+        if lang.get("is_active") and lang.get("language_code") not in translated_codes
+    ]
+
+    # Drain pending Django messages into a template-friendly list, then
+    # pass it explicitly. Because we've already consumed the iterator,
+    # the base template's {% if messages %} block will render nothing —
+    # so the flash shows up exactly once, in the spot this template chooses.
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/translation/restaurant_translations.html",
+        {
+            "translations": translations,
+            "available_languages": available_languages,
+            "configured_count": len(configured_languages),
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+    # ===========================================================================
+# Categories
+# ===========================================================================
+@login_required
+@require_http_methods(["GET", "POST"])
+def categories_page(request):
+    """List + create categories for the current restaurant."""
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    categories_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/categories/"
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST: create ---------------------------
+    if request.method == "POST":
+        payload = {
+            "name": request.POST.get("name", "").strip(),
+            "slug": request.POST.get("slug", "").strip(),
+            "description": request.POST.get("description", "").strip(),
+            "sort_order": int(request.POST.get("sort_order") or 0),
+            "is_active": request.POST.get("is_active") == "true",
+            "is_published": request.POST.get("is_published") == "true",
+        }
+
+        try:
+            response = requests.post(
+                categories_url, json=payload, headers=headers, timeout=15,
+            )
+            if response.status_code in (200, 201):
+                django_messages.success(request, "Category created on the cloud.")
+                return redirect("categories_page")
+            error = (
+                f"Cloud API error ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET: list ---------------------------
+    categories = []
+    try:
+        response = requests.get(categories_url, headers=headers, timeout=15)
+        if response.ok:
+            categories = _extract_list(response.json())
+        else:
+            error = (
+                f"Could not load categories "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/categories/categories.html",
+        {
+            "categories": categories,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def category_edit_page(request, category_id):
+    """Edit or delete a single category."""
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    category_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/categories/{category_id}/"
+    )
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST: update / delete ---------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "update").strip()
+
+        try:
+            if action == "delete":
+                response = requests.delete(
+                    category_url, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 204):
+                    django_messages.success(request, "Category deleted.")
+                    return redirect("categories_page")
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            elif action == "update":
+                payload = {
+                    "name": request.POST.get("name", "").strip(),
+                    "slug": request.POST.get("slug", "").strip(),
+                    "description": request.POST.get("description", "").strip(),
+                    "sort_order": int(request.POST.get("sort_order") or 0),
+                    "is_active": request.POST.get("is_active") == "true",
+                    "is_published": request.POST.get("is_published") == "true",
+                }
+                response = requests.patch(
+                    category_url, json=payload, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 201):
+                    django_messages.success(request, "Category updated.")
+                    return redirect("category_edit_page", category_id=category_id)
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+            else:
+                error = f"Unknown action: {action}"
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET: fetch ---------------------------
+    category = None
+    try:
+        response = requests.get(category_url, headers=headers, timeout=15)
+        if response.ok:
+            category = response.json()
+        elif response.status_code == 404:
+            error = "Category not found."
+        else:
+            error = (
+                f"Could not load category "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/categories/category_edit.html",
+        {
+            "category": category,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+# ===========================================================================
+# Category images
+# ===========================================================================
+@login_required
+@require_http_methods(["GET", "POST"])
+def category_images_page(request, category_id):
+    """List + create images for a category."""
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    images_url = (
+        f"{CLOUD_API_BASE_URL}"
+        f"/restaurants/{uuid}/categories/{category_id}/images/"
+    )
+    category_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/categories/{category_id}/"
+    )
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST: create ---------------------------
+    if request.method == "POST":
+        payload = {
+            "image_url": request.POST.get("image_url", "").strip(),
+            "alt_text": request.POST.get("alt_text", "").strip(),
+            "sort_order": int(request.POST.get("sort_order") or 0),
+            "is_primary": request.POST.get("is_primary") == "true",
+        }
+
+        try:
+            response = requests.post(
+                images_url, json=payload, headers=headers, timeout=15,
+            )
+            if response.status_code in (200, 201):
+                django_messages.success(request, "Image added.")
+                return redirect("category_images_page", category_id=category_id)
+            error = (
+                f"Cloud API error ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET: list + category header ---------------------------
+    images = []
+    category = None
+
+    try:
+        response = requests.get(images_url, headers=headers, timeout=15)
+        if response.ok:
+            images = _extract_list(response.json())
+        else:
+            error = (
+                f"Could not load images "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(category_url, headers=headers, timeout=15)
+        if response.ok:
+            category = response.json()
+    except (requests.RequestException, ValueError):
+        pass
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/categories/category_images.html",
+        {
+            "category": category,
+            "category_id": category_id,
+            "images": images,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def category_image_edit_page(request, category_id, image_id):
+    """Edit / delete / set-primary on a single category image."""
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    image_url = (
+        f"{CLOUD_API_BASE_URL}"
+        f"/restaurants/{uuid}/categories/{category_id}/images/{image_id}/"
+    )
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST ---------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "update").strip()
+
+        try:
+            if action == "delete":
+                response = requests.delete(
+                    image_url, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 204):
+                    django_messages.success(request, "Image deleted.")
+                    return redirect(
+                        "category_images_page", category_id=category_id
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            elif action in ("update", "set_primary"):
+                if action == "set_primary":
+                    payload = {"is_primary": True}
+                else:
+                    payload = {
+                        "image_url": request.POST.get("image_url", "").strip(),
+                        "alt_text": request.POST.get("alt_text", "").strip(),
+                        "sort_order": int(request.POST.get("sort_order") or 0),
+                        "is_primary": request.POST.get("is_primary") == "true",
+                    }
+
+                response = requests.patch(
+                    image_url, json=payload, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 201):
+                    django_messages.success(
+                        request,
+                        "Primary image set." if action == "set_primary"
+                        else "Image updated.",
+                    )
+                    return redirect(
+                        "category_image_edit_page",
+                        category_id=category_id,
+                        image_id=image_id,
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+            else:
+                error = f"Unknown action: {action}"
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET ---------------------------
+    image = None
+    try:
+        response = requests.get(image_url, headers=headers, timeout=15)
+        if response.ok:
+            image = response.json()
+        elif response.status_code == 404:
+            error = "Image not found."
+        else:
+            error = (
+                f"Could not load image "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/translation/category_image_edit.html",
+        {
+            "image": image,
+            "category_id": category_id,
+            "image_id": image_id,
+            "error": error,
+            "flash_messages": flash_messages,
         },
     )

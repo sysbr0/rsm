@@ -104,19 +104,21 @@ urlpatterns = [
     # ======================================================
     # API — COMBINED (categories + products)
     # ======================================================
-    path(
-        "sync/",
-        CombinedSyncAPIView.as_view(),
-        name="api-sync-all",
-    ),
-    path(
-        "api/sync/all/<uuid:entity_uuid>/",
-        CombinedSyncAPIView.as_view(),
-        name="api-sync-all-one",
-    ),
+    path("sync/", CombinedSyncAPIView.as_view(),name="api-sync-all",),
+    path("api/sync/all/<uuid:entity_uuid>/",CombinedSyncAPIView.as_view(), name="api-sync-all-one",),
 
     path("language/",views.restaurant_languages_page,name="restaurant_languages_page"),
-    path("translation/",views.restaurant_translations_page,name="restaurant_translations_page")
+    path("translation/",views.restaurant_translations_page,name="restaurant_translations_page"),
+
+
+
+     # Categories
+    path("categories/",views.categories_page,name="categories_page",),
+    path("categories/<uuid:category_id>/edit/",views.category_edit_page,name="category_edit_page",),
+
+    # Category images
+    path("categories/<uuid:category_id>/images/",views.category_images_page, name="category_images_page",),
+    path("categories/<uuid:category_id>/images/<uuid:image_id>/edit/",views.category_image_edit_page,name="category_image_edit_page",),
 
 
 ]

@@ -1,35 +1,39 @@
 {% extends "ui/online_base.html" %}
+{% block mobile_title %}Restaurant Translations{% endblock %}
 
-{% block content %}
+{% block extra_styles %}
 <style>
   /* ============================================================
-     Design tokens
+     Design tokens – ENHANCED COLOR SYSTEM
      ============================================================ */
   .rl-page {
-    --rl-bg: #f6f7f9;
+    --rl-bg: #f6f8fc;
     --rl-surface: #ffffff;
-    --rl-border: #e6e8ec;
-    --rl-border-strong: #d1d5db;
-    --rl-text: #111827;
-    --rl-text-muted: #6b7280;
-    --rl-text-soft: #9ca3af;
+    --rl-surface-raised: #ffffff;
+    --rl-border: #e9edf4;
+    --rl-border-strong: #d0d9e8;
+    --rl-text: #0b1a2f;
+    --rl-text-muted: #5e6f8d;
+    --rl-text-soft: #8b9bb8;
     --rl-primary: #4f46e5;
     --rl-primary-hover: #4338ca;
     --rl-primary-soft: #eef2ff;
-    --rl-success: #047857;
+    --rl-primary-ring: rgba(79, 70, 229, 0.22);
+    --rl-success: #10b981;
     --rl-success-soft: #ecfdf5;
     --rl-success-border: #a7f3d0;
-    --rl-danger: #b91c1c;
+    --rl-danger: #ef4444;
     --rl-danger-soft: #fef2f2;
     --rl-danger-border: #fecaca;
-    --rl-warning: #b45309;
+    --rl-warning: #f59e0b;
     --rl-warning-soft: #fffbeb;
-    --rl-radius: 12px;
-    --rl-radius-sm: 8px;
-    --rl-shadow-sm: 0 1px 2px rgba(16, 24, 40, .04);
-    --rl-shadow-md: 0 4px 12px rgba(16, 24, 40, .08);
-    --rl-shadow-lg: 0 20px 50px rgba(16, 24, 40, .18);
-    --rl-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --rl-radius: 14px;
+    --rl-radius-sm: 10px;
+    --rl-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --rl-shadow-md: 0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    --rl-shadow-lg: 0 12px 24px -6px rgba(15, 23, 42, 0.12), 0 6px 12px -4px rgba(15, 23, 42, 0.06);
+    --rl-shadow-xl: 0 28px 50px -12px rgba(15, 23, 42, 0.25), 0 12px 20px -8px rgba(15, 23, 42, 0.1);
+    --rl-font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     font-family: var(--rl-font);
     color: var(--rl-text);
     background: var(--rl-bg);
@@ -58,6 +62,7 @@
   .rl-breadcrumb a {
     color: var(--rl-text-muted);
     text-decoration: none;
+    font-weight: 500;
   }
   .rl-breadcrumb a:hover { color: var(--rl-primary); }
   .rl-breadcrumb .sep { opacity: .5; }
@@ -65,7 +70,7 @@
   .rl-page-title {
     font-size: 1.6rem;
     font-weight: 700;
-    letter-spacing: -.02em;
+    letter-spacing: -.025em;
     margin: 0 0 .25rem;
     color: var(--rl-text);
   }
@@ -76,67 +81,110 @@
   }
 
   /* ============================================================
-     Buttons
+     Buttons – RICHER INTERACTIONS
      ============================================================ */
   .rl-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: .45rem;
+    gap: .5rem;
     border-radius: var(--rl-radius-sm);
-    font-weight: 500;
+    font-weight: 600;
     font-size: .875rem;
-    padding: .55rem 1rem;
+    padding: .6rem 1.1rem;
     border: 1px solid transparent;
-    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .05s ease;
+    transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
-    line-height: 1.1;
+    line-height: 1.2;
     white-space: nowrap;
     text-decoration: none;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
   }
-  .rl-btn:active { transform: translateY(1px); }
+  .rl-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+  }
+  .rl-btn:active::after { opacity: 1; }
+  .rl-btn:active { transform: translateY(1px) scale(0.99); }
   .rl-btn:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+    box-shadow: 0 0 0 3px var(--rl-primary-ring), 0 2px 8px rgba(0,0,0,0.08);
   }
 
   .rl-btn-primary {
-    background: var(--rl-primary);
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: #fff;
-    border-color: var(--rl-primary);
+    border-color: #4f46e5;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35), 0 1px 2px rgba(79, 70, 229, 0.2);
   }
-  .rl-btn-primary:hover { background: var(--rl-primary-hover); border-color: var(--rl-primary-hover); color: #fff; }
+  .rl-btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    border-color: #4338ca;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45), 0 2px 4px rgba(79, 70, 229, 0.2);
+    transform: translateY(-1px);
+  }
 
   .rl-btn-secondary {
     background: var(--rl-surface);
     color: var(--rl-text);
     border-color: var(--rl-border-strong);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
-  .rl-btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; color: var(--rl-text); }
+  .rl-btn-secondary:hover {
+    background: #fafbff;
+    border-color: #94a3b8;
+    color: var(--rl-text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+  }
 
   .rl-btn-ghost {
     background: transparent;
     color: var(--rl-text-muted);
     border-color: transparent;
-    padding: .45rem .7rem;
+    padding: .45rem .75rem;
   }
-  .rl-btn-ghost:hover { background: #f3f4f6; color: var(--rl-text); }
+  .rl-btn-ghost:hover {
+    background: #eef2ff;
+    color: var(--rl-primary);
+    transform: translateY(-1px);
+  }
 
   .rl-btn-danger {
     background: var(--rl-surface);
     color: var(--rl-danger);
     border-color: var(--rl-danger-border);
+    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.08);
   }
-  .rl-btn-danger:hover { background: var(--rl-danger-soft); }
+  .rl-btn-danger:hover {
+    background: var(--rl-danger-soft);
+    border-color: #fca5a5;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+    transform: translateY(-1px);
+  }
 
   .rl-btn-success {
     background: var(--rl-surface);
     color: var(--rl-success);
     border-color: var(--rl-success-border);
+    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
   }
-  .rl-btn-success:hover { background: var(--rl-success-soft); }
+  .rl-btn-success:hover {
+    background: var(--rl-success-soft);
+    border-color: #6ee7b7;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    transform: translateY(-1px);
+  }
 
-  .rl-btn-sm { padding: .4rem .7rem; font-size: .8rem; }
+  .rl-btn-sm { padding: .4rem .75rem; font-size: .8rem; }
 
   /* ============================================================
      Stats row
@@ -144,26 +192,32 @@
   .rl-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: .9rem;
+    gap: 1rem;
     margin-bottom: 1.5rem;
   }
   .rl-stat {
     background: var(--rl-surface);
     border: 1px solid var(--rl-border);
     border-radius: var(--rl-radius);
-    padding: 1rem 1.1rem;
+    padding: 1.1rem 1.25rem;
     box-shadow: var(--rl-shadow-sm);
+    transition: all .2s ease;
+  }
+  .rl-stat:hover {
+    box-shadow: var(--rl-shadow-md);
+    border-color: var(--rl-border-strong);
+    transform: translateY(-2px);
   }
   .rl-stat-label {
     font-size: .72rem;
     text-transform: uppercase;
-    letter-spacing: .07em;
+    letter-spacing: .08em;
     color: var(--rl-text-soft);
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: .4rem;
   }
   .rl-stat-value {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--rl-text);
     line-height: 1.1;
@@ -183,10 +237,14 @@
     border-radius: var(--rl-radius);
     box-shadow: var(--rl-shadow-sm);
     overflow: hidden;
+    transition: box-shadow .2s ease;
+  }
+  .rl-card:hover {
+    box-shadow: var(--rl-shadow-md);
   }
 
   .rl-card-toolbar {
-    padding: .9rem 1.25rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--rl-border);
     display: flex;
     flex-wrap: wrap;
@@ -224,17 +282,18 @@
     padding: .45rem .7rem .45rem 2rem;
     font-size: .85rem;
     outline: none;
-    transition: border-color .15s, box-shadow .15s;
+    transition: all .18s ease;
     background: #fff;
     color: var(--rl-text);
+    font-family: inherit;
   }
   .rl-search input:focus {
     border-color: var(--rl-primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    box-shadow: 0 0 0 3px var(--rl-primary-ring);
   }
   .rl-search svg {
     position: absolute;
-    left: .6rem;
+    left: .65rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--rl-text-soft);
@@ -250,11 +309,12 @@
     color: var(--rl-text);
     outline: none;
     cursor: pointer;
-    transition: border-color .15s, box-shadow .15s;
+    transition: all .18s ease;
+    font-family: inherit;
   }
   .rl-filter:focus {
     border-color: var(--rl-primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    box-shadow: 0 0 0 3px var(--rl-primary-ring);
   }
 
   /* ============================================================
@@ -273,11 +333,11 @@
     text-align: left;
     font-size: .7rem;
     text-transform: uppercase;
-    letter-spacing: .07em;
+    letter-spacing: .08em;
     color: var(--rl-text-soft);
-    font-weight: 600;
-    padding: .75rem 1.1rem;
-    background: #fafbfc;
+    font-weight: 700;
+    padding: .85rem 1.1rem;
+    background: #f8fafc;
     border-bottom: 1px solid var(--rl-border);
     white-space: nowrap;
   }
@@ -291,13 +351,12 @@
     color: var(--rl-text);
   }
   .rl-table tbody tr:last-child td { border-bottom: none; }
-  .rl-table tbody tr { transition: background .1s; }
-  .rl-table tbody tr:hover { background: #fafbfc; }
+  .rl-table tbody tr { transition: background .15s ease; }
+  .rl-table tbody tr:hover { background: #fafbff; }
 
   .rl-table tbody td.center { text-align: center; }
   .rl-table tbody td.right { text-align: right; }
 
-  /* Language cell */
   .rl-lang {
     display: flex;
     align-items: center;
@@ -306,8 +365,8 @@
   .rl-lang-flag {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
-    background: var(--rl-primary-soft);
+    border-radius: 10px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
     color: var(--rl-primary);
     display: inline-flex;
     align-items: center;
@@ -317,6 +376,7 @@
     letter-spacing: .02em;
     text-transform: uppercase;
     flex-shrink: 0;
+    border: 1px solid #c7d2fe;
   }
   .rl-lang-name {
     font-weight: 600;
@@ -331,14 +391,13 @@
     margin-top: 2px;
   }
 
-  /* Pills */
   .rl-pill {
     display: inline-flex;
     align-items: center;
     gap: .35rem;
     font-size: .72rem;
     font-weight: 600;
-    padding: .3rem .7rem;
+    padding: .25rem .65rem;
     border-radius: 999px;
     border: 1px solid transparent;
     line-height: 1;
@@ -351,13 +410,12 @@
     background: currentColor;
     display: inline-block;
   }
-  .rl-pill-active   { background: var(--rl-success-soft); color: var(--rl-success); border-color: var(--rl-success-border); }
-  .rl-pill-inactive { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+  .rl-pill-active   { background: var(--rl-success-soft); color: #047857; border-color: var(--rl-success-border); }
+  .rl-pill-inactive { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
   .rl-pill-default  { background: var(--rl-primary-soft); color: #3730a3; border-color: #c7d2fe; }
 
   .rl-muted { color: var(--rl-text-soft); }
 
-  /* Row actions */
   .rl-row-actions {
     display: flex;
     gap: .35rem;
@@ -374,15 +432,16 @@
     padding: 4rem 1.5rem;
   }
   .rl-empty-icon {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: var(--rl-primary-soft);
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
     color: var(--rl-primary);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1rem;
+    border: 1px solid #c7d2fe;
   }
   .rl-empty-title {
     font-size: 1.05rem;
@@ -397,21 +456,21 @@
   }
 
   /* ============================================================
-     Modal dialog (centered, elevated)
+     MODAL – PROFESSIONAL GRADE WITH RICH COLORS & EFFECTS
      ============================================================ */
   .rl-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(17, 24, 39, .55);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: rgba(10, 18, 40, 0.65);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1.25rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .18s ease;
+    transition: opacity .3s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 1050;
     overflow-y: auto;
   }
@@ -421,207 +480,317 @@
   }
 
   .rl-modal {
-    background: var(--rl-surface);
-    border-radius: 16px;
+    background: #ffffff;
+    border-radius: 24px;
     width: 100%;
     max-width: 520px;
-    box-shadow:
-      0 0 0 1px rgba(16, 24, 40, .05),
-      0 24px 60px -12px rgba(16, 24, 40, .28),
-      0 8px 24px -8px rgba(16, 24, 40, .18);
-    transform: scale(.96) translateY(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+      0 0 0 1px rgba(79, 70, 229, 0.08),
+      0 25px 60px -12px rgba(15, 23, 42, 0.45),
+      0 10px 25px -8px rgba(15, 23, 42, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transform: scale(0.94) translateY(16px) rotateX(1deg);
     opacity: 0;
-    transition: transform .22s cubic-bezier(.2, .8, .2, 1),
-                opacity .18s ease;
+    transition: 
+      transform .35s cubic-bezier(0.16, 1, 0.3, 1), 
+      opacity .25s ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 2.5rem);
+    max-height: calc(100vh - 3rem);
+    position: relative;
   }
+  .rl-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7, #6366f1);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
   .rl-modal-backdrop.open .rl-modal {
-    transform: scale(1) translateY(0);
+    transform: scale(1) translateY(0) rotateX(0deg);
     opacity: 1;
   }
 
   .rl-modal-head {
-    padding: 1.25rem 1.5rem 1rem;
+    padding: 1.75rem 1.75rem 1.25rem;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    border-bottom: 1px solid var(--rl-border);
-    background: linear-gradient(180deg, #ffffff 0%, #fcfcfe 100%);
+    border-bottom: 1px solid #eef2f6;
+    background: linear-gradient(to bottom, #fcfdff, #ffffff);
   }
   .rl-modal-title-wrap {
     display: flex;
     align-items: center;
-    gap: .85rem;
+    gap: 1rem;
     min-width: 0;
   }
   .rl-modal-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: var(--rl-primary-soft);
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
     color: var(--rl-primary);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    border: 1px solid #c7d2fe;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.12);
+    transition: all .25s ease;
   }
+  .rl-modal-backdrop.open .rl-modal-icon {
+    animation: iconPop .4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes iconPop {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
   .rl-modal-head h5 {
     margin: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--rl-text);
-    line-height: 1.2;
+    letter-spacing: -.015em;
   }
   .rl-modal-head p {
-    margin: .2rem 0 0;
-    font-size: .8rem;
+    margin: .3rem 0 0;
+    font-size: .825rem;
     color: var(--rl-text-muted);
-    line-height: 1.35;
+    line-height: 1.4;
   }
 
   .rl-close {
-    background: transparent;
-    border: none;
+    background: #f8fafc;
+    border: 1px solid #e9edf4;
     cursor: pointer;
     color: var(--rl-text-soft);
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background .15s, color .15s;
+    transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
     margin-top: -2px;
+    margin-right: -4px;
   }
-  .rl-close:hover { background: #f3f4f6; color: var(--rl-text); }
+  .rl-close:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+    transform: rotate(90deg);
+  }
   .rl-close:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+    box-shadow: 0 0 0 3px var(--rl-primary-ring);
   }
 
   .rl-modal-body {
-    padding: 1.5rem;
+    padding: 1.75rem;
     overflow-y: auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    background: #ffffff;
   }
 
   .rl-modal-foot {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--rl-border);
-    background: #fafbfc;
+    padding: 1.15rem 1.75rem;
+    border-top: 1px solid #eef2f6;
+    background: linear-gradient(to top, #fcfdff, #ffffff);
     display: flex;
+    align-items: center;
     justify-content: flex-end;
-    gap: .5rem;
+    gap: .75rem;
   }
 
-  /* Form fields */
-  .rl-field { margin-bottom: 1.1rem; }
-  .rl-field:last-child { margin-bottom: 0; }
+  /* Form Elements – REFINED */
+  .rl-field { margin: 0; }
 
-  .rl-field label {
+  .rl-field > label {
     display: block;
-    font-size: .8rem;
+    font-size: .82rem;
     font-weight: 600;
     color: var(--rl-text);
-    margin-bottom: .4rem;
+    margin-bottom: .5rem;
+    letter-spacing: -.01em;
   }
   .rl-field .req { color: var(--rl-danger); margin-left: 2px; }
 
   .rl-field select,
   .rl-field input[type="text"] {
+    display: block;
     width: 100%;
-    border: 1px solid var(--rl-border-strong);
+    box-sizing: border-box;
+    border: 1.5px solid var(--rl-border-strong);
     border-radius: var(--rl-radius-sm);
-    padding: .6rem .8rem;
-    font-size: .9rem;
+    padding: .7rem 2.6rem .7rem 1rem;
+    font-size: .95rem;
+    line-height: 1.4;
     color: var(--rl-text);
-    background: #fff;
+    background-color: #fcfdff;
     outline: none;
-    transition: border-color .15s, box-shadow .15s;
+    transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
     font-family: inherit;
+    min-height: 48px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235e6f8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 16px;
   }
+
+  .rl-field select:hover:not(:disabled),
+  .rl-field input[type="text"]:hover:not(:disabled) {
+    border-color: #94a3b8;
+    background-color: #ffffff;
+  }
+
   .rl-field select:focus,
   .rl-field input[type="text"]:focus {
     border-color: var(--rl-primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .15);
+    background-color: #ffffff;
+    box-shadow: 
+      0 0 0 4px var(--rl-primary-ring),
+      0 2px 8px rgba(79, 70, 229, 0.1);
   }
+
   .rl-field select:disabled {
-    background: #f9fafb;
+    background-color: #f1f5f9;
     color: var(--rl-text-soft);
     cursor: not-allowed;
+    border-color: var(--rl-border);
+    opacity: 0.7;
   }
 
   .rl-hint {
-    font-size: .75rem;
+    font-size: .78rem;
     color: var(--rl-text-muted);
-    margin-top: .35rem;
-    line-height: 1.4;
+    margin-top: .5rem;
+    line-height: 1.45;
+    padding-left: .15rem;
   }
 
-  /* Toggle switch for boolean fields */
+  /* Interactive Cards / Toggles – ENHANCED VISUAL FEEDBACK */
   .rl-switch {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: .8rem 1rem;
-    border: 1px solid var(--rl-border-strong);
+    padding: 1rem 1.15rem;
+    border: 1.5px solid var(--rl-border);
     border-radius: var(--rl-radius-sm);
-    background: #fff;
+    background: #fcfdff;
     cursor: pointer;
-    transition: border-color .15s, background .15s;
+    transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
+    gap: .75rem;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
   }
-  .rl-switch:hover { border-color: #9ca3af; }
+  .rl-switch::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .rl-switch:hover {
+    border-color: #c7d2fe;
+    background-color: #f8faff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06);
+  }
+  .rl-switch:hover::before {
+    opacity: 1;
+  }
+  .rl-switch:has(input:checked) {
+    border-color: #c7d2fe;
+    background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+    box-shadow: 0 2px 10px rgba(79, 70, 229, 0.08);
+  }
+  .rl-switch:has(input:checked)::before {
+    opacity: 1;
+  }
   .rl-switch-text {
     font-size: .875rem;
     color: var(--rl-text);
-    font-weight: 500;
+    font-weight: 600;
   }
   .rl-switch-sub {
     font-size: .75rem;
     color: var(--rl-text-muted);
     margin-top: 2px;
+    line-height: 1.3;
   }
   .rl-switch input[type="checkbox"] {
     appearance: none;
-    width: 40px;
-    height: 22px;
+    -webkit-appearance: none;
+    width: 46px;
+    height: 26px;
     border-radius: 999px;
-    background: #d1d5db;
+    background: #cbd5e1;
     position: relative;
     cursor: pointer;
     outline: none;
-    transition: background .15s;
+    transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
+    margin: 0;
+    border: none;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
   }
   .rl-switch input[type="checkbox"]::after {
     content: "";
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,.2);
-    transition: transform .15s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0,0,0,0.1);
+    transition: transform .25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .rl-switch input[type="checkbox"]:checked { background: var(--rl-primary); }
-  .rl-switch input[type="checkbox"]:checked::after { transform: translateX(18px); }
+  .rl-switch input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: inset 0 1px 3px rgba(79, 70, 229, 0.3), 0 0 8px rgba(79, 70, 229, 0.2);
+  }
+  .rl-switch input[type="checkbox"]:checked::after {
+    transform: translateX(20px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), 0 0 6px rgba(79, 70, 229, 0.3);
+  }
+  .rl-switch input[type="checkbox"]:focus-visible {
+    box-shadow: 0 0 0 3px var(--rl-primary-ring), inset 0 1px 3px rgba(0,0,0,0.1);
+  }
 
-  /* ============================================================
-     Inline alert
-     ============================================================ */
+  /* Inline Alerts */
   .rl-alert {
     display: flex;
     align-items: flex-start;
-    gap: .6rem;
-    padding: .85rem 1.1rem;
+    gap: .65rem;
+    padding: .9rem 1.1rem;
     border-radius: var(--rl-radius-sm);
     font-size: .875rem;
     margin-bottom: 1.25rem;
@@ -630,12 +799,12 @@
   .rl-alert-danger {
     background: var(--rl-danger-soft);
     border-color: var(--rl-danger-border);
-    color: #7f1d1d;
+    color: #991b1b;
   }
   .rl-alert-success {
     background: var(--rl-success-soft);
     border-color: var(--rl-success-border);
-    color: #064e3b;
+    color: #065f46;
   }
   .rl-alert-info {
     background: var(--rl-primary-soft);
@@ -643,25 +812,38 @@
     color: #3730a3;
   }
 
-  /* ============================================================
-     Responsive
-     ============================================================ */
-  @media (max-width: 720px) {
+  /* Responsive Adjustments */
+  @media (max-width: 640px) {
     .rl-page-title { font-size: 1.3rem; }
-    .rl-search input { width: 160px; }
-    .rl-row-actions { flex-wrap: wrap; justify-content: flex-start; }
-    .rl-table thead th, .rl-table tbody td { padding: .7rem .75rem; }
-    .rl-modal { max-width: 100%; border-radius: 14px; }
-    .rl-modal-head { padding: 1rem 1.1rem .85rem; }
-    .rl-modal-body { padding: 1.1rem; }
-    .rl-modal-foot { padding: .85rem 1.1rem; }
+    .rl-search input { width: 100%; }
+    .rl-toolbar-right { width: 100%; }
+    .rl-modal { max-width: 100%; border-radius: 20px; }
+    .rl-modal-head { padding: 1.5rem 1.25rem 1.15rem; }
+    .rl-modal-body { padding: 1.35rem; }
+    .rl-modal-foot { padding: 1rem 1.25rem; }
+    .rl-switch { padding: .85rem 1rem; }
+    .rl-modal-icon { width: 42px; height: 42px; border-radius: 12px; }
+  }
+
+  /* Additional micro-interactions */
+  .rl-modal-backdrop.open .rl-modal-body > * {
+    animation: slideUp .4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .rl-modal-backdrop.open .rl-modal-body > *:nth-child(1) { animation-delay: 0.05s; }
+  .rl-modal-backdrop.open .rl-modal-body > *:nth-child(2) { animation-delay: 0.1s; }
+  .rl-modal-backdrop.open .rl-modal-body > *:nth-child(3) { animation-delay: 0.15s; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="rl-page">
   <div class="container-fluid py-4">
 
-    {# ==================== Flash messages ==================== #}
+    {# Flash Messages #}
     {% if messages %}
       {% for message in messages %}
         <div class="rl-alert {% if message.tags == 'success' %}rl-alert-success{% elif message.tags == 'error' %}rl-alert-danger{% else %}rl-alert-info{% endif %}">
@@ -679,7 +861,7 @@
       {% endfor %}
     {% endif %}
 
-    {# ==================== Page header ==================== #}
+    {# Page Header #}
     <div class="rl-page-header">
       <div>
         <div class="rl-breadcrumb">
@@ -702,7 +884,6 @@
       </div>
     </div>
 
-    {# ==================== Context error ==================== #}
     {% if error %}
       <div class="rl-alert rl-alert-danger">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -710,7 +891,7 @@
       </div>
     {% endif %}
 
-    {# ==================== Stats ==================== #}
+    {# Stats Row #}
     <div class="rl-stats">
       <div class="rl-stat">
         <div class="rl-stat-label">Total Languages</div>
@@ -729,7 +910,7 @@
       </div>
     </div>
 
-    {# ==================== Table card ==================== #}
+    {# Main Table Card #}
     <div class="rl-card">
       <div class="rl-card-toolbar">
         <h5 class="rl-card-title">
@@ -833,7 +1014,7 @@
       <div id="rlNoResults" style="display:none;">
         <div class="rl-empty">
           <div class="rl-empty-icon">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </div>
           <h6 class="rl-empty-title">No matches found</h6>
           <p class="rl-empty-text">Try adjusting your search or filter.</p>
@@ -843,7 +1024,7 @@
       {% else %}
       <div class="rl-empty">
         <div class="rl-empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </div>
         <h6 class="rl-empty-title">No languages configured yet</h6>
         <p class="rl-empty-text">
@@ -860,7 +1041,7 @@
   </div>
 </div>
 
-{# ==================== MODAL (Add / Edit) ==================== #}
+{# Redesigned Modal Container #}
 <div class="rl-modal-backdrop" id="rlModalBackdrop" onclick="if(event.target===this)rlCloseDrawer()">
   <div class="rl-modal" role="dialog" aria-modal="true" aria-labelledby="rlDrawerTitle">
     <form method="post" id="rlDrawerForm">
@@ -871,7 +1052,7 @@
       <div class="rl-modal-head">
         <div class="rl-modal-title-wrap">
           <div class="rl-modal-icon">
-            <svg id="rlModalIconSvg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg id="rlModalIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </div>
@@ -943,20 +1124,17 @@
   </div>
 </div>
 
-{# ==================== DATA FOR JS ==================== #}
 {{ languages|json_script:"rl-languages-data" }}
 
 <script>
 (function () {
   "use strict";
 
-  // -------- Data --------
   var RAW = JSON.parse(document.getElementById('rl-languages-data').textContent);
   var LANGUAGES = Array.isArray(RAW) ? RAW : (RAW && Array.isArray(RAW.results) ? RAW.results : []);
   var BY_ID = {};
   LANGUAGES.forEach(function (l) { BY_ID[String(l.id)] = l; });
 
-  // -------- Stats --------
   var activeCount = LANGUAGES.filter(function (l) { return l.is_active; }).length;
   var defaultLang = LANGUAGES.find(function (l) { return l.is_default; });
 
@@ -970,7 +1148,6 @@
       : 'None';
   }
 
-  // -------- Toggle switch <-> hidden input sync --------
   function bindToggle(toggleId, hiddenId) {
     var toggle = document.getElementById(toggleId);
     var hidden = document.getElementById(hiddenId);
@@ -991,7 +1168,6 @@
     hidden.value = value ? 'true' : 'false';
   }
 
-  // -------- Modal --------
   var backdrop = document.getElementById('rlModalBackdrop');
   var lastFocused = null;
 
@@ -1011,7 +1187,7 @@
     setTimeout(function () {
       var first = document.getElementById('rlLanguageCode');
       if (first) first.focus();
-    }, 60);
+    }, 80);
   }
 
   window.rlOpenAdd = function () {
@@ -1066,7 +1242,6 @@
     }
   };
 
-  // -------- Focus trap + Escape --------
   document.addEventListener('keydown', function (e) {
     if (!backdrop.classList.contains('open')) return;
 
@@ -1093,7 +1268,6 @@
     }
   });
 
-  // -------- Row Edit buttons --------
   document.querySelectorAll('[data-rl-edit]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var lang = BY_ID[String(btn.dataset.rlEdit)];
@@ -1101,7 +1275,6 @@
     });
   });
 
-  // -------- Search + filter --------
   window.rlFilter = function () {
     var q = (document.getElementById('rlSearch').value || '').toLowerCase().trim();
     var status = document.getElementById('rlStatusFilter').value;
@@ -1126,7 +1299,6 @@
     document.getElementById('rlNoResults').style.display = visible === 0 ? '' : 'none';
   };
 
-  // -------- Auto-open modal if URL has ?edit=<id> --------
   var params = new URLSearchParams(window.location.search);
   var editId = params.get('edit');
   if (editId && BY_ID[editId]) {

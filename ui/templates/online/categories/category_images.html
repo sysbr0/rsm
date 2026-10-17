@@ -1,0 +1,1252 @@
+{% extends "ui/online_base.html" %} {% block mobile_title %}Edit Image{%
+endblock %} {% block content %}
+<style>
+  /* ============================================================
+     Design tokens (identical to categories pages)
+     ============================================================ */
+  .rl-page {
+    --rl-bg: #f6f8fc;
+    --rl-surface: #ffffff;
+    --rl-border: #e9edf4;
+    --rl-border-strong: #d0d9e8;
+    --rl-text: #0b1a2f;
+    --rl-text-muted: #5e6f8d;
+    --rl-text-soft: #8b9bb8;
+    --rl-primary: #4f46e5;
+    --rl-primary-soft: #eef2ff;
+    --rl-primary-ring: rgba(79, 70, 229, 0.22);
+    --rl-success: #10b981;
+    --rl-success-soft: #ecfdf5;
+    --rl-success-border: #a7f3d0;
+    --rl-danger: #ef4444;
+    --rl-danger-soft: #fef2f2;
+    --rl-danger-border: #fecaca;
+    --rl-warning-soft: #fffbeb;
+    --rl-radius: 14px;
+    --rl-radius-sm: 10px;
+    --rl-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --rl-shadow-md:
+      0 4px 10px -2px rgba(15, 23, 42, 0.08),
+      0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    --rl-font:
+      -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    font-family: var(--rl-font);
+    color: var(--rl-text);
+    background: var(--rl-bg);
+    min-height: 100vh;
+  }
+
+  /* Page header */
+  .rl-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .rl-breadcrumb {
+    font-size: 0.78rem;
+    color: var(--rl-text-soft);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .rl-breadcrumb a {
+    color: var(--rl-text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .rl-breadcrumb a:hover {
+    color: var(--rl-primary);
+  }
+  .rl-page-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin: 0 0 0.25rem;
+  }
+  .rl-page-subtitle {
+    color: var(--rl-text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  /* Buttons */
+  .rl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--rl-radius-sm);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid transparent;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: inherit;
+  }
+  .rl-btn:active {
+    transform: translateY(1px) scale(0.99);
+  }
+  .rl-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--rl-primary-ring);
+  }
+  .rl-btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    border-color: #4f46e5;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+  }
+  .rl-btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  }
+  .rl-btn-secondary {
+    background: var(--rl-surface);
+    color: var(--rl-text);
+    border-color: var(--rl-border-strong);
+  }
+  .rl-btn-secondary:hover {
+    background: #fafbff;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+  }
+  .rl-btn-danger {
+    background: var(--rl-surface);
+    color: var(--rl-danger);
+    border-color: var(--rl-danger-border);
+  }
+  .rl-btn-danger:hover {
+    background: var(--rl-danger-soft);
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+  }
+  .rl-btn-danger-solid {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border-color: #dc2626;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+  }
+  .rl-btn-danger-solid:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+  }
+
+  /* Card */
+  .rl-card {
+    background: var(--rl-surface);
+    border: 1px solid var(--rl-border);
+    border-radius: var(--rl-radius);
+    box-shadow: var(--rl-shadow-sm);
+    overflow: hidden;
+  }
+  .rl-card-toolbar {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--rl-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .rl-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* Preview */
+  .rl-img-preview-wrap {
+    padding: 1.25rem;
+    background:
+      linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+      linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+      linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+    background-size: 20px 20px;
+    background-position:
+      0 0,
+      0 10px,
+      10px -10px,
+      -10px 0px;
+    border-bottom: 1px solid var(--rl-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .rl-img-preview {
+    width: 220px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: var(--rl-radius-sm);
+    border: 1px solid var(--rl-border);
+    background: #f1f5f9;
+    display: block;
+    box-shadow: var(--rl-shadow-md);
+  }
+  .rl-img-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 200px;
+    flex: 1;
+  }
+  .rl-img-meta .rl-hint {
+    margin-top: 0;
+  }
+  .rl-img-url {
+    font-family: ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--rl-text-muted);
+    word-break: break-all;
+    background: #f8fafc;
+    border: 1px solid var(--rl-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+  }
+
+  /* Form body */
+  .rl-form-body {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+
+  /* Sticky action bar */
+  .rl-form-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--rl-border);
+    background: linear-gradient(to top, #fcfdff 60%, rgba(252, 253, 255, 0.85));
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .rl-form-actions .rl-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-left: auto;
+  }
+
+  /* Fields */
+  .rl-field {
+    margin: 0;
+  }
+  .rl-field > label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .rl-field .req {
+    color: var(--rl-danger);
+    margin-left: 2px;
+  }
+  .rl-field input[type="text"],
+  .rl-field input[type="url"],
+  .rl-field input[type="number"],
+  .rl-field textarea,
+  .rl-field select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--rl-border-strong);
+    border-radius: var(--rl-radius-sm);
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--rl-text);
+    background-color: #fcfdff;
+    outline: none;
+    font-family: inherit;
+    min-height: 48px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rl-field textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+  .rl-field input:focus,
+  .rl-field textarea:focus,
+  .rl-field select:focus {
+    border-color: var(--rl-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px var(--rl-primary-ring);
+  }
+  .rl-hint {
+    font-size: 0.78rem;
+    color: var(--rl-text-muted);
+    margin-top: 0.5rem;
+  }
+
+  /* Switch */
+  .rl-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.15rem;
+    border: 1.5px solid var(--rl-border);
+    border-radius: var(--rl-radius-sm);
+    background: #fcfdff;
+    cursor: pointer;
+    user-select: none;
+    gap: 0.75rem;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .rl-switch:hover {
+    border-color: #c7d2fe;
+    background-color: #f8faff;
+  }
+  .rl-switch:has(input:checked) {
+    border-color: #c7d2fe;
+    background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+  }
+  .rl-switch-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .rl-switch-sub {
+    font-size: 0.75rem;
+    color: var(--rl-text-muted);
+    margin-top: 2px;
+  }
+  .rl-switch input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    margin: 0;
+    border: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rl-switch input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .rl-switch input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+  }
+  .rl-switch input[type="checkbox"]:checked::after {
+    transform: translateX(20px);
+  }
+  .rl-switch input[type="checkbox"]:focus-visible {
+    box-shadow: 0 0 0 3px var(--rl-primary-ring);
+  }
+
+  /* Pills */
+  .rl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .rl-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .rl-pill-default {
+    background: var(--rl-primary-soft);
+    color: #3730a3;
+    border-color: #c7d2fe;
+  }
+  .rl-pill-success {
+    background: var(--rl-success-soft);
+    color: #047857;
+    border-color: var(--rl-success-border);
+  }
+  .rl-pill-warning {
+    background: var(--rl-warning-soft);
+    color: #92400e;
+    border-color: #fcd34d;
+  }
+
+  /* Alerts */
+  .rl-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--rl-radius-sm);
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid;
+  }
+  .rl-alert-danger {
+    background: var(--rl-danger-soft);
+    border-color: var(--rl-danger-border);
+    color: #991b1b;
+  }
+  .rl-alert-success {
+    background: var(--rl-success-soft);
+    border-color: var(--rl-success-border);
+    color: #065f46;
+  }
+  .rl-alert-info {
+    background: var(--rl-primary-soft);
+    border-color: #c7d2fe;
+    color: #3730a3;
+  }
+  .rl-alert-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Empty state */
+  .rl-empty {
+    text-align: center;
+    padding: 4rem 1.5rem;
+  }
+  .rl-empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: var(--rl-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border: 1px solid #c7d2fe;
+  }
+  .rl-empty-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.35rem;
+  }
+  .rl-empty-text {
+    color: var(--rl-text-muted);
+    font-size: 0.875rem;
+    margin: 0 0 1.25rem;
+  }
+
+  /* Modal */
+  .rl-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 18, 40, 0.65);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1050;
+    overflow-y: auto;
+  }
+  .rl-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .rl-modal {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 0 0 1px rgba(79, 70, 229, 0.08),
+      0 25px 60px -12px rgba(15, 23, 42, 0.45),
+      0 10px 25px -8px rgba(15, 23, 42, 0.2);
+    transform: scale(0.94) translateY(16px);
+    opacity: 0;
+    transition:
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.25s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 3rem);
+    position: relative;
+  }
+  .rl-modal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7, #6366f1);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  .rl-modal-backdrop.open .rl-modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  .rl-modal-head {
+    padding: 1.75rem 1.75rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid #eef2f6;
+    background: linear-gradient(to bottom, #fcfdff, #ffffff);
+  }
+  .rl-modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+  }
+  .rl-modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: var(--rl-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #c7d2fe;
+  }
+  .rl-modal-head h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .rl-modal-head p {
+    margin: 0.3rem 0 0;
+    font-size: 0.825rem;
+    color: var(--rl-text-muted);
+  }
+  .rl-close {
+    background: #f8fafc;
+    border: 1px solid #e9edf4;
+    cursor: pointer;
+    color: var(--rl-text-soft);
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .rl-close:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+    transform: rotate(90deg);
+  }
+  .rl-modal-body {
+    padding: 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+  .rl-modal-foot {
+    padding: 1.15rem 1.75rem;
+    border-top: 1px solid #eef2f6;
+    background: linear-gradient(to top, #fcfdff, #ffffff);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  /* Screen-reader-only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .rl-page-title {
+      font-size: 1.3rem;
+    }
+    .rl-form-body {
+      padding: 1.35rem;
+    }
+    .rl-form-actions {
+      padding: 1rem 1.25rem;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .rl-form-actions .rl-actions-right {
+      margin-left: 0;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .rl-form-actions .rl-actions-right .rl-btn {
+      flex: 1 1 auto;
+    }
+    .rl-img-preview {
+      width: 100%;
+      height: 200px;
+    }
+    .rl-modal {
+      border-radius: 20px;
+    }
+    .rl-modal-head {
+      padding: 1.5rem 1.25rem 1.15rem;
+    }
+    .rl-modal-body {
+      padding: 1.35rem;
+    }
+    .rl-modal-foot {
+      padding: 1rem 1.25rem;
+      flex-wrap: wrap;
+    }
+  }
+</style>
+
+<div class="rl-page">
+  <div class="container-fluid py-4">
+    {# Flash messages #} {% if messages %} {% for message in messages %}
+    <div
+      class="rl-alert {% if message.tags == 'success' %}rl-alert-success{% elif message.tags == 'error' %}rl-alert-danger{% else %}rl-alert-info{% endif %}"
+      role="alert"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="rl-alert-icon"
+        aria-hidden="true"
+      >
+        {% if message.tags == 'success' %}
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+        {% elif message.tags == 'error' %}
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+        {% else %}
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+        {% endif %}
+      </svg>
+      <div>{{ message }}</div>
+    </div>
+    {% endfor %} {% endif %} {% if error %}
+    <div class="rl-alert rl-alert-danger" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="rl-alert-icon"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div>{{ error }}</div>
+    </div>
+    {% endif %} {# Header #}
+    <div class="rl-page-header">
+      <div>
+        <nav class="rl-breadcrumb" aria-label="Breadcrumb">
+          <a href="{% url 'restaurant_dashboard' %}">Dashboard</a>
+          <span aria-hidden="true">/</span>
+          <span>Online</span>
+          <span aria-hidden="true">/</span>
+          <a href="{% url 'categories_page' %}">Categories</a>
+          <span aria-hidden="true">/</span>
+          <a href="{% url 'category_images_page' category_id=category_id %}"
+            >Images</a
+          >
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">Edit</span>
+        </nav>
+        <h1 class="rl-page-title">Edit Image</h1>
+        <p class="rl-page-subtitle">
+          Update the image or replace it with a new one.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a
+          href="{% url 'category_images_page' category_id=category_id %}"
+          class="rl-btn rl-btn-secondary"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
+        </a>
+      </div>
+    </div>
+
+    {# Card #} {% if image %}
+    <div class="rl-card">
+      <div class="rl-card-toolbar">
+        <h2 class="rl-card-title">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          Image Details
+        </h2>
+        <div class="d-flex flex-wrap gap-2">
+          {% if image.is_primary %}
+          <span class="rl-pill rl-pill-success">
+            <span class="dot" aria-hidden="true"></span>
+            Primary image
+          </span>
+          {% else %}
+          <span class="rl-pill rl-pill-warning">
+            <span class="dot" aria-hidden="true"></span>
+            Not primary
+          </span>
+          {% endif %}
+          <span class="rl-pill rl-pill-default"
+            >#{{ image.sort_order|default:0 }}</span
+          >
+        </div>
+      </div>
+
+      {# Live preview #}
+      <div class="rl-img-preview-wrap">
+        <img
+          id="rlPreviewImg"
+          src="{{ image.image_url }}"
+          alt="{{ image.alt_text|default:'Preview' }}"
+          class="rl-img-preview"
+          onerror="
+            this.style.opacity = '0.35';
+            this.title = 'Image failed to load';
+          "
+        />
+        <div class="rl-img-meta">
+          <div>
+            <div class="rl-switch-text" style="margin-bottom: 0.35rem">
+              Current URL
+            </div>
+            <div class="rl-img-url" id="rlPreviewUrl">
+              {{ image.image_url }}
+            </div>
+          </div>
+          <div class="rl-hint">
+            Preview updates automatically as you change the URL. Use a direct
+            link to an image file (jpg, png, webp, gif).
+          </div>
+        </div>
+      </div>
+
+      <form
+        id="rlImageForm"
+        method="post"
+        action="{% url 'category_image_edit_page' category_id=category_id image_id=image_id %}"
+        novalidate
+      >
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update" />
+
+        <div class="rl-form-body">
+          <div class="rl-field">
+            <label for="rlImageUrl"
+              >Image URL <span class="req" aria-hidden="true">*</span></label
+            >
+            <input
+              type="url"
+              id="rlImageUrl"
+              name="image_url"
+              required
+              value="{{ image.image_url }}"
+              placeholder="https://example.com/image.jpg"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="rl-field">
+            <label for="rlAltText">Alt text</label>
+            <input
+              type="text"
+              id="rlAltText"
+              name="alt_text"
+              maxlength="255"
+              value="{{ image.alt_text|default:'' }}"
+              placeholder="Describe the image for accessibility"
+              autocomplete="off"
+            />
+            <div class="rl-hint">
+              Shown to screen readers and search engines.
+            </div>
+          </div>
+
+          <div class="rl-field">
+            <label for="rlSortOrder">Sort order</label>
+            <input
+              type="number"
+              id="rlSortOrder"
+              name="sort_order"
+              min="0"
+              value="{{ image.sort_order|default:0 }}"
+            />
+            <div class="rl-hint">Lower numbers appear first.</div>
+          </div>
+
+          <div class="rl-field">
+            <label class="rl-switch" for="rlIsPrimaryToggle">
+              <div>
+                <div class="rl-switch-text">Primary image</div>
+                <div class="rl-switch-sub">
+                  Setting this will unset any other primary image for the
+                  category
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                id="rlIsPrimaryToggle"
+                data-toggle="is_primary"
+                {%
+                if
+                image.is_primary
+                %}checked{%
+                endif
+                %}
+              />
+              <input
+                type="hidden"
+                name="is_primary"
+                data-toggle-target="is_primary"
+                value="{% if image.is_primary %}true{% else %}false{% endif %}"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="rl-form-actions">
+          <button
+            type="button"
+            class="rl-btn rl-btn-danger"
+            data-action="open-delete"
+            aria-haspopup="dialog"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+            Delete
+          </button>
+
+          <div class="rl-actions-right">
+            <a
+              href="{% url 'category_images_page' category_id=category_id %}"
+              class="rl-btn rl-btn-secondary"
+            >
+              Cancel
+            </a>
+            <button type="submit" class="rl-btn rl-btn-primary">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    {# Delete confirmation modal #}
+    <div class="rl-modal-backdrop" data-modal="delete-image">
+      <div
+        class="rl-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rlDeleteTitle"
+        aria-describedby="rlDeleteDesc"
+      >
+        <form
+          method="post"
+          action="{% url 'category_image_edit_page' category_id=category_id image_id=image_id %}"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete" />
+
+          <div class="rl-modal-head">
+            <div class="rl-modal-title-wrap">
+              <div
+                class="rl-modal-icon"
+                style="
+                  color: #dc2626;
+                  background: #fef2f2;
+                  border-color: #fecaca;
+                "
+                aria-hidden="true"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <div>
+                <h2 id="rlDeleteTitle">Delete image?</h2>
+                <p id="rlDeleteDesc">This action cannot be undone.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="rl-close"
+              data-action="close-delete"
+              aria-label="Close dialog"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="rl-modal-body">
+            <p
+              style="
+                margin: 0;
+                font-size: 0.9rem;
+                color: var(--rl-text-muted);
+                line-height: 1.55;
+              "
+            >
+              You are about to permanently delete this image from the category.
+              The uploaded file will not be deleted from storage.
+            </p>
+          </div>
+
+          <div class="rl-modal-foot">
+            <button
+              type="button"
+              class="rl-btn rl-btn-secondary"
+              data-action="close-delete"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="rl-btn rl-btn-danger-solid">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              </svg>
+              Delete Image
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="rl-card">
+      <div class="rl-empty">
+        <div class="rl-empty-icon" aria-hidden="true">
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h3 class="rl-empty-title">Image not found</h3>
+        <p class="rl-empty-text">
+          It may have been deleted or you may not have access.
+        </p>
+        <a
+          href="{% url 'category_images_page' category_id=category_id %}"
+          class="rl-btn rl-btn-primary"
+        >
+          Back to images
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    /* ---------------- Boolean toggle sync ---------------- */
+    var form = document.getElementById("rlImageForm");
+
+    function syncToggle(cb) {
+      if (!form) return;
+      var key = cb.getAttribute("data-toggle");
+      var hidden = form.querySelector('[data-toggle-target="' + key + '"]');
+      if (hidden) hidden.value = cb.checked ? "true" : "false";
+    }
+
+    if (form) {
+      form
+        .querySelectorAll('input[type="checkbox"][data-toggle]')
+        .forEach(function (cb) {
+          cb.addEventListener("change", function () {
+            syncToggle(cb);
+          });
+          syncToggle(cb);
+        });
+
+      /* ---------------- Live preview from URL ---------------- */
+      var urlInput = form.querySelector('input[name="image_url"]');
+      var previewImg = document.getElementById("rlPreviewImg");
+      var previewUrl = document.getElementById("rlPreviewUrl");
+
+      function updatePreview() {
+        if (!urlInput || !previewImg) return;
+        var value = (urlInput.value || "").trim();
+        if (previewUrl) previewUrl.textContent = value || "—";
+        if (value) {
+          previewImg.src = value;
+          previewImg.style.opacity = "1";
+          previewImg.style.visibility = "visible";
+        } else {
+          previewImg.removeAttribute("src");
+          previewImg.style.opacity = "0.35";
+        }
+      }
+
+      if (urlInput) {
+        var debounceTimer = null;
+        urlInput.addEventListener("input", function () {
+          if (debounceTimer) window.clearTimeout(debounceTimer);
+          debounceTimer = window.setTimeout(updatePreview, 250);
+        });
+      }
+
+      /* ---------------- Client-side validation ---------------- */
+      form.addEventListener("submit", function (e) {
+        var url = form.querySelector('input[name="image_url"]');
+        var value = url ? (url.value || "").trim() : "";
+        url.style.borderColor = "";
+
+        if (!value) {
+          e.preventDefault();
+          url.focus();
+          url.style.borderColor = "var(--rl-danger)";
+          url.addEventListener("input", function handler() {
+            url.style.borderColor = "";
+            url.removeEventListener("input", handler);
+          });
+        }
+      });
+    }
+
+    /* ---------------- Delete confirmation modal ---------------- */
+    var deleteBackdrop = document.querySelector('[data-modal="delete-image"]');
+    var lastFocused = null;
+
+    function openDelete() {
+      if (!deleteBackdrop) return;
+      lastFocused = document.activeElement;
+      deleteBackdrop.classList.add("open");
+      document.body.style.overflow = "hidden";
+      var cancelBtn = deleteBackdrop.querySelector(
+        '[data-action="close-delete"]',
+      );
+      if (cancelBtn) {
+        window.setTimeout(function () {
+          cancelBtn.focus();
+        }, 60);
+      }
+    }
+
+    function closeDelete() {
+      if (!deleteBackdrop) return;
+      deleteBackdrop.classList.remove("open");
+      document.body.style.overflow = "";
+      if (lastFocused && typeof lastFocused.focus === "function") {
+        lastFocused.focus();
+      }
+    }
+
+    document.addEventListener("click", function (e) {
+      if (e.target.closest('[data-action="open-delete"]')) {
+        e.preventDefault();
+        openDelete();
+        return;
+      }
+      if (e.target.closest('[data-action="close-delete"]')) {
+        e.preventDefault();
+        closeDelete();
+        return;
+      }
+      if (deleteBackdrop && e.target === deleteBackdrop) closeDelete();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (!deleteBackdrop || !deleteBackdrop.classList.contains("open")) return;
+      if (e.key === "Escape") {
+        closeDelete();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      var focusables = deleteBackdrop.querySelectorAll(
+        'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  })();
+</script>
+{% endblock %} {% endblock %}
