@@ -1,1122 +1,838 @@
-{% extends "ui/online_base.html" %} {% block mobile_title %}Edit Image{%
-endblock %} {% block content %}
+{% extends "ui/online_base.html" %} {% block mobile_title %}Edit Category
+Image{% endblock %} {% block content %}
 <style>
-  /* ============================================================
-     Design tokens (identical to categories pages)
-     ============================================================ */
-  .rl-page {
-    --rl-bg: #f6f8fc;
-    --rl-surface: #ffffff;
-    --rl-border: #e9edf4;
-    --rl-border-strong: #d0d9e8;
-    --rl-text: #0b1a2f;
-    --rl-text-muted: #5e6f8d;
-    --rl-text-soft: #8b9bb8;
-    --rl-primary: #4f46e5;
-    --rl-primary-soft: #eef2ff;
-    --rl-primary-ring: rgba(79, 70, 229, 0.22);
-    --rl-success: #10b981;
-    --rl-success-soft: #ecfdf5;
-    --rl-success-border: #a7f3d0;
-    --rl-danger: #ef4444;
-    --rl-danger-soft: #fef2f2;
-    --rl-danger-border: #fecaca;
-    --rl-warning-soft: #fffbeb;
-    --rl-radius: 14px;
-    --rl-radius-sm: 10px;
-    --rl-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-    --rl-shadow-md:
-      0 4px 10px -2px rgba(15, 23, 42, 0.08),
-      0 2px 4px -1px rgba(15, 23, 42, 0.04);
-    --rl-font:
-      -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-    font-family: var(--rl-font);
-    color: var(--rl-text);
-    background: var(--rl-bg);
-    min-height: 100vh;
+  .ci-page {
+    --ci-surface: #fff;
+    --ci-muted: #64748b;
+    --ci-border: #e2e8f0;
+    --ci-primary: #4f46e5;
+    --ci-primary-light: #eef2ff;
+    --ci-radius: 16px;
+    color: #172033;
   }
 
-  /* Page header */
-  .rl-page-header {
+  .ci-page .rl-page-header {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
   }
-  .rl-breadcrumb {
-    font-size: 0.78rem;
-    color: var(--rl-text-soft);
-    margin-bottom: 0.4rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-wrap: wrap;
+
+  .ci-page .rl-page-title {
+    margin: 8px 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 750;
+    letter-spacing: -0.04em;
   }
-  .rl-breadcrumb a {
-    color: var(--rl-text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }
-  .rl-breadcrumb a:hover {
-    color: var(--rl-primary);
-  }
-  .rl-page-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    margin: 0 0 0.25rem;
-  }
-  .rl-page-subtitle {
-    color: var(--rl-text-muted);
-    font-size: 0.9rem;
+
+  .ci-page .rl-page-subtitle {
     margin: 0;
+    color: var(--ci-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
   }
 
-  /* Buttons */
-  .rl-btn {
-    display: inline-flex;
+  .ci-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: var(--rl-radius-sm);
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 0.6rem 1.1rem;
-    border: 1px solid transparent;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    cursor: pointer;
-    line-height: 1.2;
-    white-space: nowrap;
-    text-decoration: none;
-    font-family: inherit;
-  }
-  .rl-btn:active {
-    transform: translateY(1px) scale(0.99);
-  }
-  .rl-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--rl-primary-ring);
-  }
-  .rl-btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: #fff;
-    border-color: #4f46e5;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
-  }
-  .rl-btn-primary:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-    color: #fff;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
-  }
-  .rl-btn-secondary {
-    background: var(--rl-surface);
-    color: var(--rl-text);
-    border-color: var(--rl-border-strong);
-  }
-  .rl-btn-secondary:hover {
-    background: #fafbff;
-    border-color: #94a3b8;
-    transform: translateY(-1px);
-  }
-  .rl-btn-danger {
-    background: var(--rl-surface);
-    color: var(--rl-danger);
-    border-color: var(--rl-danger-border);
-  }
-  .rl-btn-danger:hover {
-    background: var(--rl-danger-soft);
-    border-color: #fca5a5;
-    transform: translateY(-1px);
-  }
-  .rl-btn-danger-solid {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: #fff;
-    border-color: #dc2626;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
-  }
-  .rl-btn-danger-solid:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: #fff;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+    gap: 8px;
+    color: var(--ci-muted);
+    font-size: 0.82rem;
   }
 
-  /* Card */
-  .rl-card {
-    background: var(--rl-surface);
-    border: 1px solid var(--rl-border);
-    border-radius: var(--rl-radius);
-    box-shadow: var(--rl-shadow-sm);
+  .ci-breadcrumb a {
+    color: var(--ci-muted);
+    text-decoration: none;
+  }
+
+  .ci-breadcrumb a:hover {
+    color: var(--ci-primary);
+  }
+
+  .ci-breadcrumb .ci-separator {
+    color: #cbd5e1;
+  }
+
+  .ci-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .ci-card {
+    background: var(--ci-surface);
+    border: 1px solid var(--ci-border);
+    border-radius: var(--ci-radius);
     overflow: hidden;
-  }
-  .rl-card-toolbar {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--rl-border);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-  .rl-card-title {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin: 0;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.035);
+    min-width: 0;
   }
 
-  /* Preview area */
-  .rl-img-preview-wrap {
-    padding: 1.25rem;
-    background-color: #f8fafc;
+  .ci-card-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--ci-border);
+  }
+
+  .ci-card-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #172033;
+  }
+
+  .ci-card-description {
+    margin: 6px 0 0;
+    color: var(--ci-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .ci-preview-area {
+    padding: 22px;
+    background: #f8fafc;
+  }
+
+  .ci-preview-frame {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 280px;
+    max-height: 460px;
+    overflow: hidden;
+    background-color: #fff;
     background-image:
-      linear-gradient(45deg, #eef2f6 25%, transparent 25%),
-      linear-gradient(-45deg, #eef2f6 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #eef2f6 75%),
-      linear-gradient(-45deg, transparent 75%, #eef2f6 75%);
+      linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+      linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+      linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
     background-size: 20px 20px;
     background-position:
       0 0,
       0 10px,
       10px -10px,
-      -10px 0px;
-    border-bottom: 1px solid var(--rl-border);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  .rl-img-preview {
-    width: 220px;
-    height: 160px;
-    object-fit: cover;
-    border-radius: var(--rl-radius-sm);
-    border: 1px solid var(--rl-border);
-    background: #f1f5f9;
-    display: block;
-    box-shadow: var(--rl-shadow-md);
-    transition: opacity 0.2s ease;
-  }
-  .rl-img-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-width: 220px;
-    flex: 1;
-  }
-  .rl-img-meta-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--rl-text-soft);
-    margin: 0 0 0.35rem;
-  }
-  .rl-img-url {
-    font-family: ui-monospace, monospace;
-    font-size: 0.78rem;
-    color: var(--rl-text-muted);
-    word-break: break-all;
-    background: #fff;
-    border: 1px solid var(--rl-border);
-    border-radius: 8px;
-    padding: 0.55rem 0.75rem;
-    margin: 0;
-  }
-
-  /* Form body */
-  .rl-form-body {
-    padding: 1.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.35rem;
-  }
-
-  /* Sticky action bar */
-  .rl-form-actions {
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--rl-border);
-    background: linear-gradient(to top, #fcfdff 60%, rgba(252, 253, 255, 0.85));
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-  }
-  .rl-form-actions .rl-actions-right {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-left: auto;
-  }
-
-  /* Fields */
-  .rl-field {
-    margin: 0;
-  }
-  .rl-field > label {
-    display: block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-  .rl-field .req {
-    color: var(--rl-danger);
-    margin-left: 2px;
-  }
-  .rl-field input[type="text"],
-  .rl-field input[type="url"],
-  .rl-field input[type="number"],
-  .rl-field textarea,
-  .rl-field select {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1.5px solid var(--rl-border-strong);
-    border-radius: var(--rl-radius-sm);
-    padding: 0.7rem 1rem;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    color: var(--rl-text);
-    background-color: #fcfdff;
-    outline: none;
-    font-family: inherit;
-    min-height: 48px;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .rl-field textarea {
-    min-height: 90px;
-    resize: vertical;
-  }
-  .rl-field input:focus,
-  .rl-field textarea:focus,
-  .rl-field select:focus {
-    border-color: var(--rl-primary);
-    background-color: #fff;
-    box-shadow: 0 0 0 4px var(--rl-primary-ring);
-  }
-  .rl-hint {
-    font-size: 0.78rem;
-    color: var(--rl-text-muted);
-    margin-top: 0.5rem;
-  }
-
-  /* Switch */
-  .rl-switch {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.15rem;
-    border: 1.5px solid var(--rl-border);
-    border-radius: var(--rl-radius-sm);
-    background: #fcfdff;
-    cursor: pointer;
-    user-select: none;
-    gap: 0.75rem;
-    margin: 0;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s ease;
-  }
-  .rl-switch:hover {
-    border-color: #c7d2fe;
-    background-color: #f8faff;
-  }
-  .rl-switch:has(input:checked) {
-    border-color: #c7d2fe;
-    background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
-  }
-  .rl-switch-text {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-  .rl-switch-sub {
-    font-size: 0.75rem;
-    color: var(--rl-text-muted);
-    margin-top: 2px;
-  }
-  .rl-switch input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 46px;
-    height: 26px;
-    border-radius: 999px;
-    background: #cbd5e1;
-    position: relative;
-    cursor: pointer;
-    outline: none;
-    flex-shrink: 0;
-    margin: 0;
-    border: none;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .rl-switch input[type="checkbox"]::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .rl-switch input[type="checkbox"]:checked {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-  }
-  .rl-switch input[type="checkbox"]:checked::after {
-    transform: translateX(20px);
-  }
-  .rl-switch input[type="checkbox"]:focus-visible {
-    box-shadow: 0 0 0 3px var(--rl-primary-ring);
-  }
-
-  /* Pills */
-  .rl-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 0.25rem 0.65rem;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    line-height: 1;
-    white-space: nowrap;
-  }
-  .rl-pill .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-  .rl-pill-default {
-    background: var(--rl-primary-soft);
-    color: #3730a3;
-    border-color: #c7d2fe;
-  }
-  .rl-pill-success {
-    background: var(--rl-success-soft);
-    color: #047857;
-    border-color: var(--rl-success-border);
-  }
-  .rl-pill-warning {
-    background: var(--rl-warning-soft);
-    color: #92400e;
-    border-color: #fcd34d;
-  }
-
-  /* Alerts */
-  .rl-alert {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.65rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: var(--rl-radius-sm);
-    font-size: 0.875rem;
-    margin-bottom: 1.25rem;
-    border: 1px solid;
-  }
-  .rl-alert-danger {
-    background: var(--rl-danger-soft);
-    border-color: var(--rl-danger-border);
-    color: #991b1b;
-  }
-  .rl-alert-success {
-    background: var(--rl-success-soft);
-    border-color: var(--rl-success-border);
-    color: #065f46;
-  }
-  .rl-alert-info {
-    background: var(--rl-primary-soft);
-    border-color: #c7d2fe;
-    color: #3730a3;
-  }
-  .rl-alert-icon {
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  /* Empty state */
-  .rl-empty {
-    text-align: center;
-    padding: 4rem 1.5rem;
-  }
-  .rl-empty-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-    color: var(--rl-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    border: 1px solid #c7d2fe;
-  }
-  .rl-empty-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 0 0 0.35rem;
-  }
-  .rl-empty-text {
-    color: var(--rl-text-muted);
-    font-size: 0.875rem;
-    margin: 0 0 1.25rem;
-  }
-
-  /* Modal */
-  .rl-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(10, 18, 40, 0.65);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    backdrop-filter: blur(12px) saturate(180%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.25rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 1050;
-    overflow-y: auto;
-  }
-  .rl-modal-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .rl-modal {
-    background: #ffffff;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 520px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow:
-      0 0 0 1px rgba(79, 70, 229, 0.08),
-      0 25px 60px -12px rgba(15, 23, 42, 0.45),
-      0 10px 25px -8px rgba(15, 23, 42, 0.2);
-    transform: scale(0.94) translateY(16px);
-    opacity: 0;
-    transition:
-      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 0.25s ease;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 3rem);
-    position: relative;
-  }
-  .rl-modal::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7, #6366f1);
-    background-size: 200% 100%;
-    animation: shimmer 3s ease-in-out infinite;
-  }
-  @keyframes shimmer {
-    0%,
-    100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  .rl-modal-backdrop.open .rl-modal {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-  .rl-modal-head {
-    padding: 1.75rem 1.75rem 1.25rem;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    border-bottom: 1px solid #eef2f6;
-    background: linear-gradient(to bottom, #fcfdff, #ffffff);
-  }
-  .rl-modal-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    min-width: 0;
-  }
-  .rl-modal-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-    color: var(--rl-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border: 1px solid #c7d2fe;
-  }
-  .rl-modal-head h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-  }
-  .rl-modal-head p {
-    margin: 0.3rem 0 0;
-    font-size: 0.825rem;
-    color: var(--rl-text-muted);
-  }
-  .rl-close {
-    background: #f8fafc;
-    border: 1px solid #e9edf4;
-    cursor: pointer;
-    color: var(--rl-text-soft);
-    width: 36px;
-    height: 36px;
+      -10px 0;
+    border: 1px solid var(--ci-border);
     border-radius: 12px;
+  }
+
+  .ci-preview-frame img {
+    display: block;
+    max-width: 100%;
+    max-height: 420px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .ci-preview-placeholder {
+    display: none;
+    padding: 32px;
+    text-align: center;
+    color: var(--ci-muted);
+  }
+
+  .ci-preview-placeholder svg {
+    margin-bottom: 12px;
+    color: #94a3b8;
+  }
+
+  .ci-preview-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .ci-status {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    background: var(--ci-primary-light);
+    color: #4338ca;
+    font-size: 0.78rem;
+    font-weight: 650;
   }
-  .rl-close:hover {
-    background: #fee2e2;
-    border-color: #fecaca;
+
+  .ci-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6366f1;
+  }
+
+  .ci-preview-hint {
+    color: var(--ci-muted);
+    font-size: 0.8rem;
+  }
+
+  .ci-form-body {
+    padding: 22px;
+  }
+
+  .ci-field {
+    margin-bottom: 22px;
+  }
+
+  .ci-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .ci-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: 0.86rem;
+    font-weight: 650;
+  }
+
+  .ci-required {
     color: #dc2626;
-    transform: rotate(90deg);
   }
-  .rl-modal-body {
-    padding: 1.75rem;
-    overflow-y: auto;
-    flex: 1;
+
+  .ci-help {
+    margin-top: 7px;
+    color: var(--ci-muted);
+    font-size: 0.79rem;
+    line-height: 1.6;
+  }
+
+  .ci-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    outline: none;
+    background: #fff;
+    color: #172033;
+    font-size: 0.9rem;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .ci-input:focus {
+    border-color: var(--ci-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  }
+
+  .ci-upload-zone {
+    position: relative;
+    padding: 24px 16px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #fafbff;
+    text-align: center;
+    transition:
+      border-color 0.15s,
+      background 0.15s;
+  }
+
+  .ci-upload-zone:focus-within,
+  .ci-upload-zone.ci-dragover {
+    border-color: var(--ci-primary);
+    background: #f5f5ff;
+  }
+
+  .ci-upload-icon {
     display: flex;
-    flex-direction: column;
-    gap: 1.35rem;
+    justify-content: center;
+    align-items: center;
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: var(--ci-primary);
   }
-  .rl-modal-foot {
-    padding: 1.15rem 1.75rem;
-    border-top: 1px solid #eef2f6;
-    background: linear-gradient(to top, #fcfdff, #ffffff);
+
+  .ci-upload-title {
+    margin: 0 0 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .ci-upload-description {
+    margin: 0 0 14px;
+    color: var(--ci-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .ci-file-input {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    color: #475569;
+    font-size: 0.8rem;
+  }
+
+  .ci-file-name {
+    margin-top: 12px;
+    color: #4338ca;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+
+  .ci-switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 15px;
+    border: 1px solid var(--ci-border);
+    border-radius: 11px;
+    background: #fafbfc;
+  }
+
+  .ci-switch-title {
+    margin-bottom: 4px;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+
+  .ci-switch-description {
+    color: var(--ci-muted);
+    font-size: 0.79rem;
+    line-height: 1.55;
+  }
+
+  .ci-switch-row input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 19px;
+    height: 19px;
+    accent-color: var(--ci-primary);
+    cursor: pointer;
+  }
+
+  .ci-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-top: 1px solid var(--ci-border);
+    background: #fff;
+  }
+
+  .ci-footer-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.75rem;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
-  /* Screen-reader-only utility */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
+  .ci-page .rl-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 650;
     white-space: nowrap;
-    border: 0;
   }
 
-  @media (max-width: 640px) {
-    .rl-page-title {
-      font-size: 1.3rem;
+  .ci-page .rl-btn:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.3);
+    outline-offset: 2px;
+  }
+
+  .ci-page .rl-btn-primary {
+    background: var(--ci-primary);
+    border-color: var(--ci-primary);
+    color: #fff;
+  }
+
+  .ci-page .rl-btn-primary:hover {
+    background: #4338ca;
+  }
+
+  .ci-delete-form {
+    margin: 0;
+  }
+
+  .ci-page .rl-btn-danger {
+    color: #b91c1c;
+    background: #fff;
+    border: 1px solid #fecaca;
+  }
+
+  .ci-page .rl-btn-danger:hover {
+    background: #fef2f2;
+  }
+
+  .ci-info {
+    display: flex;
+    gap: 12px;
+    padding: 15px;
+    border: 1px solid #dbeafe;
+    border-radius: 11px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .ci-info svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .ci-empty {
+    padding: 45px 20px;
+    text-align: center;
+  }
+
+  .ci-empty h2 {
+    margin: 12px 0 7px;
+    font-size: 1.1rem;
+    font-weight: 750;
+  }
+
+  .ci-empty p {
+    margin: 0 0 20px;
+    color: var(--ci-muted);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 900px) {
+    .ci-layout {
+      grid-template-columns: minmax(0, 1fr);
     }
-    .rl-form-body {
-      padding: 1.35rem;
+
+    .ci-preview-frame {
+      min-height: 220px;
     }
-    .rl-form-actions {
-      padding: 1rem 1.25rem;
+  }
+
+  @media (max-width: 576px) {
+    .ci-page .rl-page-header {
       flex-direction: column;
-      align-items: stretch;
     }
-    .rl-form-actions .rl-actions-right {
-      margin-left: 0;
-      width: 100%;
+
+    .ci-form-body,
+    .ci-preview-area {
+      padding: 16px;
+    }
+
+    .ci-card-header {
+      padding: 17px 16px;
+    }
+
+    .ci-card-footer {
+      padding: 15px 16px;
       flex-wrap: wrap;
     }
-    .rl-form-actions .rl-actions-right .rl-btn {
-      flex: 1 1 auto;
-    }
-    .rl-img-preview {
+
+    .ci-footer-actions {
       width: 100%;
-      height: 200px;
     }
-    .rl-modal {
-      border-radius: 20px;
+
+    .ci-footer-actions .rl-btn {
+      flex: 1;
     }
-    .rl-modal-head {
-      padding: 1.5rem 1.25rem 1.15rem;
-    }
-    .rl-modal-body {
-      padding: 1.35rem;
-    }
-    .rl-modal-foot {
-      padding: 1rem 1.25rem;
-      flex-wrap: wrap;
+
+    .ci-page .rl-btn-danger {
+      width: 100%;
     }
   }
 </style>
 
-<div class="rl-page">
+<div class="rl-page ci-page">
   <div class="container-fluid py-4">
-    {# Flash messages #} {% if messages %} {% for message in messages %}
+    {% for message in messages %}
     <div
       class="rl-alert {% if message.tags == 'success' %}rl-alert-success{% elif message.tags == 'error' %}rl-alert-danger{% else %}rl-alert-info{% endif %}"
-      role="alert"
+      role="status"
     >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="rl-alert-icon"
-        aria-hidden="true"
-      >
-        {% if message.tags == 'success' %}
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
-        {% elif message.tags == 'error' %}
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-        {% else %}
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="16" x2="12" y2="12" />
-        <line x1="12" y1="8" x2="12.01" y2="8" />
-        {% endif %}
-      </svg>
       <div>{{ message }}</div>
     </div>
-    {% endfor %} {% endif %} {% if error %}
+    {% endfor %} {% if error %}
     <div class="rl-alert rl-alert-danger" role="alert">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="rl-alert-icon"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
       <div>{{ error }}</div>
     </div>
-    {% endif %} {# Header #}
+    {% endif %}
+
     <div class="rl-page-header">
       <div>
-        <nav class="rl-breadcrumb" aria-label="Breadcrumb">
-          <a href="{% url 'restaurant_dashboard' %}">Dashboard</a>
-          <span aria-hidden="true">/</span>
+        <nav class="ci-breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Dashboard</a>
+          <span class="ci-separator">/</span>
           <span>Online</span>
-          <span aria-hidden="true">/</span>
+          <span class="ci-separator">/</span>
           <a href="{% url 'categories_page' %}">Categories</a>
-          <span aria-hidden="true">/</span>
-          <a href="{% url 'category_images_page' category_id=category_id %}"
-            >Images</a
-          >
-          <span aria-hidden="true">/</span>
+          <span class="ci-separator">/</span>
+          <a href="{% url 'category_images_page' category_id=category_id %}">
+            Images
+          </a>
+          <span class="ci-separator">/</span>
           <span aria-current="page">Edit</span>
         </nav>
-        <h1 class="rl-page-title">Edit Image</h1>
+
+        <h1 class="rl-page-title">Edit category image</h1>
         <p class="rl-page-subtitle">
-          Update the image or replace it with a new one.
+          Replace the image stored on your server or update its display
+          settings.
         </p>
       </div>
-      <div class="d-flex flex-wrap gap-2">
-        <a
-          href="{% url 'category_images_page' category_id=category_id %}"
-          class="rl-btn rl-btn-secondary"
+
+      <a
+        href="{% url 'category_images_page' category_id=category_id %}"
+        class="rl-btn rl-btn-secondary"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          Back
-        </a>
-      </div>
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+        </svg>
+        Back to images
+      </a>
     </div>
 
-    {# Card #} {% if image %}
-    <div class="rl-card">
-      <div class="rl-card-toolbar">
-        <h2 class="rl-card-title">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-          Image Details
-        </h2>
-        <div class="d-flex flex-wrap gap-2">
-          {% if image.is_primary %}
-          <span class="rl-pill rl-pill-success">
-            <span class="dot" aria-hidden="true"></span>
-            Primary image
-          </span>
-          {% else %}
-          <span class="rl-pill rl-pill-warning">
-            <span class="dot" aria-hidden="true"></span>
-            Not primary
-          </span>
-          {% endif %}
-          <span class="rl-pill rl-pill-default"
-            >#{{ image.sort_order|default:0 }}</span
-          >
-        </div>
-      </div>
-
-      {# Live preview #}
-      <div class="rl-img-preview-wrap">
-        <img
-          id="rlPreviewImg"
-          src="{{ image.image_url }}"
-          alt="{{ image.alt_text|default:'Preview' }}"
-          class="rl-img-preview"
-          onerror="
-            this.style.opacity = '0.35';
-            this.title = 'Image failed to load';
-          "
-        />
-        <div class="rl-img-meta">
-          <div>
-            <p class="rl-img-meta-label">Current URL</p>
-            <p class="rl-img-url" id="rlPreviewUrl">{{ image.image_url }}</p>
-          </div>
-          <p class="rl-hint" style="margin: 0">
-            Preview updates automatically as you change the URL. Use a direct
-            link to an image file (jpg, png, webp, gif).
+    {% if image %}
+    <div class="ci-layout">
+      <!-- Image preview -->
+      <section class="ci-card">
+        <div class="ci-card-header">
+          <h2 class="ci-card-title">Image preview</h2>
+          <p class="ci-card-description">
+            This is the currently saved image. Selecting a replacement updates
+            this preview before you save.
           </p>
         </div>
-      </div>
 
-      <form
-        id="rlImageForm"
-        method="post"
-        action="{% url 'category_image_edit_page' category_id=category_id image_id=image_id %}"
-        novalidate
-      >
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update" />
-
-        <div class="rl-form-body">
-          <div class="rl-field">
-            <label for="rlImageUrl"
-              >Image URL <span class="req" aria-hidden="true">*</span></label
-            >
-            <input
-              type="url"
-              id="rlImageUrl"
-              name="image_url"
-              required
-              value="{{ image.image_url }}"
-              placeholder="https://example.com/image.jpg"
-              autocomplete="off"
+        <div class="ci-preview-area">
+          <div class="ci-preview-frame">
+            <img
+              id="ciImagePreview"
+              src="{{ image.image_url }}"
+              alt="{{ image.alt_text|default:'Category image preview' }}"
+              {%
+              if
+              not
+              image.image_url
+              %}hidden{%
+              endif
+              %}
             />
-          </div>
 
-          <div class="rl-field">
-            <label for="rlAltText">Alt text</label>
-            <input
-              type="text"
-              id="rlAltText"
-              name="alt_text"
-              maxlength="255"
-              value="{{ image.alt_text|default:'' }}"
-              placeholder="Describe the image for accessibility"
-              autocomplete="off"
-            />
-            <div class="rl-hint">
-              Shown to screen readers and search engines.
-            </div>
-          </div>
-
-          <div class="rl-field">
-            <label for="rlSortOrder">Sort order</label>
-            <input
-              type="number"
-              id="rlSortOrder"
-              name="sort_order"
-              min="0"
-              value="{{ image.sort_order|default:0 }}"
-            />
-            <div class="rl-hint">Lower numbers appear first.</div>
-          </div>
-
-          <div class="rl-field">
-            <label class="rl-switch" for="rlIsPrimaryToggle">
-              <div>
-                <div class="rl-switch-text">Primary image</div>
-                <div class="rl-switch-sub">
-                  Setting this will unset any other primary image for the
-                  category
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                id="rlIsPrimaryToggle"
-                data-toggle="is_primary"
-                {%
-                if
-                image.is_primary
-                %}checked{%
-                endif
-                %}
-              />
-              <input
-                type="hidden"
-                name="is_primary"
-                data-toggle-target="is_primary"
-                value="{% if image.is_primary %}true{% else %}false{% endif %}"
-              />
-            </label>
-          </div>
-        </div>
-
-        <div class="rl-form-actions">
-          <button
-            type="button"
-            class="rl-btn rl-btn-danger"
-            data-action="open-delete"
-            aria-haspopup="dialog"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+            <div
+              id="ciPreviewPlaceholder"
+              class="ci-preview-placeholder"
+              {%
+              if
+              image.image_url
+              %}hidden{%
+              endif
+              %}
             >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-            </svg>
-            Delete
-          </button>
-
-          <div class="rl-actions-right">
-            <a
-              href="{% url 'category_images_page' category_id=category_id %}"
-              class="rl-btn rl-btn-secondary"
-            >
-              Cancel
-            </a>
-            <button type="submit" class="rl-btn rl-btn-primary">
               <svg
-                width="16"
-                height="16"
+                width="42"
+                height="42"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2.2"
+                stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 aria-hidden="true"
               >
-                <polyline points="20 6 9 17 4 12" />
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
               </svg>
-              Save Changes
-            </button>
+              <div>No image preview available</div>
+            </div>
+          </div>
+
+          <div class="ci-preview-meta">
+            {% if image.is_primary %}
+            <span class="ci-status">
+              <span class="ci-status-dot"></span>
+              Primary image
+            </span>
+            {% else %}
+            <span class="ci-preview-hint">Category image</span>
+            {% endif %}
+
+            <span class="ci-preview-hint" id="ciPreviewStatus">
+              Currently saved
+            </span>
           </div>
         </div>
-      </form>
-    </div>
+      </section>
 
-    {# Delete confirmation modal #}
-    <div class="rl-modal-backdrop" data-modal="delete-image">
-      <div
-        class="rl-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="rlDeleteTitle"
-        aria-describedby="rlDeleteDesc"
-      >
+      <!-- Edit form -->
+      <section class="ci-card">
+        <div class="ci-card-header">
+          <h2 class="ci-card-title">Image settings</h2>
+          <p class="ci-card-description">
+            Upload a new file or change the existing image's metadata.
+          </p>
+        </div>
+
         <form
+          id="ciEditForm"
           method="post"
+          enctype="multipart/form-data"
           action="{% url 'category_image_edit_page' category_id=category_id image_id=image_id %}"
         >
           {% csrf_token %}
-          <input type="hidden" name="action" value="delete" />
+          <input type="hidden" name="action" value="update" />
 
-          <div class="rl-modal-head">
-            <div class="rl-modal-title-wrap">
-              <div
-                class="rl-modal-icon"
-                style="
-                  color: #dc2626;
-                  background: #fef2f2;
-                  border-color: #fecaca;
-                "
-                aria-hidden="true"
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
+          <div class="ci-form-body">
+            <div class="ci-field">
+              <label class="ci-label" for="ciImageFile">
+                Replace image
+                <span class="ci-required">*</span>
+              </label>
+
+              <div class="ci-upload-zone" id="ciUploadZone">
+                <div class="ci-upload-icon">
+                  <svg
+                    width="23"
+                    height="23"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="m17 8-5-5-5 5" />
+                    <path d="M12 3v12" />
+                  </svg>
+                </div>
+
+                <p class="ci-upload-title">Choose an image from your device</p>
+                <p class="ci-upload-description">
+                  Leave this field empty to keep the currently saved image.
+                  Supported formats depend on your server's image configuration.
+                </p>
+
+                <input
+                  class="ci-file-input"
+                  type="file"
+                  id="ciImageFile"
+                  name="image_url"
+                  accept="image/*"
+                  aria-describedby="ciFileHelp"
+                />
+
+                <div class="ci-file-name" id="ciFileName" hidden></div>
               </div>
-              <div>
-                <h2 id="rlDeleteTitle">Delete image?</h2>
-                <p id="rlDeleteDesc">This action cannot be undone.</p>
+
+              <p class="ci-help" id="ciFileHelp">
+                The new file will replace the existing image after you save.
+                Choosing a file alone does not upload it.
+              </p>
+            </div>
+
+            <div class="ci-field">
+              <label class="ci-label" for="ciAltText">Alt text</label>
+              <input
+                class="ci-input"
+                type="text"
+                id="ciAltText"
+                name="alt_text"
+                maxlength="255"
+                value="{{ image.alt_text|default:'' }}"
+                placeholder="Describe the image for accessibility"
+              />
+              <p class="ci-help">
+                A short description helps screen readers and accessibility.
+              </p>
+            </div>
+
+            <div class="ci-field">
+              <label class="ci-label" for="ciSortOrder">Display order</label>
+              <input
+                class="ci-input"
+                type="number"
+                id="ciSortOrder"
+                name="sort_order"
+                min="0"
+                step="1"
+                value="{{ image.sort_order|default:0 }}"
+              />
+              <p class="ci-help">
+                Lower numbers generally appear first in image lists.
+              </p>
+            </div>
+
+            <div class="ci-field">
+              <div class="ci-switch-row">
+                <div>
+                  <div class="ci-switch-title">Primary image</div>
+                  <div class="ci-switch-description">
+                    Use this as the category's main image. Other primary images
+                    should be unset by the server.
+                  </div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  id="ciIsPrimaryToggle"
+                  {%
+                  if
+                  image.is_primary
+                  %}checked{%
+                  endif
+                  %}
+                  aria-label="Set as primary image"
+                />
+
+                <input
+                  type="hidden"
+                  name="is_primary"
+                  id="ciIsPrimary"
+                  value="{% if image.is_primary %}true{% else %}false{% endif %}"
+                />
               </div>
             </div>
-            <button
-              type="button"
-              class="rl-close"
-              data-action="close-delete"
-              aria-label="Close dialog"
-            >
+
+            <div class="ci-info">
               <svg
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.8"
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 aria-hidden="true"
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
               </svg>
-            </button>
+              <div>
+                <strong>Before saving</strong><br />
+                Check the preview and image settings. If you do not select a new
+                file, the existing image should remain unchanged.
+              </div>
+            </div>
           </div>
 
-          <div class="rl-modal-body">
-            <p
-              style="
-                margin: 0;
-                font-size: 0.9rem;
-                color: var(--rl-text-muted);
-                line-height: 1.55;
-              "
-            >
-              You are about to permanently delete this image {% if
-              image.is_primary %} (<strong style="color: var(--rl-text)"
-                >currently primary</strong
-              >) {% endif %} from the category. The uploaded file will not be
-              deleted from storage.
-            </p>
-          </div>
-
-          <div class="rl-modal-foot">
+          <div class="ci-card-footer">
             <button
-              type="button"
-              class="rl-btn rl-btn-secondary"
-              data-action="close-delete"
+              type="submit"
+              form="ciDeleteForm"
+              class="rl-btn rl-btn-danger"
             >
-              Cancel
-            </button>
-            <button type="submit" class="rl-btn rl-btn-danger-solid">
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.8"
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 aria-hidden="true"
               >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="m19 6-1 14H6L5 6" />
+                <path d="M10 11v5M14 11v5" />
               </svg>
-              Delete Image
+              Delete
             </button>
+
+            <div class="ci-footer-actions">
+              <a
+                href="{% url 'category_images_page' category_id=category_id %}"
+                class="rl-btn rl-btn-secondary"
+              >
+                Cancel
+              </a>
+
+              <button type="submit" class="rl-btn rl-btn-primary">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m20 6-11 11-5-5" />
+                </svg>
+                Save changes
+              </button>
+            </div>
           </div>
         </form>
-      </div>
+      </section>
     </div>
 
-    {% else %} {# Not found #}
-    <div class="rl-card">
-      <div class="rl-empty">
-        <div class="rl-empty-icon" aria-hidden="true">
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </div>
-        <h3 class="rl-empty-title">Image not found</h3>
-        <p class="rl-empty-text">
-          It may have been deleted or you may not have access.
-        </p>
-        <a
-          href="{% url 'category_images_page' category_id=category_id %}"
-          class="rl-btn rl-btn-primary"
-        >
-          Back to images
-        </a>
-      </div>
-    </div>
+    <!-- Separate delete form -->
+    <form
+      id="ciDeleteForm"
+      method="post"
+      action="{% url 'category_image_edit_page' category_id=category_id image_id=image_id %}"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete" />
+    </form>
+
+    {% else %}
+    <section class="ci-card ci-empty">
+      <svg
+        width="42"
+        height="42"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#94a3b8"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v4" />
+        <path d="M12 16h.01" />
+      </svg>
+
+      <h2>Image not found</h2>
+      <p>The image may have been deleted or is no longer available.</p>
+
+      <a
+        href="{% url 'category_images_page' category_id=category_id %}"
+        class="rl-btn rl-btn-primary"
+      >
+        Back to images
+      </a>
+    </section>
     {% endif %}
   </div>
 </div>
@@ -1125,134 +841,115 @@ endblock %} {% block content %}
   (function () {
     "use strict";
 
-    /* ---------------- Boolean toggle sync ---------------- */
-    var form = document.getElementById("rlImageForm");
+    const fileInput = document.getElementById("ciImageFile");
+    const preview = document.getElementById("ciImagePreview");
+    const placeholder = document.getElementById("ciPreviewPlaceholder");
+    const fileName = document.getElementById("ciFileName");
+    const previewStatus = document.getElementById("ciPreviewStatus");
+    const uploadZone = document.getElementById("ciUploadZone");
+    const primaryToggle = document.getElementById("ciIsPrimaryToggle");
+    const primaryHidden = document.getElementById("ciIsPrimary");
+    const deleteForm = document.getElementById("ciDeleteForm");
 
-    function syncToggle(cb) {
-      if (!form) return;
-      var key = cb.getAttribute("data-toggle");
-      var hidden = form.querySelector('[data-toggle-target="' + key + '"]');
-      if (hidden) hidden.value = cb.checked ? "true" : "false";
+    let temporaryPreviewUrl = null;
+
+    if (primaryToggle && primaryHidden) {
+      function syncPrimary() {
+        primaryHidden.value = primaryToggle.checked ? "true" : "false";
+      }
+
+      primaryToggle.addEventListener("change", syncPrimary);
+      syncPrimary();
     }
 
-    if (form) {
-      form
-        .querySelectorAll('input[type="checkbox"][data-toggle]')
-        .forEach(function (cb) {
-          cb.addEventListener("change", function () {
-            syncToggle(cb);
-          });
-          syncToggle(cb);
-        });
+    function clearTemporaryPreview() {
+      if (temporaryPreviewUrl) {
+        URL.revokeObjectURL(temporaryPreviewUrl);
+        temporaryPreviewUrl = null;
+      }
+    }
 
-      /* ---------------- Live preview from URL ---------------- */
-      var urlInput = form.querySelector('input[name="image_url"]');
-      var previewImg = document.getElementById("rlPreviewImg");
-      var previewUrl = document.getElementById("rlPreviewUrl");
+    function previewSelectedFile(file) {
+      if (!file || !fileInput || !preview) return;
 
-      function updatePreview() {
-        if (!urlInput || !previewImg) return;
-        var value = (urlInput.value || "").trim();
-        if (previewUrl) previewUrl.textContent = value || "—";
-        if (value) {
-          previewImg.src = value;
-          previewImg.style.opacity = "1";
-        } else {
-          previewImg.removeAttribute("src");
-          previewImg.style.opacity = "0.35";
+      if (!file.type || !file.type.startsWith("image/")) {
+        fileInput.value = "";
+        if (fileName) {
+          fileName.hidden = true;
+          fileName.textContent = "";
         }
+        window.alert("Please choose a valid image file.");
+        return;
       }
 
-      if (urlInput) {
-        var debounceTimer = null;
-        urlInput.addEventListener("input", function () {
-          if (debounceTimer) window.clearTimeout(debounceTimer);
-          debounceTimer = window.setTimeout(updatePreview, 250);
-        });
+      clearTemporaryPreview();
+      temporaryPreviewUrl = URL.createObjectURL(file);
+
+      preview.onload = function () {
+        preview.hidden = false;
+        if (placeholder) placeholder.hidden = true;
+        if (previewStatus) previewStatus.textContent = "New image preview";
+        clearTemporaryPreview();
+      };
+
+      preview.onerror = function () {
+        preview.hidden = true;
+        if (placeholder) placeholder.hidden = false;
+        if (previewStatus) previewStatus.textContent = "Preview unavailable";
+        clearTemporaryPreview();
+      };
+
+      preview.src = temporaryPreviewUrl;
+
+      if (fileName) {
+        fileName.textContent = file.name;
+        fileName.hidden = false;
       }
+    }
 
-      /* ---------------- Client-side validation ---------------- */
-      form.addEventListener("submit", function (e) {
-        var url = form.querySelector('input[name="image_url"]');
-        var value = url ? (url.value || "").trim() : "";
-        url.style.borderColor = "";
+    if (fileInput) {
+      fileInput.addEventListener("change", function () {
+        const file = fileInput.files && fileInput.files[0];
+        if (file) previewSelectedFile(file);
+      });
+    }
 
-        if (!value) {
-          e.preventDefault();
-          url.focus();
-          url.style.borderColor = "var(--rl-danger)";
-          url.addEventListener("input", function handler() {
-            url.style.borderColor = "";
-            url.removeEventListener("input", handler);
-          });
+    if (uploadZone && fileInput) {
+      uploadZone.addEventListener("dragover", function (event) {
+        event.preventDefault();
+        uploadZone.classList.add("ci-dragover");
+      });
+
+      uploadZone.addEventListener("dragleave", function () {
+        uploadZone.classList.remove("ci-dragover");
+      });
+
+      uploadZone.addEventListener("drop", function (event) {
+        event.preventDefault();
+        uploadZone.classList.remove("ci-dragover");
+
+        const files = event.dataTransfer && event.dataTransfer.files;
+        if (!files || !files.length) return;
+
+        try {
+          const transfer = new DataTransfer();
+          transfer.items.add(files[0]);
+          fileInput.files = transfer.files;
+          previewSelectedFile(files[0]);
+        } catch (error) {
+          // File input selection remains available if drag-and-drop
+          // assignment is unsupported by the browser.
         }
       });
     }
 
-    /* ---------------- Delete confirmation modal ---------------- */
-    var deleteBackdrop = document.querySelector('[data-modal="delete-image"]');
-    var lastFocused = null;
-
-    function openDelete() {
-      if (!deleteBackdrop) return;
-      lastFocused = document.activeElement;
-      deleteBackdrop.classList.add("open");
-      document.body.style.overflow = "hidden";
-      var cancelBtn = deleteBackdrop.querySelector(
-        '[data-action="close-delete"]',
-      );
-      if (cancelBtn) {
-        window.setTimeout(function () {
-          cancelBtn.focus();
-        }, 60);
-      }
+    if (deleteForm) {
+      deleteForm.addEventListener("submit", function (event) {
+        if (!window.confirm("Delete this image permanently?")) {
+          event.preventDefault();
+        }
+      });
     }
-
-    function closeDelete() {
-      if (!deleteBackdrop) return;
-      deleteBackdrop.classList.remove("open");
-      document.body.style.overflow = "";
-      if (lastFocused && typeof lastFocused.focus === "function") {
-        lastFocused.focus();
-      }
-    }
-
-    document.addEventListener("click", function (e) {
-      if (e.target.closest('[data-action="open-delete"]')) {
-        e.preventDefault();
-        openDelete();
-        return;
-      }
-      if (e.target.closest('[data-action="close-delete"]')) {
-        e.preventDefault();
-        closeDelete();
-        return;
-      }
-      if (deleteBackdrop && e.target === deleteBackdrop) closeDelete();
-    });
-
-    document.addEventListener("keydown", function (e) {
-      if (!deleteBackdrop || !deleteBackdrop.classList.contains("open")) return;
-      if (e.key === "Escape") {
-        closeDelete();
-        return;
-      }
-      if (e.key !== "Tab") return;
-
-      var focusables = deleteBackdrop.querySelectorAll(
-        'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusables.length) return;
-      var first = focusables[0];
-      var last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    });
   })();
 </script>
 {% endblock %}

@@ -1193,58 +1193,105 @@ def restaurant_translations_page(request):
     # ===========================================================================
 # Categories
 # ===========================================================================
+from django.shortcuts import render, redirect
+from django.contrib import messages as django_messages
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+import requests
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def categories_page(request):
-    """List + create categories for the current restaurant."""
-    uuid = _get_restaurant_uuid(request)
-    if not uuid:
+    """List and create categories for the current restaurant."""
+
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
         return redirect("restaurant_dashboard")
 
-    categories_url = f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/categories/"
+    categories_url = f"{CLOUD_API_BASE_URL}/restaurants/{restaurant_uuid}/categories/"
     headers = get_cloud_headers(request)
     error = None
 
-    # --------------------------- POST: create ---------------------------
+    # Holds data to pre-fill the form modal if submission fails
+    form_data = {}
+
+    # ---------------------------------------------------------
+    # POST: Create a category
+    # ---------------------------------------------------------
     if request.method == "POST":
-        payload = {
-            "name": request.POST.get("name", "").strip(),
-            "slug": request.POST.get("slug", "").strip(),
-            "description": request.POST.get("description", "").strip(),
-            "sort_order": int(request.POST.get("sort_order") or 0),
-            "is_active": request.POST.get("is_active") == "true",
-            "is_published": request.POST.get("is_published") == "true",
+        name = request.POST.get("name", "").strip()
+        slug = request.POST.get("slug", "").strip()
+        description = request.POST.get("description", "").strip()
+        sort_order_raw = request.POST.get("sort_order", "0").strip()
+
+        # Save field values in case of error return
+        form_data = {
+            "name": name,
+            "slug": slug,
+            "description": description,
+            "sort_order": sort_order_raw,
+            "is_active": request.POST.get("is_active") == "on",
+            "is_published": request.POST.get("is_published") == "on",
         }
 
-        try:
-            response = requests.post(
-                categories_url, json=payload, headers=headers, timeout=15,
-            )
-            if response.status_code in (200, 201):
-                django_messages.success(request, "Category created on the cloud.")
-                return redirect("categories_page")
-            error = (
-                f"Cloud API error ({response.status_code}): "
-                f"{_cloud_error(response)}"
-            )
-        except requests.RequestException as exc:
-            error = f"Could not connect to the cloud API: {exc}"
+        # Validate required fields
+        if not name:
+            error = "Category name is required."
+        elif not slug:
+            error = "Category slug is required."
+        else:
+            try:
+                sort_order = int(sort_order_raw)
+                if sort_order < 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                sort_order = None
+                error = "Sort order must be a non-negative integer."
 
-    # --------------------------- GET: list ---------------------------
+            if error is None:
+                payload = {
+                    "name": name,
+                    "slug": slug,
+                    "description": description,
+                    "sort_order": sort_order,
+                    "is_active": form_data["is_active"],
+                    "is_published": form_data["is_published"],
+                }
+
+                try:
+                    response = requests.post(
+                        categories_url,
+                        json=payload,
+                        headers=headers,
+                        timeout=15,
+                    )
+
+                    if response.status_code in (200, 201):
+                        django_messages.success(request, "Category created successfully.")
+                        return redirect("categories_page")
+
+                    error = f"Cloud API error ({response.status_code}): {_cloud_error(response)}"
+
+                except requests.RequestException as exc:
+                    error = f"Could not connect to the cloud API: {exc}"
+
+    # ---------------------------------------------------------
+    # GET: Load categories list
+    # ---------------------------------------------------------
     categories = []
     try:
         response = requests.get(categories_url, headers=headers, timeout=15)
         if response.ok:
-            categories = _extract_list(response.json())
-        else:
-            error = (
-                f"Could not load categories "
-                f"({response.status_code}): {_cloud_error(response)}"
-            )
+            try:
+                categories = _extract_list(response.json())
+            except ValueError:
+                error = "Cloud API returned an invalid response."
+        elif error is None:
+            error = f"Could not load categories ({response.status_code}): {_cloud_error(response)}"
+
     except requests.RequestException as exc:
-        error = f"Could not connect to the cloud API: {exc}"
-    except ValueError:
-        error = "Cloud API returned an invalid response."
+        if error is None:
+            error = f"Could not connect to the cloud API: {exc}"
 
     flash_messages = _collect_messages(request)
 
@@ -1254,10 +1301,11 @@ def categories_page(request):
         {
             "categories": categories,
             "error": error,
+            "form_data": form_data,
             "flash_messages": flash_messages,
+            "has_form_error": error is not None and request.method == "POST",
         },
     )
-
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -1349,69 +1397,116 @@ def category_edit_page(request, category_id):
 # ===========================================================================
 # Category images
 # ===========================================================================
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def category_images_page(request, category_id):
-    """List + create images for a category."""
-    uuid = _get_restaurant_uuid(request)
-    if not uuid:
+    """List and upload image files for a category."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
         return redirect("restaurant_dashboard")
 
     images_url = (
-        f"{CLOUD_API_BASE_URL}"
-        f"/restaurants/{uuid}/categories/{category_id}/images/"
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/categories/{category_id}/images/"
     )
     category_url = (
-        f"{CLOUD_API_BASE_URL}/restaurants/{uuid}/categories/{category_id}/"
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/categories/{category_id}/"
     )
+
     headers = get_cloud_headers(request)
     error = None
 
-    # --------------------------- POST: create ---------------------------
     if request.method == "POST":
+        uploaded_file = request.FILES.get("image_url")
+
         payload = {
-            "image_url": request.POST.get("image_url", "").strip(),
             "alt_text": request.POST.get("alt_text", "").strip(),
-            "sort_order": int(request.POST.get("sort_order") or 0),
-            "is_primary": request.POST.get("is_primary") == "true",
+            "sort_order": request.POST.get("sort_order") or "0",
+            "is_primary": (
+                "true"
+                if request.POST.get("is_primary") == "true"
+                else "false"
+            ),
         }
 
-        try:
-            response = requests.post(
-                images_url, json=payload, headers=headers, timeout=15,
-            )
-            if response.status_code in (200, 201):
-                django_messages.success(request, "Image added.")
-                return redirect("category_images_page", category_id=category_id)
-            error = (
-                f"Cloud API error ({response.status_code}): "
-                f"{_cloud_error(response)}"
-            )
-        except requests.RequestException as exc:
-            error = f"Could not connect to the cloud API: {exc}"
+        if not uploaded_file:
+            error = "Please select an image file."
+        else:
+            # Let requests generate the multipart Content-Type
+            # and its required boundary.
+            upload_headers = dict(headers)
+            upload_headers.pop("Content-Type", None)
+            upload_headers.pop("content-type", None)
 
-    # --------------------------- GET: list + category header ---------------------------
+            try:
+                response = requests.post(
+                    images_url,
+                    data=payload,
+                    files={
+                        "image_url": (
+                            uploaded_file.name,
+                            uploaded_file,
+                            uploaded_file.content_type
+                            or "application/octet-stream",
+                        )
+                    },
+                    headers=upload_headers,
+                    timeout=60,
+                )
+
+                if response.status_code in (200, 201):
+                    django_messages.success(
+                        request,
+                        "Image uploaded successfully.",
+                    )
+                    return redirect(
+                        "category_images_page",
+                        category_id=category_id,
+                    )
+
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            except requests.RequestException as exc:
+                error = f"Could not connect to the cloud API: {exc}"
+
     images = []
     category = None
 
     try:
-        response = requests.get(images_url, headers=headers, timeout=15)
+        response = requests.get(
+            images_url,
+            headers=headers,
+            timeout=15,
+        )
+
         if response.ok:
             images = _extract_list(response.json())
         else:
-            error = (
-                f"Could not load images "
-                f"({response.status_code}): {_cloud_error(response)}"
+            error = error or (
+                f"Could not load images ({response.status_code}): "
+                f"{_cloud_error(response)}"
             )
+
     except requests.RequestException as exc:
-        error = f"Could not connect to the cloud API: {exc}"
+        error = error or f"Could not connect to the cloud API: {exc}"
     except ValueError:
-        error = "Cloud API returned an invalid response."
+        error = error or "Cloud API returned an invalid response."
 
     try:
-        response = requests.get(category_url, headers=headers, timeout=15)
+        response = requests.get(
+            category_url,
+            headers=headers,
+            timeout=15,
+        )
+
         if response.ok:
             category = response.json()
+
     except (requests.RequestException, ValueError):
         pass
 
@@ -1433,32 +1528,42 @@ def category_images_page(request, category_id):
 @login_required
 @require_http_methods(["GET", "POST"])
 def category_image_edit_page(request, category_id, image_id):
-    """Edit / delete / set-primary on a single category image."""
-    uuid = _get_restaurant_uuid(request)
-    if not uuid:
+    """Edit, replace, delete, or set primary on a category image."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+
+    if not restaurant_uuid:
         return redirect("restaurant_dashboard")
 
-    image_url = (
-        f"{CLOUD_API_BASE_URL}"
-        f"/restaurants/{uuid}/categories/{category_id}/images/{image_id}/"
+    image_api_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/categories/{category_id}/"
+        f"images/{image_id}/"
     )
+
     headers = get_cloud_headers(request)
     error = None
 
-    # --------------------------- POST ---------------------------
     if request.method == "POST":
         action = request.POST.get("action", "update").strip()
 
         try:
             if action == "delete":
                 response = requests.delete(
-                    image_url, headers=headers, timeout=15,
+                    image_api_url,
+                    headers=headers,
+                    timeout=15,
                 )
+
                 if response.status_code in (200, 204):
-                    django_messages.success(request, "Image deleted.")
-                    return redirect(
-                        "category_images_page", category_id=category_id
+                    django_messages.success(
+                        request,
+                        "Image deleted.",
                     )
+                    return redirect(
+                        "category_images_page",
+                        category_id=category_id,
+                    )
+
                 error = (
                     f"Cloud API error ({response.status_code}): "
                     f"{_cloud_error(response)}"
@@ -1466,62 +1571,116 @@ def category_image_edit_page(request, category_id, image_id):
 
             elif action in ("update", "set_primary"):
                 if action == "set_primary":
-                    payload = {"is_primary": True}
+                    response = requests.patch(
+                        image_api_url,
+                        json={"is_primary": True},
+                        headers=headers,
+                        timeout=15,
+                    )
+
                 else:
                     payload = {
-                        "image_url": request.POST.get("image_url", "").strip(),
-                        "alt_text": request.POST.get("alt_text", "").strip(),
-                        "sort_order": int(request.POST.get("sort_order") or 0),
-                        "is_primary": request.POST.get("is_primary") == "true",
+                        "alt_text": request.POST.get(
+                            "alt_text", ""
+                        ).strip(),
+                        "sort_order": (
+                            request.POST.get("sort_order") or "0"
+                        ),
+                        "is_primary": (
+                            "true"
+                            if request.POST.get("is_primary") == "true"
+                            else "false"
+                        ),
                     }
 
-                response = requests.patch(
-                    image_url, json=payload, headers=headers, timeout=15,
-                )
+                    uploaded_file = request.FILES.get("image_url")
+
+                    if uploaded_file:
+                        # Replace the existing image file.
+                        upload_headers = dict(headers)
+                        upload_headers.pop("Content-Type", None)
+                        upload_headers.pop("content-type", None)
+
+                        response = requests.patch(
+                            image_api_url,
+                            data=payload,
+                            files={
+                                "image_url": (
+                                    uploaded_file.name,
+                                    uploaded_file,
+                                    uploaded_file.content_type
+                                    or "application/octet-stream",
+                                )
+                            },
+                            headers=upload_headers,
+                            timeout=60,
+                        )
+
+                    else:
+                        # Update metadata without replacing the file.
+                        response = requests.patch(
+                            image_api_url,
+                            json=payload,
+                            headers=headers,
+                            timeout=15,
+                        )
+
                 if response.status_code in (200, 201):
                     django_messages.success(
                         request,
-                        "Primary image set." if action == "set_primary"
-                        else "Image updated.",
+                        (
+                            "Primary image set."
+                            if action == "set_primary"
+                            else "Image updated successfully."
+                        ),
                     )
+
                     return redirect(
                         "category_image_edit_page",
                         category_id=category_id,
                         image_id=image_id,
                     )
+
                 error = (
                     f"Cloud API error ({response.status_code}): "
                     f"{_cloud_error(response)}"
                 )
+
             else:
                 error = f"Unknown action: {action}"
 
         except requests.RequestException as exc:
             error = f"Could not connect to the cloud API: {exc}"
 
-    # --------------------------- GET ---------------------------
     image = None
+
     try:
-        response = requests.get(image_url, headers=headers, timeout=15)
+        response = requests.get(
+            image_api_url,
+            headers=headers,
+            timeout=15,
+        )
+
         if response.ok:
             image = response.json()
         elif response.status_code == 404:
-            error = "Image not found."
+            error = error or "Image not found."
         else:
-            error = (
-                f"Could not load image "
-                f"({response.status_code}): {_cloud_error(response)}"
+            error = error or (
+                f"Could not load image ({response.status_code}): "
+                f"{_cloud_error(response)}"
             )
+
     except requests.RequestException as exc:
-        error = f"Could not connect to the cloud API: {exc}"
+        error = error or f"Could not connect to the cloud API: {exc}"
     except ValueError:
-        error = "Cloud API returned an invalid response."
+        error = error or "Cloud API returned an invalid response."
 
     flash_messages = _collect_messages(request)
 
     return render(
         request,
-        "online/translation/category_image_edit.html",
+        "online/categories/category_image_edit.html",
         {
             "image": image,
             "category_id": category_id,
