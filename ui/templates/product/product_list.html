@@ -1194,6 +1194,105 @@
       transition: none !important;
     }
   }
+
+  /* CARD ACTIONS */
+  .pm-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .pm-ibtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 1.5px solid #0f172a;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.15);
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+  .pm-ibtn .mat {
+    font-size: 18px;
+  }
+  .pm-ibtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px -6px rgba(15, 23, 42, 0.28);
+  }
+  .pm-ibtn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+  }
+  .pm-ibtn.edit:hover {
+    background: #eef2ff;
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+  .pm-ibtn.deactivate:hover {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #b45309;
+  }
+  .pm-ibtn.activate:hover {
+    background: #f0fdf4;
+    border-color: #10b981;
+    color: #047857;
+  }
+  .pm-ibtn.delete:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
+  }
+
+  /* DELETE MODAL */
+  .pm-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: #fef2f2;
+    color: var(--pm-danger);
+    margin-bottom: 1rem;
+  }
+  .pm-modal-icon .mat {
+    font-size: 28px;
+  }
+  .pm-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.6rem 1.15rem;
+    border: 0;
+    border-radius: var(--pm-r);
+    background: var(--pm-danger);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .pm-btn-danger .mat {
+    font-size: 18px;
+  }
+  .pm-btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    box-shadow: 0 8px 20px -8px rgba(239, 68, 68, 0.6);
+    transform: translateY(-1px);
+  }
+  .pm-btn-danger:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
 </style>
 
 <div class="pm" id="products-manager">

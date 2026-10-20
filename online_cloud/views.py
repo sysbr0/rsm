@@ -6,7 +6,7 @@ import requests
 import os
 from django.conf import settings
 
-from django.contrib import messages
+
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods, require_POST
@@ -1190,7 +1190,7 @@ def restaurant_translations_page(request):
     )
 
 
-    # ===========================================================================
+# ===========================================================================
 # Categories
 # ===========================================================================
 from django.shortcuts import render, redirect
@@ -1528,6 +1528,7 @@ def category_images_page(request, category_id):
 @login_required
 @require_http_methods(["GET", "POST"])
 def category_image_edit_page(request, category_id, image_id):
+
     """Edit, replace, delete, or set primary on a category image."""
     restaurant_uuid = _get_restaurant_uuid(request)
 
@@ -1685,6 +1686,1028 @@ def category_image_edit_page(request, category_id, image_id):
             "image": image,
             "category_id": category_id,
             "image_id": image_id,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+
+# ===========================================================================
+# Products
+# ===========================================================================
+from django.shortcuts import render, redirect
+from django.contrib import messages as django_messages
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from collections import Counter
+
+import requests
+@login_required
+@require_http_methods(["GET", "POST"])
+
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def products_page(request):
+    """Manage products and category filters for the current restaurant."""
+
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
+        return redirect("restaurant_dashboard")
+
+    base_url = CLOUD_API_BASE_URL.rstrip("/")
+    products_url = (
+        f"{base_url}/restaurants/{restaurant_uuid}/products/"
+    )
+    categories_url = (
+        f"{base_url}/restaurants/{restaurant_uuid}/categories/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+    form_data = {}
+
+    selected_category = (
+        request.GET.get("category")
+        or request.GET.get("catagory")
+        or ""
+    ).strip()
+
+    # Create product
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        slug = request.POST.get("slug", "").strip()
+        sku = request.POST.get("sku", "").strip()
+        description = request.POST.get("description", "").strip()
+        short_description = request.POST.get(
+            "short_description", ""
+        ).strip()
+        sort_order_raw = request.POST.get("sort_order", "0").strip()
+        prep_raw = request.POST.get(
+            "preparation_time_minutes", ""
+        ).strip()
+        category_id = (
+            request.POST.get("category")
+            or request.POST.get("catagory")
+            or ""
+        ).strip() or None
+        source_id = request.POST.get("source_id", "").strip()
+
+        form_data = {
+            "name": name,
+            "slug": slug,
+            "sku": sku,
+            "description": description,
+            "short_description": short_description,
+            "sort_order": sort_order_raw,
+            "preparation_time_minutes": prep_raw,
+            "category": category_id or "",
+            "source_id": source_id,
+            "is_active": request.POST.get("is_active") == "on",
+            "is_published": request.POST.get("is_published") == "on",
+            "is_available": request.POST.get("is_available") == "on",
+            "is_featured": request.POST.get("is_featured") == "on",
+        }
+
+        sort_order = None
+        preparation_time = None
+
+        if not name:
+            error = "Product name is required."
+        elif not slug:
+            error = "Product slug is required."
+        else:
+            try:
+                sort_order = int(sort_order_raw)
+                if sort_order < 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                error = "Sort order must be a non-negative integer."
+
+            if error is None and prep_raw:
+                try:
+                    preparation_time = int(prep_raw)
+                    if preparation_time < 0:
+                        raise ValueError
+                except (TypeError, ValueError):
+                    error = (
+                        "Preparation time must be a "
+                        "non-negative integer."
+                    )
+
+        if error is None:
+            payload = {
+                "name": name,
+                "slug": slug,
+                "sku": sku,
+                "description": description,
+                "short_description": short_description,
+                "sort_order": sort_order,
+                "preparation_time_minutes": preparation_time,
+                "catagory": category_id,
+                "is_active": form_data["is_active"],
+                "is_published": form_data["is_published"],
+                "is_available": form_data["is_available"],
+                "is_featured": form_data["is_featured"],
+            }
+
+            if source_id:
+                payload["source_id"] = source_id
+
+            try:
+                response = requests.post(
+                    products_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=15,
+                )
+
+                if response.status_code in (200, 201):
+                    django_messages.success(
+                        request, "Product created successfully."
+                    )
+                    return redirect("products_page")
+
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+            except requests.RequestException:
+                error = "Could not connect to the cloud API."
+
+    # Load categories
+    categories = []
+    try:
+        response = requests.get(
+            categories_url, headers=headers, timeout=15
+        )
+        if response.ok:
+            categories = _extract_list(response.json())
+        elif error is None:
+            error = (
+                f"Could not load categories ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+    except (requests.RequestException, ValueError):
+        if error is None:
+            error = "Could not load categories from the cloud API."
+
+    # Load all products for category counts.
+    # This also lets us filter locally if the API ignores filters.
+    all_products = []
+    try:
+        response = requests.get(
+            products_url, headers=headers, timeout=15
+        )
+        if response.ok:
+            all_products = _extract_list(response.json())
+        elif error is None:
+            error = (
+                f"Could not load products ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+    except (requests.RequestException, ValueError):
+        if error is None:
+            error = "Could not load products from the cloud API."
+
+    def category_id_of(product):
+        raw = product.get("catagory", product.get("category"))
+        if isinstance(raw, dict):
+            raw = raw.get("id") or raw.get("uuid")
+        if raw:
+            return str(raw).strip()
+
+        detail = product.get("catagory_detail")
+        if isinstance(detail, dict):
+            return str(
+                detail.get("id") or detail.get("uuid") or ""
+            ).strip()
+
+        return ""
+
+    # Build category counts from the unfiltered product list.
+    counts = Counter(
+        category_id_of(product)
+        for product in all_products
+        if category_id_of(product)
+    )
+
+    for category in categories:
+        cid = str(
+            category.get("id") or category.get("uuid") or ""
+        ).strip()
+        category["product_count"] = counts.get(cid, 0)
+
+    # Filter products locally to keep the sidebar and table consistent.
+    products = all_products
+    if selected_category:
+        products = [
+            product
+            for product in all_products
+            if category_id_of(product) == selected_category
+        ]
+
+    return render(
+        request,
+        "online/products/products.html",
+        {
+            "products": products,
+            "categories": categories,
+            "selected_catagory": selected_category,
+            "selected_category": selected_category,
+            "total_products": len(all_products),
+            "available_products": sum(
+                bool(p.get("is_available")) for p in all_products
+            ),
+            "error": error,
+            "form_data": form_data,
+            "flash_messages": _collect_messages(request),
+            "has_form_error": (
+                error is not None and request.method == "POST"
+            ),
+        },
+    )
+
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def product_edit_page(request, product_id):
+    """Edit or delete a product through the cloud API."""
+
+    uuid = _get_restaurant_uuid(request)
+    if not uuid:
+        return redirect("restaurant_dashboard")
+
+    product_url = (
+        f"{CLOUD_API_BASE_URL.rstrip('/')}"
+        f"/restaurants/{uuid}/products/{product_id}/"
+    )
+    headers = get_cloud_headers(request)
+    cloud_timeout = (5, 30)
+
+    product = None
+    error = None
+    submitted_values = {}
+
+    # ---------------------------------------------------------
+    # POST: Update or delete
+    # ---------------------------------------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "update").strip()
+
+        try:
+            if action == "delete":
+                response = requests.delete(
+                    product_url,
+                    headers=headers,
+                    timeout=cloud_timeout,
+                )
+
+                if response.status_code in (200, 202, 204):
+                    django_messages.success(
+                        request,
+                        "Product deleted successfully.",
+                    )
+                    return redirect("products_page")
+
+                error = (
+                    f"Could not delete product ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            elif action == "update":
+                submitted_values = {
+                    "name": request.POST.get("name", "").strip(),
+                    "slug": request.POST.get("slug", "").strip(),
+                    "sku": request.POST.get("sku", "").strip(),
+                    "description": request.POST.get("description", "").strip(),
+                    "short_description": request.POST.get(
+                        "short_description", ""
+                    ).strip(),
+                    "sort_order": request.POST.get("sort_order", "0"),
+                    "preparation_time_minutes": request.POST.get(
+                        "preparation_time_minutes", ""
+                    ).strip(),
+                    "is_active": request.POST.get("is_active") == "true",
+                    "is_published": request.POST.get("is_published") == "true",
+                    "is_available": request.POST.get("is_available") == "true",
+                    "is_featured": request.POST.get("is_featured") == "true",
+                }
+
+                # Validate sort order.
+                try:
+                    sort_order = int(
+                        submitted_values["sort_order"] or 0
+                    )
+                    if sort_order < 0:
+                        raise ValueError
+                except (TypeError, ValueError):
+                    error = (
+                        "Sort order must be a non-negative whole number."
+                    )
+
+                # Validate preparation time.
+                preparation_raw = submitted_values[
+                    "preparation_time_minutes"
+                ]
+                preparation_time = None
+
+                if error is None and preparation_raw:
+                    try:
+                        preparation_time = int(preparation_raw)
+                        if preparation_time < 0:
+                            raise ValueError
+                    except (TypeError, ValueError):
+                        error = (
+                            "Preparation time must be a "
+                            "non-negative whole number."
+                        )
+
+                # Send update to the cloud API.
+                if error is None:
+                    payload = {
+                        "name": submitted_values["name"],
+                        "slug": submitted_values["slug"],
+                        "sku": submitted_values["sku"],
+                        "description": submitted_values["description"],
+                        "short_description": submitted_values[
+                            "short_description"
+                        ],
+                        "sort_order": sort_order,
+                        "preparation_time_minutes": preparation_time,
+                        "is_active": submitted_values["is_active"],
+                        "is_published": submitted_values["is_published"],
+                        "is_available": submitted_values["is_available"],
+                        "is_featured": submitted_values["is_featured"],
+                    }
+
+                    response = requests.patch(
+                        product_url,
+                        json=payload,
+                        headers=headers,
+                        timeout=cloud_timeout,
+                    )
+
+                    if response.status_code in (200, 201, 202, 204):
+                        django_messages.success(
+                            request,
+                            "Product updated successfully.",
+                        )
+                        return redirect(
+                            "product_edit_page",
+                            product_id=product_id,
+                        )
+
+                    error = (
+                        f"Could not update product ({response.status_code}): "
+                        f"{_cloud_error(response)}"
+                    )
+
+            else:
+                error = f"Unknown action: {action}"
+
+        except requests.exceptions.Timeout:
+            error = (
+                "The cloud API timed out. Your update may have completed "
+                "despite the timeout. Reload the product to verify its "
+                "current status before retrying."
+            )
+
+        except requests.exceptions.ConnectionError:
+            error = (
+                "Could not connect to the cloud API. "
+                "Check the server and network connection."
+            )
+
+        except requests.exceptions.RequestException as exc:
+            error = f"Cloud API request failed: {exc}"
+
+    # ---------------------------------------------------------
+    # GET: Fetch current product from cloud API
+    # ---------------------------------------------------------
+    try:
+        response = requests.get(
+            product_url,
+            headers=headers,
+            timeout=cloud_timeout,
+        )
+
+        if response.status_code == 200:
+            try:
+                product = response.json()
+
+                if not isinstance(product, dict):
+                    product = None
+                    error = error or (
+                        "The cloud API returned an invalid product response."
+                    )
+
+            except ValueError:
+                error = error or (
+                    "The cloud API returned invalid JSON."
+                )
+
+        elif response.status_code == 404:
+            error = error or (
+                "Product not found. Verify the product and "
+                "restaurant identifiers."
+            )
+
+        else:
+            error = error or (
+                f"Could not load product ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+
+    except requests.exceptions.Timeout:
+        error = error or (
+            "The cloud API did not respond in time. "
+            "Please try again shortly."
+        )
+
+    except requests.exceptions.ConnectionError:
+        error = error or (
+            "Could not connect to the cloud API."
+        )
+
+    except requests.exceptions.RequestException as exc:
+        error = error or f"Cloud API request failed: {exc}"
+
+    # ---------------------------------------------------------
+    # Prepare template values
+    # ---------------------------------------------------------
+    if request.method == "POST" and submitted_values:
+        form_data = submitted_values
+    else:
+        form_data = product or {}
+
+    def to_bool(value):
+        """Convert common API boolean representations safely."""
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, (int, float)):
+            return value != 0
+
+        if isinstance(value, str):
+            return value.strip().lower() in (
+                "true",
+                "1",
+                "yes",
+                "on",
+            )
+
+        return False
+
+    status = {
+        field: to_bool(form_data.get(field, False))
+        for field in (
+            "is_active",
+            "is_published",
+            "is_available",
+            "is_featured",
+        )
+    }
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/products/product_edit.html",
+        {
+            "product": product,
+            "form_data": form_data,
+            "error": error,
+            "flash_messages": flash_messages,
+
+            # Actual visibility states for the template.
+            "is_active": status["is_active"],
+            "is_published": status["is_published"],
+            "is_available": status["is_available"],
+            "is_featured": status["is_featured"],
+        },
+    )
+
+
+# ===========================================================================
+# Product images
+# ===========================================================================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def product_images_page(request, product_id):
+    """List and upload image files for a product."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
+        return redirect("restaurant_dashboard")
+
+    images_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/images/"
+    )
+    product_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+
+    if request.method == "POST":
+        # Product images use a URLField, so we accept either an uploaded
+        # file (if/when the serializer supports it) or a direct URL.
+        image_url_value = request.POST.get("image_url", "").strip()
+        uploaded_file = request.FILES.get("image_url")
+
+        payload = {
+            "alt_text": request.POST.get("alt_text", "").strip(),
+            "caption": request.POST.get("caption", "").strip(),
+            "sort_order": request.POST.get("sort_order") or "0",
+            "is_primary": (
+                "true"
+                if request.POST.get("is_primary") == "true"
+                else "false"
+            ),
+        }
+
+        if uploaded_file:
+            # Multipart upload path
+            upload_headers = dict(headers)
+            upload_headers.pop("Content-Type", None)
+            upload_headers.pop("content-type", None)
+
+            try:
+                response = requests.post(
+                    images_url,
+                    data=payload,
+                    files={
+                        "image_url": (
+                            uploaded_file.name,
+                            uploaded_file,
+                            uploaded_file.content_type
+                            or "application/octet-stream",
+                        )
+                    },
+                    headers=upload_headers,
+                    timeout=60,
+                )
+
+                if response.status_code in (200, 201):
+                    django_messages.success(
+                        request,
+                        "Image uploaded successfully.",
+                    )
+                    return redirect(
+                        "product_images_page",
+                        product_id=product_id,
+                    )
+
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            except requests.RequestException as exc:
+                error = f"Could not connect to the cloud API: {exc}"
+
+        elif image_url_value:
+            # Direct URL path (ProductImage.image_url is a URLField)
+            payload["image_url"] = image_url_value
+
+            try:
+                response = requests.post(
+                    images_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=15,
+                )
+
+                if response.status_code in (200, 201):
+                    django_messages.success(
+                        request,
+                        "Image added successfully.",
+                    )
+                    return redirect(
+                        "product_images_page",
+                        product_id=product_id,
+                    )
+
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            except requests.RequestException as exc:
+                error = f"Could not connect to the cloud API: {exc}"
+
+        else:
+            error = "Please provide an image URL or select an image file."
+
+    images = []
+    product = None
+
+    try:
+        response = requests.get(
+            images_url,
+            headers=headers,
+            timeout=15,
+        )
+
+        if response.ok:
+            images = _extract_list(response.json())
+        else:
+            error = error or (
+                f"Could not load images ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+
+    except requests.RequestException as exc:
+        error = error or f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = error or "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(
+            product_url,
+            headers=headers,
+            timeout=15,
+        )
+
+        if response.ok:
+            product = response.json()
+
+    except (requests.RequestException, ValueError):
+        pass
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/products/product_images.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "images": images,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def product_image_edit_page(request, product_id, image_id):
+    """Edit or delete a single product image."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
+        return redirect("restaurant_dashboard")
+
+    image_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/images/{image_id}/"
+    )
+    product_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST: update / delete ---------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "update").strip()
+
+        try:
+            if action == "delete":
+                response = requests.delete(
+                    image_url, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 204):
+                    django_messages.success(request, "Image deleted.")
+                    return redirect(
+                        "product_images_page",
+                        product_id=product_id,
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            elif action == "update":
+                payload = {
+                    "image_url": request.POST.get("image_url", "").strip(),
+                    "alt_text": request.POST.get("alt_text", "").strip(),
+                    "caption": request.POST.get("caption", "").strip(),
+                    "sort_order": int(request.POST.get("sort_order") or 0),
+                    "is_primary": request.POST.get("is_primary") == "true",
+                }
+                response = requests.patch(
+                    image_url, json=payload, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 201):
+                    django_messages.success(request, "Image updated.")
+                    return redirect(
+                        "product_image_edit_page",
+                        product_id=product_id,
+                        image_id=image_id,
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+            else:
+                error = f"Unknown action: {action}"
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET: fetch ---------------------------
+    image = None
+    product = None
+
+    try:
+        response = requests.get(image_url, headers=headers, timeout=15)
+        if response.ok:
+            image = response.json()
+        elif response.status_code == 404:
+            error = "Image not found."
+        else:
+            error = (
+                f"Could not load image "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(product_url, headers=headers, timeout=15)
+        if response.ok:
+            product = response.json()
+    except (requests.RequestException, ValueError):
+        pass
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/products/product_image_edit.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "image": image,
+            "image_id": image_id,
+            "error": error,
+            "flash_messages": flash_messages,
+        },
+    )
+
+
+# ===========================================================================
+# Product translations
+# ===========================================================================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def product_translations_page(request, product_id):
+    """List and create translations for a product."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
+        return redirect("restaurant_dashboard")
+
+    translations_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/translations/"
+    )
+    product_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/"
+    )
+    languages_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/languages/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+    form_data = {}
+
+    # ---------------------------------------------------------
+    # POST: Create a translation
+    # ---------------------------------------------------------
+    if request.method == "POST":
+        language_code = request.POST.get("language_code", "").strip()
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        short_description = request.POST.get("short_description", "").strip()
+
+        form_data = {
+            "language_code": language_code,
+            "name": name,
+            "description": description,
+            "short_description": short_description,
+        }
+
+        if not language_code:
+            error = "Language is required."
+        elif not name:
+            error = "Translation name is required."
+        else:
+            payload = {
+                "language_code": language_code,
+                "name": name,
+                "description": description,
+                "short_description": short_description,
+            }
+
+            try:
+                response = requests.post(
+                    translations_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=15,
+                )
+
+                if response.status_code in (200, 201):
+                    django_messages.success(request, "Translation created successfully.")
+                    return redirect(
+                        "product_translations_page",
+                        product_id=product_id,
+                    )
+
+                error = f"Cloud API error ({response.status_code}): {_cloud_error(response)}"
+
+            except requests.RequestException as exc:
+                error = f"Could not connect to the cloud API: {exc}"
+
+    # ---------------------------------------------------------
+    # GET: Load translations, product, and languages
+    # ---------------------------------------------------------
+    translations = []
+    product = None
+    languages = []
+
+    try:
+        response = requests.get(
+            translations_url,
+            headers=headers,
+            timeout=15,
+        )
+        if response.ok:
+            translations = _extract_list(response.json())
+        elif error is None:
+            error = (
+                f"Could not load translations ({response.status_code}): "
+                f"{_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        if error is None:
+            error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        if error is None:
+            error = "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(product_url, headers=headers, timeout=15)
+        if response.ok:
+            product = response.json()
+    except (requests.RequestException, ValueError):
+        pass
+
+    try:
+        response = requests.get(languages_url, headers=headers, timeout=15)
+        if response.ok:
+            languages = _extract_list(response.json())
+    except (requests.RequestException, ValueError):
+        pass
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/products/product_translations.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "translations": translations,
+            "languages": languages,
+            "error": error,
+            "form_data": form_data,
+            "flash_messages": flash_messages,
+            "has_form_error": error is not None and request.method == "POST",
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def product_translation_edit_page(request, product_id, translation_id):
+    """Edit or delete a single product translation."""
+    restaurant_uuid = _get_restaurant_uuid(request)
+    if not restaurant_uuid:
+        return redirect("restaurant_dashboard")
+
+    translation_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/translations/{translation_id}/"
+    )
+    product_url = (
+        f"{CLOUD_API_BASE_URL}/restaurants/"
+        f"{restaurant_uuid}/products/{product_id}/"
+    )
+
+    headers = get_cloud_headers(request)
+    error = None
+
+    # --------------------------- POST: update / delete ---------------------------
+    if request.method == "POST":
+        action = request.POST.get("action", "update").strip()
+
+        try:
+            if action == "delete":
+                response = requests.delete(
+                    translation_url, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 204):
+                    django_messages.success(request, "Translation deleted.")
+                    return redirect(
+                        "product_translations_page",
+                        product_id=product_id,
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+
+            elif action == "update":
+                payload = {
+                    "language_code": request.POST.get("language_code", "").strip(),
+                    "name": request.POST.get("name", "").strip(),
+                    "description": request.POST.get("description", "").strip(),
+                    "short_description": request.POST.get("short_description", "").strip(),
+                }
+                response = requests.patch(
+                    translation_url, json=payload, headers=headers, timeout=15,
+                )
+                if response.status_code in (200, 201):
+                    django_messages.success(request, "Translation updated.")
+                    return redirect(
+                        "product_translation_edit_page",
+                        product_id=product_id,
+                        translation_id=translation_id,
+                    )
+                error = (
+                    f"Cloud API error ({response.status_code}): "
+                    f"{_cloud_error(response)}"
+                )
+            else:
+                error = f"Unknown action: {action}"
+
+        except requests.RequestException as exc:
+            error = f"Could not connect to the cloud API: {exc}"
+
+    # --------------------------- GET: fetch ---------------------------
+    translation = None
+    product = None
+
+    try:
+        response = requests.get(translation_url, headers=headers, timeout=15)
+        if response.ok:
+            translation = response.json()
+        elif response.status_code == 404:
+            error = "Translation not found."
+        else:
+            error = (
+                f"Could not load translation "
+                f"({response.status_code}): {_cloud_error(response)}"
+            )
+    except requests.RequestException as exc:
+        error = f"Could not connect to the cloud API: {exc}"
+    except ValueError:
+        error = "Cloud API returned an invalid response."
+
+    try:
+        response = requests.get(product_url, headers=headers, timeout=15)
+        if response.ok:
+            product = response.json()
+    except (requests.RequestException, ValueError):
+        pass
+
+    flash_messages = _collect_messages(request)
+
+    return render(
+        request,
+        "online/products/product_translation_edit.html",
+        {
+            "product": product,
+            "product_id": product_id,
+            "translation": translation,
+            "translation_id": translation_id,
             "error": error,
             "flash_messages": flash_messages,
         },

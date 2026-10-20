@@ -64,6 +64,7 @@ def pull_categories(restaurant_uuid: str) -> dict:
             "description": row.get("description") or "",
             "display_order": row.get("sort_order") or row.get("display_order") or 0,
             "is_active": row.get("is_active", True),
+          
             "is_synced": True,
             "last_synced_at": timezone.now(),
         }

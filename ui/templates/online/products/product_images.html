@@ -1,0 +1,650 @@
+{% extends "ui/online_base.html" %} {% block mobile_title %}Product Images{%
+endblock %} {% block extra_styles %}
+<style>
+  .product-images-page {
+    --red: #7f1d1d;
+    --red-hover: #991b1b;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    color: #1f2937;
+    padding: 24px 0 48px;
+  }
+  .product-images-page * {
+    box-sizing: border-box;
+  }
+
+  .product-images-page .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .product-images-page h1 {
+    font-size: 26px;
+    font-weight: 750;
+    margin: 0;
+  }
+  .product-images-page .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 7px 0 0;
+  }
+  .product-images-page .btn-primary-custom,
+  .product-images-page .btn-secondary-custom,
+  .product-images-page .btn-danger-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .product-images-page .btn-primary-custom {
+    background: var(--red);
+    border: 1px solid var(--red);
+    color: white;
+  }
+  .product-images-page .btn-primary-custom:hover {
+    background: var(--red-hover);
+    color: white;
+  }
+  .product-images-page .btn-secondary-custom {
+    background: white;
+    color: #374151;
+    border: 1px solid var(--border);
+  }
+  .product-images-page .btn-danger-custom {
+    background: #b91c1c;
+    color: white;
+    border: 1px solid #b91c1c;
+  }
+  .product-images-page .panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .product-images-page .panel-header {
+    padding: 19px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .product-images-page .panel-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 750;
+  }
+  .product-images-page .panel-description {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .product-images-page .panel-body {
+    padding: 22px;
+  }
+  .product-images-page .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    margin-bottom: 7px;
+  }
+  .product-images-page .form-control {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    font-size: 14px;
+  }
+  .product-images-page .form-control:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.1);
+  }
+  .product-images-page textarea.form-control {
+    min-height: 90px;
+    resize: vertical;
+  }
+  .product-images-page .field-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .product-images-page .upload-area {
+    border: 2px dashed #d1d5db;
+    background: #fafafa;
+    border-radius: 13px;
+    padding: 25px;
+    text-align: center;
+    transition: 0.2s ease;
+  }
+  .product-images-page .upload-area.drag-over {
+    border-color: var(--red);
+    background: #fff7f7;
+  }
+  .product-images-page .upload-icon {
+    font-size: 30px;
+    margin-bottom: 8px;
+  }
+  .product-images-page .upload-title {
+    font-size: 14px;
+    font-weight: 750;
+    margin-bottom: 5px;
+  }
+  .product-images-page .upload-subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+  .product-images-page .image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .product-images-page .image-card {
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    overflow: hidden;
+    min-width: 0;
+    background: white;
+  }
+  .product-images-page .image-preview {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: #f3f4f6;
+    overflow: hidden;
+  }
+  .product-images-page .image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .product-images-page .image-placeholder {
+    display: flex;
+    height: 100%;
+    min-height: 150px;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 34px;
+  }
+  .product-images-page .primary-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--red);
+    color: white;
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 750;
+  }
+  .product-images-page .image-details {
+    padding: 14px;
+  }
+  .product-images-page .image-caption {
+    font-size: 14px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .product-images-page .image-alt {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+    overflow-wrap: anywhere;
+  }
+  .product-images-page .image-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .product-images-page .image-url {
+    display: block;
+    margin-top: 10px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+    color: #7f1d1d;
+  }
+  .product-images-page .alert-custom {
+    border-radius: 10px;
+    padding: 13px 15px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .product-images-page .alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+  .product-images-page .alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+  .product-images-page .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+  }
+  .product-images-page .empty-icon {
+    font-size: 35px;
+    margin-bottom: 12px;
+  }
+  .product-images-page .empty-title {
+    font-size: 16px;
+    font-weight: 750;
+  }
+  .product-images-page .empty-description {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 7px;
+  }
+  .product-images-page .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+  .product-images-page .checkbox-row label {
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .product-images-page .form-check-input:checked {
+    background-color: var(--red);
+    border-color: var(--red);
+  }
+  @media (max-width: 900px) {
+    .product-images-page .image-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 576px) {
+    .product-images-page {
+      padding-top: 16px;
+    }
+    .product-images-page h1 {
+      font-size: 23px;
+    }
+    .product-images-page .page-header {
+      align-items: flex-start;
+    }
+    .product-images-page .panel-body {
+      padding: 16px;
+    }
+    .product-images-page .panel-header {
+      padding: 16px;
+    }
+    .product-images-page .image-grid {
+      grid-template-columns: 1fr;
+    }
+    .product-images-page .upload-area {
+      padding: 18px;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="product-images-page">
+  <div class="container-fluid">
+    <div class="page-header">
+      <div>
+        <h1>Product Images</h1>
+        <p class="subtitle">Upload, organize and manage product photography.</p>
+
+        {% if product %}
+        <p class="subtitle">
+          Product:
+          <strong>{{ product.name|default:"Unnamed product" }}</strong>
+        </p>
+        {% endif %}
+      </div>
+
+      <a
+        href="{% url 'product_edit_page' product_id=product_id %}"
+        class="btn-secondary-custom"
+      >
+        ← Back to Product
+      </a>
+    </div>
+
+    {% if error %}
+    <div class="alert-custom alert-error" role="alert">
+      <strong>Request failed.</strong> {{ error }}
+    </div>
+    {% endif %} {% if flash_messages %} {% for message in flash_messages %}
+    <div
+      class="alert-custom {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}"
+      role="status"
+    >
+      {{ message }}
+    </div>
+    {% endfor %} {% endif %}
+
+    <!-- Upload form -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Add Product Image</h2>
+        <p class="panel-description">Upload a file or provide an image URL.</p>
+      </div>
+
+      <div class="panel-body">
+        <form method="post" enctype="multipart/form-data" id="imageUploadForm">
+          {% csrf_token %}
+
+          <div class="mb-4">
+            <label class="form-label" for="imageFile">
+              Upload Image File
+            </label>
+
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-icon" aria-hidden="true">▧</div>
+
+              <div class="upload-title">Choose an image from your device</div>
+
+              <p class="upload-subtitle">
+                Select an image file to upload to your cloud API.
+              </p>
+
+              <input
+                type="file"
+                class="form-control"
+                id="imageFile"
+                name="image_url"
+                accept="image/*"
+              />
+
+              <span class="field-hint" id="fileName"> No file selected. </span>
+            </div>
+          </div>
+
+          <div class="text-center text-muted mb-4">— OR ADD AN IMAGE URL —</div>
+
+          <div class="mb-3">
+            <label class="form-label" for="imageUrl"> Image URL </label>
+
+            <input
+              type="url"
+              class="form-control"
+              id="imageUrl"
+              name="image_url"
+              placeholder="https://example.com/images/product.jpg"
+            />
+
+            <span class="field-hint">
+              Used when no image file is selected.
+            </span>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="altText"> Alternative Text </label>
+
+              <input
+                type="text"
+                class="form-control"
+                id="altText"
+                name="alt_text"
+                maxlength="255"
+                placeholder="Describe the image for accessibility"
+              />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="caption"> Caption </label>
+
+              <input
+                type="text"
+                class="form-control"
+                id="caption"
+                name="caption"
+                maxlength="255"
+                placeholder="e.g. Our signature burger"
+              />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="sortOrder"> Display Order </label>
+
+              <input
+                type="number"
+                class="form-control"
+                id="sortOrder"
+                name="sort_order"
+                min="0"
+                step="1"
+                value="0"
+                required
+              />
+
+              <span class="field-hint"> Lower values appear first. </span>
+            </div>
+
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="checkbox-row w-100 mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="isPrimary"
+                  name="is_primary"
+                  value="true"
+                />
+
+                <label for="isPrimary"> Set as primary image </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="btn-primary-custom" id="uploadButton">
+              Upload Image
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Image gallery -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Image Gallery</h2>
+        <p class="panel-description">
+          {% if images %} {{ images|length }} image{{ images|length|pluralize }}
+          registered. {% else %} Images associated with this product. {% endif
+          %}
+        </p>
+      </div>
+
+      {% if images %}
+      <div class="panel-body">
+        <div class="image-grid">
+          {% for image in images %}
+          <article class="image-card">
+            <div class="image-preview">
+              {% if image.is_primary %}
+              <span class="primary-badge">PRIMARY IMAGE</span>
+              {% endif %} {% if image.image_url %}
+              <img
+                src="{{ image.image_url }}"
+                alt="{{ image.alt_text|default:image.caption|default:'Product image' }}"
+                loading="lazy"
+                onerror="
+                  this.style.display = 'none';
+                  this.nextElementSibling.style.display = 'flex';
+                "
+              />
+
+              <div class="image-placeholder" style="display: none">▧</div>
+              {% else %}
+              <div class="image-placeholder">▧</div>
+              {% endif %}
+            </div>
+
+            <div class="image-details">
+              <div class="image-caption">
+                {{ image.caption|default:"Untitled image" }}
+              </div>
+
+              <div class="image-alt">
+                Alt text: {{ image.alt_text|default:"Not provided" }}
+              </div>
+
+              <div class="image-meta">
+                <span> Order: {{ image.sort_order|default:"0" }} </span>
+
+                {% if image.is_primary %}
+                <span class="text-danger fw-bold"> Primary </span>
+                {% endif %}
+              </div>
+
+              {% if image.image_url %}
+              <a
+                href="{{ image.image_url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="image-url"
+              >
+                Open original image ↗
+              </a>
+              {% endif %}
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">▧</div>
+        <div class="empty-title">No images yet</div>
+        <p class="empty-description">
+          Upload your first product image or add an image URL above.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const fileInput = document.getElementById("imageFile");
+    const urlInput = document.getElementById("imageUrl");
+    const fileName = document.getElementById("fileName");
+    const uploadForm = document.getElementById("imageUploadForm");
+    const uploadButton = document.getElementById("uploadButton");
+    const uploadArea = document.getElementById("uploadArea");
+    const sortOrder = document.getElementById("sortOrder");
+
+    if (fileInput) {
+      fileInput.addEventListener("change", function () {
+        const file = fileInput.files && fileInput.files[0];
+
+        if (fileName) {
+          fileName.textContent = file ? file.name : "No file selected.";
+        }
+
+        if (file && urlInput) {
+          urlInput.value = "";
+        }
+      });
+    }
+
+    if (urlInput && fileInput) {
+      urlInput.addEventListener("input", function () {
+        if (urlInput.value.trim() && fileInput.files.length) {
+          fileInput.value = "";
+          if (fileName) {
+            fileName.textContent = "No file selected.";
+          }
+        }
+      });
+    }
+
+    // Drag-and-drop convenience.
+    if (uploadArea && fileInput) {
+      ["dragenter", "dragover"].forEach(function (eventName) {
+        uploadArea.addEventListener(eventName, function (event) {
+          event.preventDefault();
+          uploadArea.classList.add("drag-over");
+        });
+      });
+
+      ["dragleave", "drop"].forEach(function (eventName) {
+        uploadArea.addEventListener(eventName, function (event) {
+          event.preventDefault();
+          uploadArea.classList.remove("drag-over");
+        });
+      });
+
+      uploadArea.addEventListener("drop", function (event) {
+        const files = event.dataTransfer.files;
+
+        if (files.length && files[0].type.startsWith("image/")) {
+          fileInput.files = files;
+
+          if (fileName) {
+            fileName.textContent = files[0].name;
+          }
+
+          if (urlInput) {
+            urlInput.value = "";
+          }
+        }
+      });
+    }
+
+    if (uploadForm && uploadButton) {
+      uploadForm.addEventListener("submit", function (event) {
+        const selectedFile = fileInput && fileInput.files.length > 0;
+
+        const imageUrl = urlInput && urlInput.value.trim();
+
+        if (!selectedFile && !imageUrl) {
+          event.preventDefault();
+          alert("Please select an image file or provide an image URL.");
+          return;
+        }
+
+        if (
+          sortOrder &&
+          (!Number.isInteger(Number(sortOrder.value)) ||
+            Number(sortOrder.value) < 0)
+        ) {
+          event.preventDefault();
+          sortOrder.focus();
+          sortOrder.reportValidity();
+          return;
+        }
+
+        if (selectedFile) {
+          const file = fileInput.files[0];
+
+          if (!file.type.startsWith("image/")) {
+            event.preventDefault();
+            alert("Please select a valid image file.");
+            return;
+          }
+        }
+
+        uploadButton.disabled = true;
+        uploadButton.textContent = "Uploading...";
+      });
+    }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,1249 @@
+{% extends "ui/online_base.html" %} {% block content %}
+<style>
+  .pe-page {
+    --primary: #5146e5;
+    --primary-hover: #4035cc;
+    --text: #20243a;
+    --muted: #737b91;
+    --border: #e5e8f0;
+    --green: #16875d;
+    --red: #d9364f;
+    color: var(--text);
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: 14px;
+    padding: 28px;
+  }
+
+  .pe-page *,
+  .pe-page *::before,
+  .pe-page *::after {
+    box-sizing: border-box;
+  }
+
+  .pe-page .pe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 26px;
+  }
+
+  .pe-page .pe-breadcrumb {
+    display: flex;
+    gap: 9px;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .pe-page .pe-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .pe-page .pe-breadcrumb a:hover {
+    color: var(--primary);
+  }
+
+  .pe-page .pe-title {
+    margin: 0;
+    font-size: clamp(24px, 3vw, 31px);
+    font-weight: 750;
+    letter-spacing: -1px;
+  }
+
+  .pe-page .pe-subtitle {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .pe-page .pe-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 16px;
+    min-height: 43px;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      background 0.2s,
+      border-color 0.2s,
+      transform 0.2s;
+  }
+
+  .pe-page .pe-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+  }
+
+  .pe-page .pe-btn-primary {
+    color: white;
+    background: var(--primary);
+  }
+
+  .pe-page .pe-btn-primary:hover {
+    color: white;
+    background: var(--primary-hover);
+  }
+
+  .pe-page .pe-btn-outline {
+    color: #4b5267;
+    background: white;
+    border-color: var(--border);
+  }
+
+  .pe-page .pe-btn-outline:hover {
+    background: #f8f8fc;
+    border-color: #c9cde0;
+  }
+
+  .pe-page .pe-btn-danger {
+    color: var(--red);
+    background: white;
+    border-color: #f1cbd2;
+  }
+
+  .pe-page .pe-btn-danger:hover {
+    background: #fff3f5;
+    border-color: #e9aab5;
+  }
+
+  .pe-page .pe-btn-block {
+    width: 100%;
+  }
+
+  .pe-page .pe-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 23px;
+    align-items: start;
+  }
+
+  .pe-page .pe-main,
+  .pe-page .pe-sidebar {
+    min-width: 0;
+  }
+
+  .pe-page .pe-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: 0 3px 14px rgba(29, 37, 71, 0.025);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .pe-page .pe-card-header {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 20px 23px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pe-page .pe-card-icon {
+    display: grid;
+    place-items: center;
+    width: 39px;
+    height: 39px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    background: #f0efff;
+    color: var(--primary);
+    font-size: 18px;
+  }
+
+  .pe-page .pe-card-heading {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 750;
+  }
+
+  .pe-page .pe-card-description {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .pe-page .pe-card-body {
+    padding: 24px;
+  }
+
+  .pe-page .pe-field {
+    margin-bottom: 22px;
+  }
+
+  .pe-page .pe-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .pe-page .pe-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .pe-page .pe-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #34394e;
+  }
+
+  .pe-page .pe-required {
+    color: var(--red);
+  }
+
+  .pe-page .pe-control {
+    display: block;
+    width: 100%;
+    min-height: 45px;
+    border: 1px solid #dfe3ed;
+    border-radius: 9px;
+    padding: 11px 13px;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .pe-page .pe-control::placeholder {
+    color: #a0a6b7;
+  }
+
+  .pe-page .pe-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(81, 70, 229, 0.09);
+  }
+
+  .pe-page textarea.pe-control {
+    min-height: 115px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .pe-page textarea.pe-short-description {
+    min-height: 86px;
+  }
+
+  .pe-page .pe-help {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 7px;
+    line-height: 1.5;
+  }
+
+  .pe-page .pe-count {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Visibility settings */
+  .pe-page .pe-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 17px 0;
+    border-bottom: 1px solid #eef0f5;
+  }
+
+  .pe-page .pe-status-row:first-child {
+    padding-top: 0;
+  }
+
+  .pe-page .pe-status-row:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .pe-page .pe-status-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .pe-page .pe-status-help {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 5px 0 0;
+  }
+
+  .pe-page .pe-status-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+  }
+
+  .pe-page .pe-state-label {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.2px;
+    color: #16875d;
+    background: #e9f7ef;
+    white-space: nowrap;
+  }
+
+  .pe-page .pe-state-label.is-off {
+    color: #687083;
+    background: #eef0f5;
+  }
+
+  .pe-page .pe-switch {
+    position: relative;
+    display: block;
+    width: 43px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .pe-page .pe-switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .pe-page .pe-switch-track {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: #dce0e9;
+    border-radius: 30px;
+    transition: background 0.2s;
+  }
+
+  .pe-page .pe-switch-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px #0002;
+    transition: transform 0.2s;
+  }
+
+  .pe-page .pe-switch input:checked + .pe-switch-track {
+    background: var(--primary);
+  }
+
+  .pe-page .pe-switch input:checked + .pe-switch-track::after {
+    transform: translateX(19px);
+  }
+
+  .pe-page .pe-switch input:focus-visible + .pe-switch-track {
+    outline: 3px solid #c8c4ff;
+    outline-offset: 2px;
+  }
+
+  /* Product preview */
+  .pe-page .pe-preview {
+    background: linear-gradient(145deg, #fafaff, #f5f6ff);
+    border: 1px solid #e8e7fb;
+    border-radius: 12px;
+    padding: 17px;
+  }
+
+  .pe-page .pe-preview-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
+  .pe-page .pe-preview-symbol {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #e9e7ff;
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+  }
+
+  .pe-page .pe-preview-name {
+    font-size: 14px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+    margin: 0;
+  }
+
+  .pe-page .pe-preview-sku {
+    color: var(--muted);
+    font-size: 11px;
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .pe-page .pe-preview-description {
+    color: #636b80;
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 0 0 13px;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+  }
+
+  .pe-page .pe-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .pe-page .pe-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 20px;
+    padding: 5px 9px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #e9f7ef;
+    color: #16875d;
+  }
+
+  .pe-page .pe-badge.off {
+    background: #eef0f5;
+    color: #777f91;
+  }
+
+  .pe-page .pe-save-card {
+    position: sticky;
+    top: 20px;
+  }
+
+  .pe-page .pe-save-note {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+    text-align: center;
+    margin: 12px 0 0;
+  }
+
+  .pe-page .pe-danger-heading {
+    color: var(--red);
+  }
+
+  .pe-page .pe-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .pe-page .pe-alert {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .pe-page .pe-alert-error {
+    color: #a6243a;
+    background: #fff1f3;
+    border: 1px solid #f4c9d0;
+  }
+
+  .pe-page .pe-alert-success {
+    color: #116c49;
+    background: #edfaf3;
+    border: 1px solid #c9eedb;
+  }
+
+  .pe-page .pe-alert-info {
+    color: #344b8a;
+    background: #f0f4ff;
+    border: 1px solid #d9e2ff;
+  }
+
+  .pe-page .pe-alert-close {
+    float: right;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    font-size: 18px;
+    margin-left: 10px;
+  }
+
+  .pe-page .pe-empty {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .pe-page .pe-empty-icon {
+    font-size: 44px;
+    color: #a0a6b7;
+  }
+
+  .pe-page .pe-empty h3 {
+    margin: 15px 0 8px;
+    font-size: 20px;
+  }
+
+  .pe-page .pe-empty p {
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+
+  @media (max-width: 1050px) {
+    .pe-page .pe-layout {
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 850px) {
+    .pe-page {
+      padding: 18px;
+    }
+
+    .pe-page .pe-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pe-page .pe-sidebar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    .pe-page .pe-sidebar .pe-card {
+      margin-bottom: 0;
+    }
+
+    .pe-page .pe-sidebar .pe-save-card {
+      position: static;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .pe-page {
+      padding: 12px;
+    }
+
+    .pe-page .pe-grid-2,
+    .pe-page .pe-sidebar {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pe-page .pe-card-header {
+      padding: 16px;
+    }
+
+    .pe-page .pe-card-body {
+      padding: 17px;
+    }
+
+    .pe-page .pe-header > .pe-btn {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pe-page *,
+    .pe-page *::before,
+    .pe-page *::after {
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="pe-page">
+  <header class="pe-header">
+    <div>
+      <nav class="pe-breadcrumb" aria-label="Breadcrumb">
+        <a href="{% url 'products_page' %}">Products</a>
+        <span>/</span>
+        <span>Edit product</span>
+      </nav>
+      <h1 class="pe-title">Edit product</h1>
+      <p class="pe-subtitle">
+        Manage product information, availability and visibility.
+      </p>
+    </div>
+
+    <a href="{% url 'products_page' %}" class="pe-btn pe-btn-outline">
+      <i class="bi bi-arrow-left"></i> Back to products
+    </a>
+  </header>
+
+  {% if error %}
+  <div class="pe-alert pe-alert-error" role="alert">
+    <button
+      type="button"
+      class="pe-alert-close"
+      aria-label="Dismiss message"
+      data-dismiss-alert
+    >
+      &times;
+    </button>
+    <strong
+      ><i class="bi bi-exclamation-circle"></i> Something went wrong</strong
+    >
+    <div>{{ error }}</div>
+  </div>
+  {% endif %} {% if flash_messages %} {% for message in flash_messages %}
+  <div
+    class="pe-alert {% if 'success' in message.tags %}pe-alert-success{% elif 'error' in message.tags %}pe-alert-error{% else %}pe-alert-info{% endif %}"
+    role="status"
+  >
+    <button
+      type="button"
+      class="pe-alert-close"
+      aria-label="Dismiss message"
+      data-dismiss-alert
+    >
+      &times;
+    </button>
+    {{ message }}
+  </div>
+  {% endfor %} {% endif %} {% if product %}
+  <form method="post" id="peProductForm">
+    {% csrf_token %}
+
+    <div class="pe-layout">
+      <main class="pe-main">
+        <!-- General information -->
+        <section class="pe-card">
+          <div class="pe-card-header">
+            <div class="pe-card-icon"><i class="bi bi-box-seam"></i></div>
+            <div>
+              <h2 class="pe-card-heading">General information</h2>
+              <p class="pe-card-description">
+                Basic details used to identify your product.
+              </p>
+            </div>
+          </div>
+
+          <div class="pe-card-body">
+            <div class="pe-field">
+              <label class="pe-label" for="peName">
+                Product name <span class="pe-required">*</span>
+              </label>
+              <input
+                class="pe-control"
+                type="text"
+                id="peName"
+                name="name"
+                maxlength="255"
+                required
+                value="{{ form_data.name|default:product.name|default:'' }}"
+                placeholder="e.g. Classic Margherita Pizza"
+              />
+            </div>
+
+            <div class="pe-grid-2">
+              <div class="pe-field">
+                <label class="pe-label" for="peSlug">Product slug</label>
+                <input
+                  class="pe-control"
+                  type="text"
+                  id="peSlug"
+                  name="slug"
+                  maxlength="255"
+                  value="{{ form_data.slug|default:product.slug|default:'' }}"
+                  placeholder="classic-margherita"
+                />
+                <small class="pe-help">URL-friendly product identifier.</small>
+              </div>
+
+              <div class="pe-field">
+                <label class="pe-label" for="peSku">SKU</label>
+                <input
+                  class="pe-control"
+                  type="text"
+                  id="peSku"
+                  name="sku"
+                  maxlength="100"
+                  value="{{ form_data.sku|default:product.sku|default:'' }}"
+                  placeholder="e.g. PIZ-001"
+                />
+                <small class="pe-help">Your internal stock reference.</small>
+              </div>
+            </div>
+
+            <div class="pe-field">
+              <label class="pe-label" for="peShortDescription">
+                Short description
+                <span class="pe-count"
+                  ><span id="peShortCount">0</span> characters</span
+                >
+              </label>
+              <textarea
+                class="pe-control pe-short-description"
+                id="peShortDescription"
+                name="short_description"
+                maxlength="300"
+                placeholder="A brief summary of the product..."
+              >
+{{ form_data.short_description|default:product.short_description|default:'' }}</textarea
+              >
+            </div>
+
+            <div class="pe-field">
+              <label class="pe-label" for="peDescription">
+                Full description
+                <span class="pe-count"
+                  ><span id="peDescriptionCount">0</span> characters</span
+                >
+              </label>
+              <textarea
+                class="pe-control"
+                id="peDescription"
+                name="description"
+                placeholder="Describe ingredients, features and product details..."
+              >
+{{ form_data.description|default:product.description|default:'' }}</textarea
+              >
+              <small class="pe-help">
+                Provide useful details to help customers make a decision.
+              </small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Operational settings -->
+        <section class="pe-card">
+          <div class="pe-card-header">
+            <div class="pe-card-icon"><i class="bi bi-sliders"></i></div>
+            <div>
+              <h2 class="pe-card-heading">Operational settings</h2>
+              <p class="pe-card-description">
+                Configure sorting and preparation time.
+              </p>
+            </div>
+          </div>
+
+          <div class="pe-card-body">
+            <div class="pe-grid-2">
+              <div class="pe-field">
+                <label class="pe-label" for="peSortOrder">Display order</label>
+                <input
+                  class="pe-control"
+                  type="number"
+                  id="peSortOrder"
+                  name="sort_order"
+                  min="0"
+                  step="1"
+                  required
+                  value="{{ form_data.sort_order|default:product.sort_order|default:0 }}"
+                />
+                <small class="pe-help">Lower numbers can appear first.</small>
+              </div>
+
+              <div class="pe-field">
+                <label class="pe-label" for="pePrepTime"
+                  >Preparation time (minutes)</label
+                >
+                <input
+                  class="pe-control"
+                  type="number"
+                  id="pePrepTime"
+                  name="preparation_time_minutes"
+                  min="0"
+                  step="1"
+                  value="{{ form_data.preparation_time_minutes|default:product.preparation_time_minutes|default:'' }}"
+                  placeholder="e.g. 15"
+                />
+                <small class="pe-help">Leave empty if not applicable.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="pe-sidebar">
+        <!-- Visibility -->
+        <section class="pe-card">
+          <div class="pe-card-header">
+            <div class="pe-card-icon"><i class="bi bi-toggles"></i></div>
+            <div>
+              <h2 class="pe-card-heading">Visibility & status</h2>
+              <p class="pe-card-description">Current state and settings.</p>
+            </div>
+          </div>
+
+          <div class="pe-card-body">
+            <div class="pe-status-row">
+              <div>
+                <p class="pe-status-title">Active</p>
+                <p class="pe-status-help">Enabled in your system.</p>
+              </div>
+              <div class="pe-status-control">
+                <span
+                  id="peStateActive"
+                  class="pe-state-label{% if not is_active %} is-off{% endif %}"
+                >
+                  {% if is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                </span>
+                <label class="pe-switch">
+                  <input
+                    type="checkbox"
+                    id="peActive"
+                    name="is_active"
+                    value="true"
+                    {%
+                    if
+                    is_active
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <span class="pe-switch-track"></span>
+                  <span class="visually-hidden">Active</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pe-status-row">
+              <div>
+                <p class="pe-status-title">Published</p>
+                <p class="pe-status-help">Eligible for public display.</p>
+              </div>
+              <div class="pe-status-control">
+                <span
+                  id="peStatePublished"
+                  class="pe-state-label{% if not is_published %} is-off{% endif %}"
+                >
+                  {% if is_published %}PUBLISHED{% else %}UNPUBLISHED{% endif %}
+                </span>
+                <label class="pe-switch">
+                  <input
+                    type="checkbox"
+                    id="pePublished"
+                    name="is_published"
+                    value="true"
+                    {%
+                    if
+                    is_published
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <span class="pe-switch-track"></span>
+                  <span class="visually-hidden">Published</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pe-status-row">
+              <div>
+                <p class="pe-status-title">Available</p>
+                <p class="pe-status-help">Can customers order it?</p>
+              </div>
+              <div class="pe-status-control">
+                <span
+                  id="peStateAvailable"
+                  class="pe-state-label{% if not is_available %} is-off{% endif %}"
+                >
+                  {% if is_available %}AVAILABLE{% else %}UNAVAILABLE{% endif %}
+                </span>
+                <label class="pe-switch">
+                  <input
+                    type="checkbox"
+                    id="peAvailable"
+                    name="is_available"
+                    value="true"
+                    {%
+                    if
+                    is_available
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <span class="pe-switch-track"></span>
+                  <span class="visually-hidden">Available</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pe-status-row">
+              <div>
+                <p class="pe-status-title">Featured product</p>
+                <p class="pe-status-help">Highlight in supported listings.</p>
+              </div>
+              <div class="pe-status-control">
+                <span
+                  id="peStateFeatured"
+                  class="pe-state-label{% if not is_featured %} is-off{% endif %}"
+                >
+                  {% if is_featured %}FEATURED{% else %}NOT FEATURED{% endif %}
+                </span>
+                <label class="pe-switch">
+                  <input
+                    type="checkbox"
+                    id="peFeatured"
+                    name="is_featured"
+                    value="true"
+                    {%
+                    if
+                    is_featured
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <span class="pe-switch-track"></span>
+                  <span class="visually-hidden">Featured</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Live preview -->
+        <section class="pe-card">
+          <div class="pe-card-header">
+            <div class="pe-card-icon"><i class="bi bi-eye"></i></div>
+            <div>
+              <h2 class="pe-card-heading">Quick preview</h2>
+              <p class="pe-card-description">Updates as you edit.</p>
+            </div>
+          </div>
+
+          <div class="pe-card-body">
+            <div class="pe-preview">
+              <div class="pe-preview-top">
+                <div class="pe-preview-symbol">
+                  <i class="bi bi-box2-heart"></i>
+                </div>
+                <div style="min-width: 0">
+                  <p class="pe-preview-name" id="pePreviewName">
+                    {{ product.name|default:"Untitled product" }}
+                  </p>
+                  <p class="pe-preview-sku">
+                    SKU:
+                    <span id="pePreviewSku"
+                      >{{ product.sku|default:"Not assigned" }}</span
+                    >
+                  </p>
+                </div>
+              </div>
+
+              <p class="pe-preview-description" id="pePreviewDescription">
+                {{
+                product.short_description|default:product.description|default:"Your
+                product description will appear here." }}
+              </p>
+
+              <div class="pe-badges">
+                <span class="pe-badge" id="peBadgeActive">Active</span>
+                <span class="pe-badge" id="peBadgeAvailable">Available</span>
+                <span class="pe-badge" id="peBadgePublished">Published</span>
+                <span class="pe-badge" id="peBadgeFeatured">Featured</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Save -->
+        <section class="pe-card pe-save-card">
+          <div class="pe-card-body">
+            <button
+              type="submit"
+              name="action"
+              value="update"
+              class="pe-btn pe-btn-primary pe-btn-block"
+              id="peSaveButton"
+            >
+              <i class="bi bi-check2-circle"></i>
+              <span id="peSaveText">Save changes</span>
+            </button>
+
+            <p class="pe-save-note">
+              <i class="bi bi-shield-check"></i>
+              Changes are sent to your restaurant's cloud API.
+            </p>
+
+            <div class="pe-divider"></div>
+
+            <a
+              href="{% url 'products_page' %}"
+              class="pe-btn pe-btn-outline pe-btn-block"
+              >Cancel</a
+            >
+          </div>
+        </section>
+
+        <!-- Delete -->
+        <section class="pe-card">
+          <div class="pe-card-body">
+            <h2 class="pe-card-heading pe-danger-heading">
+              <i class="bi bi-exclamation-triangle"></i> Danger zone
+            </h2>
+            <p
+              class="pe-card-description"
+              style="margin-top: 9px; margin-bottom: 17px"
+            >
+              Permanently delete this product. This action may be irreversible.
+            </p>
+
+            <button
+              type="submit"
+              name="action"
+              value="delete"
+              class="pe-btn pe-btn-danger pe-btn-block"
+              id="peDeleteButton"
+              formnovalidate
+            >
+              <i class="bi bi-trash3"></i> Delete product
+            </button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </form>
+
+  {% else %}
+  <section class="pe-card">
+    <div class="pe-empty">
+      <div class="pe-empty-icon"><i class="bi bi-box-seam"></i></div>
+      <h3>Product unavailable</h3>
+      <p>The product could not be loaded. Check the error above.</p>
+      <a href="{% url 'products_page' %}" class="pe-btn pe-btn-primary">
+        <i class="bi bi-arrow-left"></i> Back to products
+      </a>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const root = document.querySelector(".pe-page");
+    if (!root) return;
+
+    root.querySelectorAll("[data-dismiss-alert]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const alert = button.closest(".pe-alert");
+        if (alert) alert.remove();
+      });
+    });
+
+    const form = root.querySelector("#peProductForm");
+    if (!form) return;
+
+    const $ = function (selector) {
+      return root.querySelector(selector);
+    };
+
+    const nameInput = $("#peName");
+    const slugInput = $("#peSlug");
+    const skuInput = $("#peSku");
+    const shortInput = $("#peShortDescription");
+    const descriptionInput = $("#peDescription");
+    const saveButton = $("#peSaveButton");
+    const saveText = $("#peSaveText");
+    const deleteButton = $("#peDeleteButton");
+
+    const stateDefinitions = [
+      {
+        input: "#peActive",
+        label: "#peStateActive",
+        badge: "#peBadgeActive",
+        on: "ACTIVE",
+        off: "INACTIVE",
+        badgeOn: "Active",
+        badgeOff: "Inactive",
+      },
+      {
+        input: "#pePublished",
+        label: "#peStatePublished",
+        badge: "#peBadgePublished",
+        on: "PUBLISHED",
+        off: "UNPUBLISHED",
+        badgeOn: "Published",
+        badgeOff: "Not published",
+      },
+      {
+        input: "#peAvailable",
+        label: "#peStateAvailable",
+        badge: "#peBadgeAvailable",
+        on: "AVAILABLE",
+        off: "UNAVAILABLE",
+        badgeOn: "Available",
+        badgeOff: "Unavailable",
+      },
+      {
+        input: "#peFeatured",
+        label: "#peStateFeatured",
+        badge: "#peBadgeFeatured",
+        on: "FEATURED",
+        off: "NOT FEATURED",
+        badgeOn: "Featured",
+        badgeOff: "Not featured",
+      },
+    ];
+
+    function updatePreview() {
+      $("#pePreviewName").textContent =
+        nameInput.value.trim() || "Untitled product";
+
+      $("#pePreviewSku").textContent = skuInput.value.trim() || "Not assigned";
+
+      $("#pePreviewDescription").textContent =
+        shortInput.value.trim() ||
+        descriptionInput.value.trim() ||
+        "Your product description will appear here.";
+
+      stateDefinitions.forEach(function (state) {
+        const input = $(state.input);
+        const label = $(state.label);
+        const badge = $(state.badge);
+
+        if (!input || !label || !badge) return;
+
+        const enabled = input.checked;
+
+        label.textContent = enabled ? state.on : state.off;
+        label.classList.toggle("is-off", !enabled);
+
+        badge.textContent = enabled ? state.badgeOn : state.badgeOff;
+        badge.classList.toggle("off", !enabled);
+      });
+    }
+
+    function updateCounters() {
+      $("#peShortCount").textContent = shortInput.value.length;
+      $("#peDescriptionCount").textContent = descriptionInput.value.length;
+    }
+
+    [nameInput, skuInput, shortInput, descriptionInput].forEach(
+      function (input) {
+        input.addEventListener("input", function () {
+          updatePreview();
+          updateCounters();
+        });
+      },
+    );
+
+    stateDefinitions.forEach(function (state) {
+      $(state.input).addEventListener("change", updatePreview);
+    });
+
+    // Generate a slug automatically until the user edits it manually.
+    let slugManuallyEdited = Boolean(slugInput.value.trim());
+
+    slugInput.addEventListener("input", function () {
+      slugManuallyEdited = true;
+    });
+
+    nameInput.addEventListener("input", function () {
+      if (slugManuallyEdited) return;
+
+      slugInput.value = nameInput.value
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 255);
+    });
+
+    // Use the actual clicked submit button to identify the requested action.
+    form.addEventListener("submit", function (event) {
+      const submitter = event.submitter;
+      const action =
+        submitter && submitter.name === "action" ? submitter.value : "update";
+
+      if (action === "delete") {
+        if (
+          !window.confirm(
+            "Are you sure you want to permanently delete this product?",
+          )
+        ) {
+          event.preventDefault();
+          return;
+        }
+
+        deleteButton.disabled = true;
+        deleteButton.innerHTML =
+          '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Deleting...';
+        return;
+      }
+
+      if (action !== "update") return;
+
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        form.reportValidity();
+        return;
+      }
+
+      const sortOrder = $("#peSortOrder");
+      const prepTime = $("#pePrepTime");
+
+      function isNonNegativeInteger(value) {
+        return (
+          value === "" ||
+          (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)))
+        );
+      }
+
+      if (!isNonNegativeInteger(sortOrder.value)) {
+        event.preventDefault();
+        sortOrder.setCustomValidity("Enter a non-negative whole number.");
+        sortOrder.reportValidity();
+        sortOrder.setCustomValidity("");
+        return;
+      }
+
+      if (!isNonNegativeInteger(prepTime.value)) {
+        event.preventDefault();
+        prepTime.setCustomValidity("Enter a non-negative whole number.");
+        prepTime.reportValidity();
+        prepTime.setCustomValidity("");
+        return;
+      }
+
+      saveButton.disabled = true;
+      saveText.textContent = "Saving...";
+      saveButton.insertAdjacentHTML(
+        "afterbegin",
+        '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>',
+      );
+    });
+
+    // Initialize the labels from the server-rendered checkbox states.
+    updatePreview();
+    updateCounters();
+  })();
+</script>
+{% endblock %}

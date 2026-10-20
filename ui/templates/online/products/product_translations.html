@@ -1,0 +1,877 @@
+{% extends "ui/online_base.html" %} {% block mobile_title %}Categories{%
+endblock %} {% block content %}
+<style>
+  /* ==========================================================================
+   Product Translations Management — Stylesheet
+   Design tokens follow a 4px spacing scale and WCAG-AA compliant colors.
+   ========================================================================== */
+
+  :root {
+    /* Typography */
+    --pt-font-sans:
+      system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      sans-serif;
+
+    /* Brand / semantic colors */
+    --pt-primary: #0d6efd;
+    --pt-primary-hover: #0b5ed7;
+    --pt-primary-subtle: rgba(13, 110, 253, 0.1);
+    --pt-secondary: #6c757d;
+    --pt-success: #198754;
+    --pt-danger: #dc3545;
+    --pt-danger-subtle: rgba(220, 53, 69, 0.1);
+    --pt-warning: #ffc107;
+
+    /* Surfaces */
+    --pt-bg-page: #f8f9fa;
+    --pt-bg-card: #ffffff;
+    --pt-bg-muted: #fcfdff;
+    --pt-border-color: #dee2e6;
+
+    /* Text */
+    --pt-text-main: #212529;
+    --pt-text-muted: #6c757d;
+
+    /* Elevation & radius */
+    --pt-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --pt-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --pt-radius: 0.5rem;
+    --pt-radius-sm: 0.375rem;
+
+    /* Motion */
+    --pt-transition: 150ms ease-in-out;
+  }
+
+  /* --------------------------------------------------------------------------
+   Page shell
+   -------------------------------------------------------------------------- */
+  .pt-page {
+    font-family: var(--pt-font-sans);
+    background-color: var(--pt-bg-page);
+    color: var(--pt-text-main);
+    padding-bottom: 3rem;
+    min-height: 100vh;
+  }
+
+  .pt-header {
+    border-bottom: 1px solid var(--pt-border-color);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Breadcrumbs */
+  .pt-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: var(--pt-text-muted);
+  }
+  .pt-breadcrumb a {
+    color: var(--pt-secondary);
+    text-decoration: none;
+    transition: color var(--pt-transition);
+  }
+  .pt-breadcrumb a:hover,
+  .pt-breadcrumb a:focus-visible {
+    color: var(--pt-primary);
+    text-decoration: underline;
+  }
+
+  /* --------------------------------------------------------------------------
+   Cards
+   -------------------------------------------------------------------------- */
+  .pt-card {
+    background-color: var(--pt-bg-card);
+    border: 1px solid var(--pt-border-color);
+    border-radius: var(--pt-radius);
+    box-shadow: var(--pt-shadow-sm);
+    overflow: hidden;
+    transition: box-shadow var(--pt-transition);
+  }
+  .pt-card:hover {
+    box-shadow: var(--pt-shadow-md);
+  }
+
+  /* --------------------------------------------------------------------------
+   Data table
+   -------------------------------------------------------------------------- */
+  .pt-table {
+    width: 100%;
+    margin-bottom: 0;
+    vertical-align: middle;
+  }
+  .pt-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--pt-text-muted);
+    background-color: var(--pt-bg-muted);
+    border-bottom: 2px solid var(--pt-border-color);
+    padding: 0.75rem 1rem;
+  }
+  .pt-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--pt-border-color);
+    color: var(--pt-text-main);
+  }
+  .pt-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .pt-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.015);
+  }
+
+  /* Language badge */
+  .pt-lang-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #495057;
+    background-color: #e9ecef;
+    border-radius: var(--pt-radius-sm);
+    text-align: center;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  /* Truncated description cell */
+  .pt-truncate {
+    max-width: 350px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* --------------------------------------------------------------------------
+   Modal overrides
+   -------------------------------------------------------------------------- */
+  .pt-modal .modal-content {
+    border: none;
+    border-radius: var(--pt-radius);
+    box-shadow: var(--pt-shadow-md);
+    overflow: hidden;
+  }
+  .pt-modal .modal-header {
+    background-color: var(--pt-bg-page);
+    border-bottom: 1px solid var(--pt-border-color);
+    padding: 1.25rem 1.5rem;
+  }
+  .pt-modal .modal-body {
+    padding: 1.5rem;
+  }
+  .pt-modal .modal-footer {
+    background-color: var(--pt-bg-page);
+    border-top: 1px solid var(--pt-border-color);
+    padding: 1rem 1.5rem;
+  }
+
+  /* Summary box inside modals */
+  .pt-summary {
+    background-color: var(--pt-bg-page);
+    border: 1px solid var(--pt-border-color);
+    border-radius: var(--pt-radius-sm);
+    padding: 1rem;
+  }
+  .pt-summary__label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pt-text-muted);
+    font-weight: 600;
+  }
+  .pt-summary__value {
+    font-weight: 600;
+    color: var(--pt-text-main);
+    margin-top: 0.15rem;
+  }
+
+  /* --------------------------------------------------------------------------
+   Form controls
+   -------------------------------------------------------------------------- */
+  .form-control,
+  .form-select {
+    border-radius: var(--pt-radius-sm);
+    border-color: var(--pt-border-color);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    transition:
+      border-color var(--pt-transition),
+      box-shadow var(--pt-transition);
+  }
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--pt-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  }
+  .form-label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 0.35rem;
+    color: var(--pt-text-main);
+  }
+
+  /* Invalid state */
+  .form-control.is-invalid,
+  .form-select.is-invalid {
+    border-color: var(--pt-danger) !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15) !important;
+  }
+
+  /* --------------------------------------------------------------------------
+   Empty state
+   -------------------------------------------------------------------------- */
+  .pt-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+  .pt-empty__icon {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .pt-empty__title {
+    font-weight: 600;
+    color: var(--pt-text-main);
+    margin-bottom: 0.5rem;
+  }
+  .pt-empty__text {
+    color: var(--pt-text-muted);
+    font-size: 0.875rem;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  /* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+  @media (max-width: 767.98px) {
+    .pt-header .d-flex {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+    .pt-truncate {
+      max-width: 200px;
+    }
+  }
+
+  /* Respect reduced-motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<div class="pt-page container-fluid py-4">
+  <!-- ============================================================
+       Header & Breadcrumb
+       ============================================================ -->
+  <header class="pt-header">
+    <nav aria-label="Breadcrumb">
+      <ol class="breadcrumb pt-breadcrumb mb-2">
+        <li class="breadcrumb-item">
+          <a href="{% url 'restaurant_dashboard' %}">
+            <i class="bi bi-house-door" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline">Dashboard</span>
+          </a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{% url 'products_page' %}">
+            <i class="bi bi-box-seam" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline">Products</span>
+          </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Translations</li>
+      </ol>
+    </nav>
+
+    <div
+      class="d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <div>
+        <h1 class="h3 mb-1 fw-bold text-dark">
+          <i class="bi bi-translate text-primary me-2" aria-hidden="true"></i>
+          Product Translations
+        </h1>
+        <p class="text-muted mb-0">
+          {% if product %}
+          <i class="bi bi-box-seam me-1" aria-hidden="true"></i>
+          Product:
+          <strong class="text-dark"
+            >{{ product.name|default:"Untitled" }}</strong
+          >
+          {% if product.sku %}
+          <span class="ms-2 badge bg-light text-dark border"
+            >SKU: {{ product.sku }}</span
+          >
+          {% endif %} {% else %}
+          <i class="bi bi-box-seam me-1" aria-hidden="true"></i>
+          Product ID: <strong class="text-dark">{{ product_id }}</strong>
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a
+          href="{% url 'product_translations_page' product_id=product_id %}"
+          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+        >
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Refresh
+        </a>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm d-inline-flex align-items-center shadow-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#addTranslationModal"
+        >
+          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add Translation
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Flash messages
+       ============================================================ -->
+  {% if flash_messages %}
+  <div class="row mb-3">
+    <div class="col-12">
+      {% for message in flash_messages %}
+      <div
+        class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0"
+        role="alert"
+      >
+        <i
+          class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"
+          aria-hidden="true"
+        ></i>
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ============================================================
+       Error alert (non-form)
+       ============================================================ -->
+  {% if error and not has_form_error %}
+  <div class="row mb-3">
+    <div class="col-12">
+      <div
+        class="alert alert-danger alert-dismissible fade show shadow-sm border-0"
+        role="alert"
+      >
+        <i class="bi bi-exclamation-octagon me-2" aria-hidden="true"></i>
+        <strong>Error:</strong> {{ error }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ============================================================
+       Existing translations table
+       ============================================================ -->
+  <section
+    class="card pt-card border-0 rounded-3"
+    aria-labelledby="existing-translations-title"
+  >
+    <div
+      class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom"
+    >
+      <h2
+        class="h5 mb-0 fw-semibold text-dark"
+        id="existing-translations-title"
+      >
+        <i class="bi bi-list-ul me-2 text-primary" aria-hidden="true"></i>
+        Existing Translations
+      </h2>
+      <span
+        class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2 fw-medium"
+      >
+        {{ translations|length }} total
+      </span>
+    </div>
+
+    <div class="card-body p-0">
+      {% if translations %}
+      <div class="table-responsive">
+        <table class="table table-hover pt-table mb-0">
+          <caption class="visually-hidden">
+            Existing product translations
+          </caption>
+          <thead>
+            <tr>
+              <th class="ps-4" scope="col" style="width: 100px">Language</th>
+              <th scope="col">Name &amp; Description</th>
+              <th scope="col" class="d-none d-md-table-cell">Short Summary</th>
+              <th scope="col" class="text-end pe-4" style="width: 140px">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in translations %}
+            <tr>
+              <td class="ps-4">
+                <span class="pt-lang-badge"
+                  >{{ t.language_code|upper|default:"—" }}</span
+                >
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">
+                  {{ t.name|default:"—" }}
+                </div>
+                {% if t.description %}
+                <div
+                  class="text-muted small pt-truncate"
+                  title="{{ t.description }}"
+                >
+                  {{ t.description }}
+                </div>
+                {% endif %}
+              </td>
+              <td class="d-none d-md-table-cell text-muted small">
+                {{ t.short_description|default:"—"|truncatechars:60 }}
+              </td>
+              <td class="text-end pe-4">
+                <div
+                  class="btn-group btn-group-sm"
+                  role="group"
+                  aria-label="Translation actions"
+                >
+                  <a
+                    href="{% url 'product_translation_edit_page' product_id=product_id translation_id=t.id %}"
+                    class="btn btn-outline-primary"
+                    title="Edit translation"
+                    aria-label="Edit translation for {{ t.language_code|upper }}"
+                  >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    title="Delete translation"
+                    aria-label="Delete translation for {{ t.language_code|upper }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteModal"
+                    data-translation-id="{{ t.id }}"
+                    data-translation-lang="{{ t.language_code|upper }}"
+                    data-translation-name="{{ t.name|default:''|escapejs }}"
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="pt-empty">
+        <i class="bi bi-translate pt-empty__icon" aria-hidden="true"></i>
+        <h5 class="pt-empty__title">No translations yet</h5>
+        <p class="pt-empty__text mb-3">
+          Get started by adding your first language translation for this
+          product.
+        </p>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm px-4 shadow-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#addTranslationModal"
+        >
+          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add Translation
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<!-- ============================================================
+     Add Translation Modal
+     ============================================================ -->
+<div
+  class="modal fade pt-modal"
+  id="addTranslationModal"
+  tabindex="-1"
+  aria-labelledby="addTranslationModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2
+          class="h5 modal-title fw-semibold text-dark"
+          id="addTranslationModalLabel"
+        >
+          <i class="bi bi-plus-circle text-primary me-2" aria-hidden="true"></i>
+          Add New Product Translation
+        </h2>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <form method="post" id="createTranslationForm" novalidate>
+        {% csrf_token %}
+        <div class="modal-body">
+          {% if error and has_form_error %}
+          <div
+            class="alert alert-danger alert-dismissible fade show py-2 small mb-3"
+            role="alert"
+          >
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+            {{ error }}
+            <button
+              type="button"
+              class="btn-close btn-sm"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <!-- Language -->
+            <div class="col-12">
+              <label for="language_code" class="form-label">
+                <i class="bi bi-flag me-1 text-muted" aria-hidden="true"></i>
+                Language <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <select
+                class="form-select"
+                id="language_code"
+                name="language_code"
+                required
+                aria-required="true"
+              >
+                <option value="">— Select language —</option>
+                {% for lang in languages %}
+                <option
+                  value="{{ lang.language_code }}"
+                  {%
+                  if
+                  form_data.language_code|lower=""
+                  ="lang.language_code|lower"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  {{ lang.language_code|upper }} — {{
+                  lang.name|default:lang.language_code }}
+                </option>
+                {% empty %}
+                <option value="en">EN — English</option>
+                <option value="de">DE — German</option>
+                <option value="fr">FR — French</option>
+                <option value="es">ES — Spanish</option>
+                <option value="it">IT — Italian</option>
+                <option value="pt">PT — Portuguese</option>
+                <option value="nl">NL — Dutch</option>
+                <option value="pl">PL — Polish</option>
+                <option value="ru">RU — Russian</option>
+                <option value="tr">TR — Turkish</option>
+                <option value="ar">AR — Arabic</option>
+                <option value="zh">ZH — Chinese</option>
+                <option value="ja">JA — Japanese</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <!-- Name -->
+            <div class="col-12">
+              <label for="name" class="form-label">
+                <i class="bi bi-tag me-1 text-muted" aria-hidden="true"></i>
+                Name <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="name"
+                name="name"
+                value="{{ form_data.name|default:'' }}"
+                placeholder="Translated product name"
+                required
+                aria-required="true"
+                maxlength="255"
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <!-- Short Description -->
+            <div class="col-12">
+              <label for="short_description" class="form-label">
+                <i
+                  class="bi bi-card-text me-1 text-muted"
+                  aria-hidden="true"
+                ></i>
+                Short Description
+              </label>
+              <textarea
+                class="form-control"
+                id="short_description"
+                name="short_description"
+                rows="2"
+                placeholder="Brief summary (optional)"
+                maxlength="500"
+              >
+{{ form_data.short_description|default:'' }}</textarea
+              >
+            </div>
+
+            <!-- Full Description -->
+            <div class="col-12">
+              <label for="description" class="form-label">
+                <i
+                  class="bi bi-file-text me-1 text-muted"
+                  aria-hidden="true"
+                ></i>
+                Full Description
+              </label>
+              <textarea
+                class="form-control"
+                id="description"
+                name="description"
+                rows="4"
+                placeholder="Detailed description (optional)"
+              >
+{{ form_data.description|default:'' }}</textarea
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-4"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary px-4 shadow-sm">
+            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Create
+            Translation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     Delete Confirmation Modal
+     ============================================================ -->
+<div
+  class="modal fade pt-modal"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+  data-product-id="{{ product_id }}"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div
+        class="modal-header"
+        style="background-color: var(--pt-danger-subtle)"
+      >
+        <h2
+          class="h5 modal-title fw-semibold text-danger"
+          id="deleteModalLabel"
+        >
+          <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
+          Confirm Deletion
+        </h2>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="mb-3 text-secondary">
+          Are you sure you want to delete this translation?
+        </p>
+
+        <div class="pt-summary mb-3">
+          <div class="pt-summary__label">Language</div>
+          <div class="pt-summary__value mb-2" id="deleteLang">—</div>
+          <div class="pt-summary__label">Name</div>
+          <div class="pt-summary__value" id="deleteName">—</div>
+        </div>
+
+        <p class="text-danger small mb-0 fw-medium">
+          <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
+          This action cannot be undone.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-4"
+          data-bs-dismiss="modal"
+        >
+          Cancel
+        </button>
+        <form method="post" id="deleteForm" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger px-4 shadow-sm">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i> Yes, Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    /* ---------------------------------------------------------------------
+     Delete confirmation modal
+     Populates the modal with the target translation's details and sets
+     the form action to the correct delete URL.
+     --------------------------------------------------------------------- */
+    function initDeleteModal() {
+      const modalEl = document.getElementById("deleteModal");
+      if (!modalEl) return;
+
+      const deleteForm = document.getElementById("deleteForm");
+      const langEl = document.getElementById("deleteLang");
+      const nameEl = document.getElementById("deleteName");
+      const productId = modalEl.dataset.productId || "";
+
+      modalEl.addEventListener("show.bs.modal", function (event) {
+        const trigger = event.relatedTarget;
+        if (!trigger) return;
+
+        const translationId = trigger.getAttribute("data-translation-id") || "";
+        const lang = trigger.getAttribute("data-translation-lang") || "—";
+        const name = trigger.getAttribute("data-translation-name") || "—";
+
+        if (langEl) langEl.textContent = lang;
+        if (nameEl) nameEl.textContent = name;
+
+        if (deleteForm && translationId) {
+          deleteForm.action =
+            "/manager/online/products/" +
+            encodeURIComponent(productId) +
+            "/translations/" +
+            encodeURIComponent(translationId) +
+            "/";
+        }
+      });
+
+      modalEl.addEventListener("hidden.bs.modal", function () {
+        if (deleteForm) deleteForm.removeAttribute("action");
+        if (langEl) langEl.textContent = "—";
+        if (nameEl) nameEl.textContent = "—";
+      });
+    }
+
+    /* ---------------------------------------------------------------------
+     Client-side validation for the create form.
+     Server-side validation is still authoritative; this just improves UX.
+     --------------------------------------------------------------------- */
+    function initCreateForm() {
+      const form = document.getElementById("createTranslationForm");
+      if (!form) return;
+
+      const fields = [
+        {
+          el: form.querySelector("#language_code"),
+          message: "Please select a language.",
+        },
+        {
+          el: form.querySelector("#name"),
+          message: "Please enter a translation name.",
+        },
+      ].filter(function (f) {
+        return f.el;
+      });
+
+      function showError(field, message) {
+        field.classList.add("is-invalid");
+        field.setAttribute("aria-invalid", "true");
+        const feedback = field.parentElement.querySelector(".invalid-feedback");
+        if (feedback) feedback.textContent = message;
+      }
+
+      function clearError(field) {
+        field.classList.remove("is-invalid");
+        field.removeAttribute("aria-invalid");
+        const feedback = field.parentElement.querySelector(".invalid-feedback");
+        if (feedback) feedback.textContent = "";
+      }
+
+      fields.forEach(function (f) {
+        f.el.addEventListener("input", function () {
+          clearError(f.el);
+        });
+        f.el.addEventListener("change", function () {
+          clearError(f.el);
+        });
+      });
+
+      form.addEventListener("submit", function (event) {
+        let firstInvalid = null;
+
+        fields.forEach(function (f) {
+          if (!f.el.value.trim()) {
+            showError(f.el, f.message);
+            if (!firstInvalid) firstInvalid = f.el;
+          } else {
+            clearError(f.el);
+          }
+        });
+
+        if (firstInvalid) {
+          event.preventDefault();
+          event.stopPropagation();
+          firstInvalid.focus();
+        }
+      });
+    }
+
+    function boot() {
+      initDeleteModal();
+      initCreateForm();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+</script>
+{% endblock %} {% endblock %}

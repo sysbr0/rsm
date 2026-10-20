@@ -4,13 +4,20 @@ from . import views
 from .views import (
     CategorySyncPageView,
     ProductSyncPageView,
- 
 
+    products_page,
+    product_edit_page,
+    product_images_page,
+    product_image_edit_page,
+    product_translations_page,
+    product_translation_edit_page,
 )
+
 from .api_view import (
     CategorySyncAPIView,
     ProductSyncAPIView,
     CombinedSyncAPIView,
+  
 )
 
 urlpatterns = [
@@ -119,6 +126,54 @@ urlpatterns = [
     # Category images
     path("categories/<uuid:category_id>/images/",views.category_images_page, name="category_images_page",),
     path("categories/<uuid:category_id>/images/<uuid:image_id>/edit/",views.category_image_edit_page,name="category_image_edit_page",),
+    # -----------------------------------------------------------------
+    # Products
+    # -----------------------------------------------------------------
+    path(
+        "products/",
+        products_page,
+        name="products_page",
+    ),
 
+ 
+    path(
+        "products/<uuid:product_id>/edit/",
+        product_edit_page,
+        name="product_edit_page",
+    ),
 
+    # -----------------------------------------------------------------
+    # Product images
+    # -----------------------------------------------------------------
+    path(
+        "products/<uuid:product_id>/images/",
+        
+        name="product_images_page",
+    ),
+    path(
+        "products/<uuid:product_id>/images/<uuid:image_id>/edit/",
+        product_image_edit_page,
+        name="product_image_edit_page",
+    ),
+
+    # -----------------------------------------------------------------
+    # Product translations
+    # -----------------------------------------------------------------
+    path(
+        "products/<uuid:product_id>/translations/",
+        product_translations_page,
+        name="product_translations_page",
+    ),
+    path(
+        "products/<uuid:product_id>/translations/<int:translation_id>/edit/",
+        product_translation_edit_page,
+        name="product_translation_edit_page",
+    ),
 ]
+
+
+
+
+
+
+
