@@ -21,8 +21,9 @@ urlpatterns = [
     # path("tables/", include("tables.urls")),
     path("manager/", include("ui.urls")),
     # path("licensing/", include("licensing.urls")),
-    # path("api/", include("api.urls")),
+     path("api/", include("api.urls")),
     path("financial/", include("Financial.urls")),
+    path("chat/", include("chat.urls")),
 ]
 
 # Serve uploaded files during local development.

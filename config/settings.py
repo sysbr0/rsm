@@ -91,8 +91,10 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "rest_framework.authtoken",
+    "channels",
 
     "online_cloud",
+    "chat",
 
     "menu",
     "users",
@@ -103,6 +105,7 @@ INSTALLED_APPS = [
     "licensing",
     "common",
     "Financial",
+    "api"
 ]
 
 MIDDLEWARE = [
@@ -166,6 +169,14 @@ DATABASES = {
 
 AUTH_USER_MODEL = "users.User"
 
+ASGI_APPLICATION = "config.asgi.application"
+
+# Local development only — Redis is not required
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

@@ -16,6 +16,9 @@ from Financial.utils import format_currency
 from tables.models import *
 from django.conf import settings
 from menu.models import Category
+
+from decimal import Decimal, InvalidOperation
+from django.core.exceptions import ValidationError
 from tables.models import (
     RestaurantTable,
     SectionBlock,
@@ -413,6 +416,7 @@ def test(request):
         request,
         "ui/test.html",
     )
+
 def admin_table_detail(request, table_id: int):
     table = get_object_or_404(
         RestaurantTable,
@@ -676,6 +680,8 @@ def admin_table_detail(request, table_id: int):
     form_success = (
         request.GET.get("created") == "1"
     )
+    discount_applied = request.GET.get("discount_applied") == "1"
+    discount_cleared = request.GET.get("discount_cleared") == "1"
 
     delete_item_success = (
         request.GET.get("item_deleted") == "1"
@@ -703,6 +709,9 @@ def admin_table_detail(request, table_id: int):
 
     table_changed = (
         request.GET.get("table_changed") == "1"
+    )
+    change_waiter = (
+         request.GET.get("change_waiter") == "1"
     )
 
     selected_quantities: dict[
@@ -939,8 +948,194 @@ def admin_table_detail(request, table_id: int):
                             f"{exc}"
                         )
 
+
+
+
+
+        #-------------------------------------------------------
+        # chaneg waiter 
         # ========================================================
-        # PRINT PENDING KITCHEN / SECTION ITEMS
+        # ========================================================
+        # CHANGE WAITER
+        #
+        # Two flows in one action based on the POST data:
+        #   1. CREATE: Transfer the order to a new waiter.
+        #      - If a Manager does this, it's auto-approved.
+        #      - If a Waiter does this, it creates a pending request.
+        #   2. RESOLVE: Approve or Deny a pending request.
+        #      - Only Waiter B or a Manager can approve/deny.
+        # ========================================================
+
+        elif action == "change_waiter":
+
+            current_order = get_current_order()
+
+            if current_order is None:
+
+                form_error = (
+                    "No active order found "
+                    "to change the waiter for."
+                )
+
+            elif current_order.status in (
+                OrderStatus.PAID,
+                OrderStatus.CANCELLED,
+            ):
+
+                form_error = (
+                    "Cannot change the waiter of a paid "
+                    "or cancelled order."
+                )
+
+            else:
+                # Determine if we are creating a new request or resolving one
+                transfer_action = (
+                    request.POST
+                    .get("transfer_action", "create")
+                    .strip()
+                )
+
+                if transfer_action == "create":
+
+                    raw_waiter_id = (
+                        request.POST
+                        .get("new_waiter_id", "")
+                        .strip()
+                    )
+
+                    try:
+                        new_waiter_id = int(raw_waiter_id)
+                    except (TypeError, ValueError):
+                        new_waiter_id = 0
+
+                    if new_waiter_id <= 0:
+
+                        form_error = (
+                            "Please select a waiter "
+                            "before confirming."
+                        )
+
+                    elif new_waiter_id == current_order.waiter_id:
+
+                        form_error = (
+                            "The selected waiter is already "
+                            "assigned to this order."
+                        )
+
+                    else:
+                        seted_waiter = (
+                            User.objects
+                            .filter(id=new_waiter_id)
+                            .first()
+                        )
+
+                        if seted_waiter is None:
+
+                            form_error = (
+                                "Selected waiter "
+                                "is not available."
+                            )
+
+                        else:
+                            try:
+                                transfer = (
+                                    ChangeOrderWaiter
+                                    .create_transfer_request(
+                                        order=current_order,
+                                        created_by_user=request.user,
+                                        seted_waiter=seted_waiter,
+                                    )
+                                )
+
+                                # Manager auto-approved → order already updated
+                                if transfer.is_approved:
+                                    return redirect(
+                                        f"{request.path}"
+                                        "?waiter_changed=1"
+                                    )
+
+                                return redirect(
+                                    f"{request.path}"
+                                    "?waiter_transfer_requested=1"
+                                )
+
+                            except Exception as exc:
+                                form_error = (
+                                    "Unable to request "
+                                    "waiter change: "
+                                    f"{exc}"
+                                )
+
+                elif transfer_action == "resolve":
+
+                    raw_transfer_id = (
+                        request.POST
+                        .get("transfer_id", "")
+                        .strip()
+                    )
+
+                    resolve_decision = (
+                        request.POST
+                        .get("resolve_decision", "approve")
+                        .strip()
+                    )
+
+                    try:
+                        transfer_id = int(raw_transfer_id)
+                    except (TypeError, ValueError):
+                        transfer_id = 0
+
+                    if transfer_id <= 0:
+
+                        form_error = "Invalid transfer request."
+
+                    else:
+                        transfer = (
+                            ChangeOrderWaiter.objects
+                            .filter(
+                                id=transfer_id,
+                                order=current_order,
+                                is_approved=False,
+                            )
+                            .first()
+                        )
+
+                        if not transfer:
+
+                            form_error = (
+                                "Pending transfer request "
+                                "not found or already processed."
+                            )
+
+                        else:
+                            try:
+                                approve_bool = (
+                                    resolve_decision == "approve"
+                                )
+
+                                transfer.approve_or_deny_transfer(
+                                    actioning_user=request.user,
+                                    approve=approve_bool,
+                                )
+
+                                if approve_bool:
+                                    return redirect(
+                                        f"{request.path}"
+                                        "?waiter_changed=1"
+                                    )
+
+                                return redirect(
+                                    f"{request.path}"
+                                    "?waiter_transfer_denied=1"
+                                )
+
+                            except Exception as exc:
+                                form_error = (
+                                    "Unable to process "
+                                    "waiter change: "
+                                    f"{exc}"
+                                )
+        # ========================================================
         #
         # IMPORTANT:
         # This is the ONLY place where pending OrderItems
@@ -1188,6 +1383,75 @@ def admin_table_detail(request, table_id: int):
                         "?item_updated=1"
                     )
 
+
+# ========================================================
+# APPLY DISCOUNT
+# ========================================================
+
+        elif action == "apply_discount":
+
+            current_order = get_current_order()
+
+            if current_order is None:
+                form_error = "No active order found to apply a discount to."
+
+            elif current_order.status in (
+                OrderStatus.PAID,
+                OrderStatus.CANCELLED,
+            ):
+                form_error = "Cannot apply a discount to a paid or cancelled order."
+
+            else:
+                raw_discount = (
+                    request.POST.get("discount_amount", "")
+                    .strip()
+                )
+
+                try:
+                    discount_amount = Decimal(raw_discount)
+                except (InvalidOperation, TypeError, ValueError):
+                    discount_amount = None
+
+                if discount_amount is None:
+                    form_error = "Please enter a valid discount amount."
+
+                else:
+                    try:
+                        current_order.apply_discount(discount_amount)
+                        return redirect(f"{request.path}?discount_applied=1")
+
+                    except ValidationError as exc:
+                        if hasattr(exc, "messages"):
+                            form_error = " ".join(exc.messages)
+                        else:
+                            form_error = str(exc)
+
+                    except Exception as exc:
+                        form_error = f"Unable to apply discount: {exc}"
+
+
+        # ========================================================
+        # CLEAR DISCOUNT (optional but useful)
+        # ========================================================
+
+        elif action == "clear_discount":
+
+            current_order = get_current_order()
+
+            if current_order is None:
+                form_error = "No active order found."
+
+            elif current_order.status in (
+                OrderStatus.PAID,
+                OrderStatus.CANCELLED,
+            ):
+                form_error = "Cannot modify a paid or cancelled order."
+
+            else:
+                current_order.clear_discount()
+                return redirect(f"{request.path}?discount_cleared=1")
+
+
         # ========================================================
         # DELETE ORDER ITEM
         # ========================================================
@@ -1312,6 +1576,9 @@ def admin_table_detail(request, table_id: int):
         # ========================================================
         # CREATE / ADD ORDER ITEMS
         # ========================================================
+
+
+        
 
         elif action in {
             "save_and_create_order",
@@ -1851,6 +2118,15 @@ def admin_table_detail(request, table_id: int):
     # ============================================================
     # CONTEXT
     # ============================================================
+    waiters = User.objects.filter(role=UserRole.WAITER, is_active=True)
+
+    
+    pending_transfer = None
+    if order:  # <--- Use 'order' here, not 'current_order'
+        pending_transfer = ChangeOrderWaiter.objects.filter(
+            order=order, 
+            is_approved=False
+        ).first()
 
     context = {
         "table": table,
@@ -1944,12 +2220,17 @@ def admin_table_detail(request, table_id: int):
             TableStatus.OCCUPIED
         ),
 
+        "discount_applied": discount_applied,
+        "discount_cleared": discount_cleared,
+
         # --------------------------------------------------------
         # Change-table payload (sections → available tables)
         # --------------------------------------------------------
         "sections_payload": sections_payload,
 
         "admin_page": "tables",
+         "waiters": waiters,
+         "pending_waiter_transfer": pending_transfer,
     }
 
     return render(

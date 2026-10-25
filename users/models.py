@@ -13,6 +13,7 @@ class UserRole(models.TextChoices):
     WAITER = "WAITER", "Waiter"
     CASHIER = "CASHIER", "Cashier"
     KITCHEN = "KITCHEN", "Kitchen"
+    EMPLOYEE =  "EMPLOYEE" , "Employee"
 
 
 class BaseAuth(AbstractUser):
@@ -40,7 +41,7 @@ class User(BaseAuth):
     is_active = models.BooleanField(
         default=True,
     )
-
+    is_working = models.BooleanField(default=True)
     REQUIRED_FIELDS = ["email"]
 
     def __str__(self):

@@ -1,0 +1,1019 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff Chat | RMS</title>
+
+    <style>
+      :root {
+        --primary: #7f1d1d;
+        --primary-dark: #5f1515;
+        --purple: #4c1d95;
+        --background: #f5f6fa;
+        --surface: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --success: #15803d;
+        --read-check: #60a5fa;
+        --unread: #dc2626;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: var(--background);
+        color: var(--text);
+      }
+
+      .app {
+        height: 100dvh;
+        display: flex;
+        padding: 18px;
+        gap: 18px;
+        max-width: 1600px;
+        margin: auto;
+      }
+
+      .sidebar {
+        width: 310px;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+
+      .sidebar-header {
+        padding: 22px;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), var(--purple));
+      }
+
+      .sidebar-header h1 {
+        font-size: 21px;
+        margin: 0 0 6px;
+      }
+
+      .sidebar-header p {
+        margin: 0;
+        font-size: 13px;
+        opacity: 0.85;
+      }
+
+      .search-box {
+        padding: 15px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .search-box input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      .search-box input:focus {
+        border-color: var(--primary);
+      }
+
+      .staff-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+      }
+
+      .staff-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .staff-item:hover {
+        background: #f9fafb;
+      }
+
+      .staff-item.active {
+        background: #fef2f2;
+        outline: 1px solid #fecaca;
+      }
+
+      .avatar {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #ede9fe;
+        color: var(--purple);
+        font-weight: 700;
+      }
+
+      .staff-info {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .staff-name {
+        font-size: 14px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+      }
+
+      .staff-role {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* Unread messages badge */
+      .unread-badge {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--unread);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .unread-badge[hidden] {
+        display: none;
+      }
+
+      .chat-panel {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+
+      .chat-header {
+        min-height: 82px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .chat-header .avatar {
+        width: 46px;
+        height: 46px;
+      }
+
+      .chat-heading {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .chat-heading h2 {
+        margin: 0;
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+
+      .connection-status {
+        margin-top: 5px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .connection-status.connected {
+        color: var(--success);
+      }
+      .connection-status.error {
+        color: #b91c1c;
+      }
+
+      .messages {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        padding: 24px;
+        background: radial-gradient(#e5e7eb 0.7px, transparent 0.7px);
+        background-size: 18px 18px;
+        background-color: #fafafa;
+      }
+
+      .empty-state {
+        margin: auto;
+        max-width: 320px;
+        text-align: center;
+        color: var(--muted);
+        line-height: 1.6;
+        padding: 20px;
+      }
+
+      .message-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        max-width: 78%;
+      }
+
+      .message-row.mine {
+        align-self: flex-end;
+        align-items: flex-end;
+      }
+
+      .message-sender {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 0 8px 4px;
+      }
+
+      .bubble {
+        padding: 11px 14px;
+        border-radius: 15px 15px 15px 4px;
+        background: white;
+        border: 1px solid var(--border);
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .mine .bubble {
+        color: white;
+        background: var(--primary);
+        border-color: var(--primary);
+        border-radius: 15px 15px 4px 15px;
+      }
+
+      .message-meta {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 5px;
+        margin: 5px 5px 0;
+      }
+
+      .message-time {
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .message-status {
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: -3px;
+        padding-right: 3px;
+        color: #9ca3af;
+        user-select: none;
+      }
+
+      .message-status.seen {
+        color: var(--read-check);
+      }
+
+      .composer {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        padding: 16px;
+        border-top: 1px solid var(--border);
+        background: white;
+      }
+
+      .composer textarea {
+        flex: 1;
+        resize: none;
+        min-height: 46px;
+        max-height: 130px;
+        padding: 13px 15px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        outline: none;
+        font: inherit;
+        font-size: 14px;
+      }
+
+      .composer textarea:focus {
+        border-color: var(--primary);
+      }
+
+      .send-button {
+        min-width: 90px;
+        height: 46px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--primary);
+        color: white;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .send-button:hover {
+        background: var(--primary-dark);
+      }
+
+      .send-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .notice {
+        padding: 10px 16px;
+        font-size: 12px;
+        color: #92400e;
+        background: #fffbeb;
+        border-top: 1px solid #fde68a;
+        display: none;
+      }
+
+      .back-button {
+        display: none;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 9px;
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 700px) {
+        .app {
+          height: 100dvh;
+          padding: 0;
+          gap: 0;
+        }
+
+        .sidebar {
+          width: 100%;
+          min-width: 0;
+          border: 0;
+          border-radius: 0;
+        }
+
+        .chat-panel {
+          display: none;
+          width: 100%;
+          border: 0;
+          border-radius: 0;
+        }
+
+        .app.chat-open .sidebar {
+          display: none;
+        }
+        .app.chat-open .chat-panel {
+          display: flex;
+        }
+        .back-button {
+          display: block;
+        }
+        .messages {
+          padding: 16px;
+        }
+        .message-row {
+          max-width: 90%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app" id="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>RMS Messages</h1>
+          <p>Private staff conversations</p>
+        </div>
+
+        <div class="search-box">
+          <input
+            id="staffSearch"
+            type="search"
+            placeholder="Search staff..."
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="staff-list" id="staffList">
+          <div class="empty-state">Loading staff members...</div>
+        </div>
+      </aside>
+
+      <main class="chat-panel">
+        <header class="chat-header">
+          <button class="back-button" id="backButton" type="button">
+            ← Back
+          </button>
+
+          <div class="avatar" id="headerAvatar">?</div>
+
+          <div class="chat-heading">
+            <h2 id="chatTitle">Select a staff member</h2>
+            <div class="connection-status" id="connectionStatus">
+              Choose someone to start chatting
+            </div>
+          </div>
+        </header>
+
+        <div class="messages" id="messages">
+          <div class="empty-state">
+            <strong>Your staff chat</strong>
+            <p>
+              Select a staff member from the list to view your conversation and
+              send messages in real time.
+            </p>
+          </div>
+        </div>
+
+        <div class="notice" id="notice"></div>
+
+        <form class="composer" id="messageForm">
+          <textarea
+            id="messageInput"
+            placeholder="Write a message..."
+            maxlength="5000"
+            rows="1"
+            disabled
+          ></textarea>
+
+          <button class="send-button" id="sendButton" type="submit" disabled>
+            Send ➤
+          </button>
+        </form>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const CURRENT_USER_ID = Number("{{ request.user.id|escapejs }}");
+        const STAFF_API_URL = "/chat/staff/";
+        const WS_BASE_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+
+        const app = document.getElementById("app");
+        const staffList = document.getElementById("staffList");
+        const staffSearch = document.getElementById("staffSearch");
+        const messagesBox = document.getElementById("messages");
+        const chatTitle = document.getElementById("chatTitle");
+        const headerAvatar = document.getElementById("headerAvatar");
+        const connectionStatus = document.getElementById("connectionStatus");
+        const messageForm = document.getElementById("messageForm");
+        const messageInput = document.getElementById("messageInput");
+        const sendButton = document.getElementById("sendButton");
+        const notice = document.getElementById("notice");
+
+        let staffMembers = [];
+        let selectedStaff = null;
+        let socket = null;
+        let reconnectTimer = null;
+        let manualClose = false;
+        let loadingStaff = false;
+
+        function displayName(user) {
+          return user.full_name || user.username || `Staff #${user.id}`;
+        }
+
+        function initials(name) {
+          return (
+            name
+              .trim()
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((part) => part.charAt(0).toUpperCase())
+              .join("") || "?"
+          );
+        }
+
+        function setStatus(text, type = "") {
+          connectionStatus.textContent = text;
+          connectionStatus.className = "connection-status";
+          if (type) connectionStatus.classList.add(type);
+        }
+
+        function showNotice(text) {
+          notice.textContent = text;
+          notice.style.display = "block";
+        }
+
+        function hideNotice() {
+          notice.style.display = "none";
+          notice.textContent = "";
+        }
+
+        async function loadStaff({ silent = false } = {}) {
+          // Prevent overlapping background requests.
+          if (loadingStaff) return;
+          loadingStaff = true;
+
+          if (!silent && staffMembers.length === 0) {
+            staffList.innerHTML =
+              '<div class="empty-state">Loading staff members...</div>';
+          }
+
+          try {
+            const response = await fetch(STAFF_API_URL, {
+              method: "GET",
+              credentials: "same-origin",
+              headers: { Accept: "application/json" },
+              cache: "no-store",
+            });
+
+            if (!response.ok) {
+              throw new Error(`Staff API returned HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            const users = Array.isArray(data) ? data : data.results;
+
+            if (!Array.isArray(users)) {
+              throw new Error("Unexpected staff API response.");
+            }
+
+            staffMembers = users.filter(
+              (user) => Number(user.id) !== CURRENT_USER_ID,
+            );
+
+            // Update the selected staff object without resetting the conversation.
+            if (selectedStaff) {
+              const refreshed = staffMembers.find(
+                (user) => Number(user.id) === Number(selectedStaff.id),
+              );
+
+              if (refreshed) selectedStaff = refreshed;
+            }
+
+            renderStaff();
+          } catch (error) {
+            console.error("Failed to load staff:", error);
+
+            if (!silent || staffMembers.length === 0) {
+              staffList.innerHTML =
+                '<div class="empty-state">Could not load staff. Check the staff API URL and your login session.</div>';
+            }
+          } finally {
+            loadingStaff = false;
+          }
+        }
+
+        function renderStaff() {
+          const query = staffSearch.value.trim().toLowerCase();
+
+          const filtered = staffMembers.filter((user) => {
+            const name = displayName(user).toLowerCase();
+            const role = String(user.role || "").toLowerCase();
+            return name.includes(query) || role.includes(query);
+          });
+
+          staffList.replaceChildren();
+
+          if (!filtered.length) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.textContent = staffMembers.length
+              ? "No matching staff members."
+              : "No other staff members found.";
+            staffList.appendChild(empty);
+            return;
+          }
+
+          filtered.forEach((user) => {
+            const name = displayName(user);
+            const unreadCount = Math.max(0, Number(user.unread_count || 0));
+
+            const item = document.createElement("div");
+            item.className = "staff-item";
+            item.setAttribute("role", "button");
+            item.tabIndex = 0;
+
+            if (selectedStaff && Number(selectedStaff.id) === Number(user.id)) {
+              item.classList.add("active");
+            }
+
+            const avatar = document.createElement("div");
+            avatar.className = "avatar";
+            avatar.textContent = initials(name);
+
+            const info = document.createElement("div");
+            info.className = "staff-info";
+
+            const nameElement = document.createElement("div");
+            nameElement.className = "staff-name";
+            nameElement.textContent = name;
+
+            const roleElement = document.createElement("div");
+            roleElement.className = "staff-role";
+            roleElement.textContent = user.role || "Staff";
+
+            info.append(nameElement, roleElement);
+
+            const badge = document.createElement("span");
+            badge.className = "unread-badge";
+            badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+            badge.hidden = unreadCount === 0;
+            badge.setAttribute(
+              "aria-label",
+              `${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`,
+            );
+
+            item.append(avatar, info, badge);
+
+            item.addEventListener("click", () => selectStaff(user));
+            item.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectStaff(user);
+              }
+            });
+
+            staffList.appendChild(item);
+          });
+        }
+
+        function selectStaff(user) {
+          selectedStaff = user;
+          manualClose = true;
+          clearTimeout(reconnectTimer);
+
+          if (socket) {
+            const oldSocket = socket;
+            socket = null;
+            oldSocket.close();
+          }
+
+          app.classList.add("chat-open");
+          hideNotice();
+
+          chatTitle.textContent = displayName(user);
+          headerAvatar.textContent = initials(displayName(user));
+          messagesBox.replaceChildren();
+
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "Connecting to chat...";
+          messagesBox.appendChild(empty);
+
+          messageInput.disabled = true;
+          sendButton.disabled = true;
+          setStatus("Connecting...");
+
+          renderStaff();
+          connectWebSocket(Number(user.id));
+        }
+
+        function connectWebSocket(recipientId) {
+          if (!selectedStaff || Number(selectedStaff.id) !== recipientId) {
+            return;
+          }
+
+          const url = `${WS_BASE_URL}/ws/chat/${recipientId}/`;
+          manualClose = false;
+
+          try {
+            socket = new WebSocket(url);
+          } catch (error) {
+            console.error("Could not create WebSocket:", error);
+            setStatus("Could not connect", "error");
+            scheduleReconnect(recipientId);
+            return;
+          }
+
+          const thisSocket = socket;
+
+          thisSocket.addEventListener("open", () => {
+            if (socket !== thisSocket) return;
+
+            setStatus("Connected", "connected");
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+          });
+
+          thisSocket.addEventListener("message", (event) => {
+            if (socket !== thisSocket) return;
+
+            let data;
+
+            try {
+              data = JSON.parse(event.data);
+            } catch (error) {
+              console.error("Invalid chat response:", event.data);
+              return;
+            }
+
+            if (data.type === "chat_history") {
+              messagesBox.replaceChildren();
+              (data.messages || []).forEach(addMessage);
+              scrollToBottom();
+              markVisibleIncomingMessagesRead();
+              refreshUnreadCountsSoon();
+            } else if (data.type === "chat_message") {
+              addMessage(data.message_data);
+              markVisibleIncomingMessagesRead();
+              refreshUnreadCountsSoon();
+            } else if (data.type === "chat_read_receipt") {
+              updateReadReceipts(data.message_ids || [], data.reader_id);
+              refreshUnreadCountsSoon();
+            } else if (data.type === "error") {
+              showNotice(data.message || "Could not send message.");
+            }
+          });
+
+          thisSocket.addEventListener("error", (error) => {
+            console.error("WebSocket error:", error);
+            setStatus("Connection error", "error");
+          });
+
+          thisSocket.addEventListener("close", (event) => {
+            if (socket !== thisSocket) return;
+
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            if (
+              manualClose ||
+              !selectedStaff ||
+              Number(selectedStaff.id) !== recipientId
+            ) {
+              return;
+            }
+
+            setStatus(
+              event.code === 4001
+                ? "Not authenticated — sign in again"
+                : `Disconnected (${event.code})`,
+              "error",
+            );
+
+            scheduleReconnect(recipientId);
+          });
+        }
+
+        function scheduleReconnect(recipientId) {
+          clearTimeout(reconnectTimer);
+          if (manualClose) return;
+
+          reconnectTimer = setTimeout(() => {
+            if (selectedStaff && Number(selectedStaff.id) === recipientId) {
+              setStatus("Reconnecting...");
+              connectWebSocket(recipientId);
+            }
+          }, 2500);
+        }
+
+        function addMessage(message) {
+          if (!message || typeof message.message !== "string") return;
+
+          const senderId = Number(message.sender_id);
+          const mine = senderId === CURRENT_USER_ID;
+          const otherId = Number(selectedStaff?.id);
+
+          if (!otherId) return;
+
+          const belongsToConversation =
+            (senderId === CURRENT_USER_ID &&
+              Number(message.recipient_id) === otherId) ||
+            (senderId === otherId &&
+              Number(message.recipient_id) === CURRENT_USER_ID);
+
+          if (!belongsToConversation) return;
+
+          const messageId = message.id == null ? null : String(message.id);
+
+          if (
+            messageId &&
+            messagesBox.querySelector(
+              `[data-message-id="${CSS.escape(messageId)}"]`,
+            )
+          ) {
+            return;
+          }
+
+          const empty = messagesBox.querySelector(".empty-state");
+          if (empty) empty.remove();
+
+          const row = document.createElement("div");
+          row.className = `message-row${mine ? " mine" : ""}`;
+
+          if (messageId) row.dataset.messageId = messageId;
+
+          if (!mine) {
+            const sender = document.createElement("div");
+            sender.className = "message-sender";
+            sender.textContent =
+              message.sender_name || displayName(selectedStaff);
+            row.appendChild(sender);
+          }
+
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = message.message;
+
+          const meta = document.createElement("div");
+          meta.className = "message-meta";
+
+          const time = document.createElement("div");
+          time.className = "message-time";
+          time.textContent = formatTime(message.sent_at);
+          meta.appendChild(time);
+
+          if (mine) {
+            const status = document.createElement("span");
+            const isRead = message.is_read === true;
+
+            status.className = `message-status${isRead ? " seen" : ""}`;
+            status.textContent = isRead ? "✓✓" : "✓";
+            status.title = isRead ? "Read" : "Sent";
+            status.setAttribute("aria-label", status.title);
+
+            if (messageId) status.dataset.statusFor = messageId;
+
+            meta.appendChild(status);
+          }
+
+          row.append(bubble, meta);
+          messagesBox.appendChild(row);
+          scrollToBottom();
+        }
+
+        function updateReadReceipts(messageIds, readerId) {
+          if (!selectedStaff || Number(readerId) !== Number(selectedStaff.id)) {
+            return;
+          }
+
+          messageIds.forEach((id) => {
+            const messageId = String(id);
+
+            const row = messagesBox.querySelector(
+              `.message-row.mine[data-message-id="${CSS.escape(messageId)}"]`,
+            );
+
+            if (!row) return;
+
+            const status = row.querySelector(".message-status");
+            if (!status) return;
+
+            status.textContent = "✓✓";
+            status.classList.add("seen");
+            status.title = "Read";
+            status.setAttribute("aria-label", "Read");
+          });
+        }
+
+        function markVisibleIncomingMessagesRead() {
+          if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN ||
+            !selectedStaff ||
+            document.visibilityState !== "visible"
+          ) {
+            return;
+          }
+
+          if (
+            window.matchMedia("(max-width: 700px)").matches &&
+            !app.classList.contains("chat-open")
+          ) {
+            return;
+          }
+
+          const messageIds = Array.from(
+            messagesBox.querySelectorAll(
+              ".message-row:not(.mine)[data-message-id]",
+            ),
+          )
+            .map((row) => Number(row.dataset.messageId))
+            .filter((id) => Number.isInteger(id) && id > 0);
+
+          if (messageIds.length) {
+            socket.send(
+              JSON.stringify({
+                type: "mark_read",
+                message_ids: messageIds,
+              }),
+            );
+          }
+        }
+
+        function formatTime(value) {
+          if (!value) return "";
+
+          const date = new Date(value);
+          if (Number.isNaN(date.getTime())) return "";
+
+          return date.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+
+        function scrollToBottom() {
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        }
+
+        function sendMessage() {
+          const text = messageInput.value.trim();
+
+          if (!text || !socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+          }
+
+          if (text.length > 5000) {
+            showNotice("Messages cannot exceed 5000 characters.");
+            return;
+          }
+
+          hideNotice();
+
+          socket.send(JSON.stringify({ message: text }));
+
+          messageInput.value = "";
+          messageInput.style.height = "46px";
+          messageInput.focus();
+        }
+
+        function refreshUnreadCountsSoon() {
+          // Refresh counts after the backend has had time to save read status.
+          setTimeout(() => loadStaff({ silent: true }), 500);
+        }
+
+        messageForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          sendMessage();
+        });
+
+        messageInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+          }
+        });
+
+        messageInput.addEventListener("input", () => {
+          messageInput.style.height = "46px";
+          messageInput.style.height =
+            Math.min(messageInput.scrollHeight, 130) + "px";
+        });
+
+        staffSearch.addEventListener("input", renderStaff);
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            markVisibleIncomingMessagesRead();
+            loadStaff({ silent: true });
+          }
+        });
+
+        window.addEventListener("focus", () => {
+          markVisibleIncomingMessagesRead();
+          loadStaff({ silent: true });
+        });
+
+        document.getElementById("backButton").addEventListener("click", () => {
+          app.classList.remove("chat-open");
+          loadStaff({ silent: true });
+        });
+
+        window.addEventListener("beforeunload", () => {
+          manualClose = true;
+          clearTimeout(reconnectTimer);
+          if (socket) socket.close();
+        });
+
+        // Initial staff list.
+        loadStaff();
+
+        // Refresh unread counts every 10 seconds.
+        setInterval(() => {
+          loadStaff({ silent: true });
+        }, 10000);
+      })();
+    </script>
+  </body>
+</html>

@@ -828,6 +828,21 @@ sidebar_extra %}
   .order-btn--change-table .order-btn__content strong {
     color: #1d4ed8;
   }
+  .order-btn--discount {
+    border-color: #fde68a;
+    background: #fffbeb;
+  }
+  .order-btn--discount:hover {
+    border-color: #fcd34d;
+    background: #fef3c7;
+  }
+  .order-btn--discount .order-btn__icon {
+    background: #fef3c7;
+    color: #b45309;
+  }
+  .order-btn--discount .order-btn__content strong {
+    color: #92400e;
+  }
 
   /* BUILDER */
   .td-builder {
@@ -1814,7 +1829,6 @@ sidebar_extra %}
     }
   }
 </style>
-
 <div class="td" id="table-details-manager">
   <!-- HERO -->
   <header class="td-hero">
@@ -1894,40 +1908,77 @@ sidebar_extra %}
         <span class="mat">check_circle</span>
         <span>Order created successfully for this table.</span>
       </div>
-      {% endif %} {% if form_error %}
+      {% endif %} 
+      {% if form_error %}
       <div class="td-toast err">
         <span class="mat">error</span>
         <span>{{ form_error }}</span>
       </div>
-      {% endif %} {% if delete_item_success %}
+      {% endif %} 
+      {% if delete_item_success %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Order item deleted successfully.</span>
       </div>
-      {% endif %} {% if update_item_success %}
+      {% endif %} 
+      {% if update_item_success %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Order item updated successfully.</span>
       </div>
-      {% endif %} {% if delete_order_success %}
+      {% endif %} 
+      {% if delete_order_success %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Current order deleted successfully.</span>
       </div>
-      {% endif %} {% if invoice_printed %}
+      {% endif %} 
+      {% if invoice_printed %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Invoice marked as printed for the customer.</span>
       </div>
-      {% endif %} {% if order_paid %}
+      {% endif %} 
+      {% if order_paid %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Order marked as paid successfully.</span>
       </div>
-      {% endif %} {% if table_changed %}
+      {% endif %} 
+      {% if table_changed %}
       <div class="td-toast ok">
         <span class="mat">check_circle</span>
         <span>Table changed successfully.</span>
+      </div>
+      {% endif %} 
+      {% if waiter_transfer_requested %}
+      <div class="td-toast ok">
+        <span class="mat">check_circle</span>
+        <span>Waiter transfer requested. Waiting for approval.</span>
+      </div>
+      {% endif %} 
+      {% if waiter_changed %}
+      <div class="td-toast ok">
+        <span class="mat">check_circle</span>
+        <span>Waiter changed successfully.</span>
+      </div>
+      {% endif %} 
+      {% if waiter_transfer_denied %}
+      <div class="td-toast ok">
+        <span class="mat">check_circle</span>
+        <span>Waiter transfer request denied.</span>
+      </div>
+      {% endif %}
+      {% if discount_applied %}
+      <div class="td-toast ok">
+        <span class="mat">check_circle</span>
+        <span>Discount applied successfully.</span>
+      </div>
+      {% endif %} 
+      {% if discount_cleared %}
+      <div class="td-toast ok">
+        <span class="mat">check_circle</span>
+        <span>Discount cleared successfully.</span>
       </div>
       {% endif %}
 
@@ -1958,20 +2009,9 @@ sidebar_extra %}
             <input type="hidden" name="action" value="print_invoice" />
             <button type="submit" class="order-btn order-btn--print">
               <span class="order-btn__icon">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path
-                    d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                  ></path>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                   <rect x="6" y="14" width="12" height="8"></rect>
                 </svg>
               </span>
@@ -1983,23 +2023,9 @@ sidebar_extra %}
           </form>
 
           {% if current_order.status != "PAID" %}
-          <button
-            type="button"
-            class="order-btn order-btn--paid"
-            data-open-payment-modal
-            aria-label="Set order as paid"
-          >
+          <button type="button" class="order-btn order-btn--paid" data-open-payment-modal aria-label="Set order as paid">
             <span class="order-btn__icon">
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </span>
@@ -2011,23 +2037,25 @@ sidebar_extra %}
           </button>
           {% endif %}
 
-          <button
-            type="button"
-            class="order-btn order-btn--change-table"
-            data-open-change-table-modal
-            aria-label="Change table"
-          >
+          <!-- NEW: CHANGE WAITER BUTTON -->
+          <button type="button" class="order-btn order-btn--change-table" style="border-color: #e9d5ff; background: #faf5ff;" data-open-waiter-modal aria-label="Change Waiter">
+            <span class="order-btn__icon" style="background: #f3e8ff; color: #9333ea;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <polyline points="17 11 19 13 23 9"></polyline>
+              </svg>
+            </span>
+            <span class="order-btn__content">
+              <strong>Change Waiter</strong>
+              <small>Transfer or request transfer</small>
+            </span>
+            <span class="order-btn__arrow">→</span>
+          </button>
+
+          <button type="button" class="order-btn order-btn--change-table" data-open-change-table-modal aria-label="Change table">
             <span class="order-btn__icon">
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="17 1 21 5 17 9"></polyline>
                 <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
                 <polyline points="7 23 3 19 7 15"></polyline>
@@ -2041,29 +2069,34 @@ sidebar_extra %}
             <span class="order-btn__arrow">→</span>
           </button>
 
-          <form
-            method="post"
-            id="printPendingItemsForm"
-            class="order-actions__form"
-          >
+          <button type="button" class="order-btn order-btn--discount" data-open-discount-modal aria-label="Apply discount">
+            <span class="order-btn__icon">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+            </span>
+            <span class="order-btn__content">
+              <strong>Apply Discount</strong>
+              {% if current_order.discount > 0 %}
+              Current: -{{ current_order.discount|floatformat:2 }}
+              {% else %}
+              No discount applied
+              {% endif %}
+              </small>
+            </span>
+            <span class="order-btn__arrow">→</span>
+          </button>
+          {% endif %}
+
+          <form method="post" id="printPendingItemsForm" class="order-actions__form">
             {% csrf_token %}
             <input type="hidden" name="action" value="print_pending_items" />
             <button type="submit" class="order-btn order-btn--print-items">
               <span class="order-btn__icon">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path
-                    d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                  ></path>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                   <rect x="6" y="14" width="12" height="8"></rect>
                 </svg>
               </span>
@@ -2075,6 +2108,32 @@ sidebar_extra %}
           </form>
         </div>
 
+        <!-- NEW: PENDING WAITER TRANSFER ALERT -->
+        {% if pending_waiter_transfer %}
+        <div style="margin-top: 1rem; padding: 1rem; border: 1.5px solid #fcd34d; background: #fffbeb; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; color: #92400e; font-size: 0.85rem; font-weight: 600;">
+            <span class="mat" style="color: #d97706;">hourglass_top</span>
+            <span>Waiter ({{ pending_waiter_transfer.seted_waiter.username }}) is waiting for your approval to take this order.</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <form method="post" style="margin: 0;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="change_waiter">
+              <input type="hidden" name="transfer_action" value="resolve">
+              <input type="hidden" name="transfer_id" value="{{ pending_waiter_transfer.id }}">
+              <button type="submit" name="resolve_decision" value="approve" style="padding: 0.5rem 1rem; border-radius: 8px; border: 0; background: #10b981; color: white; font-weight: 700; cursor: pointer; font-size: 0.75rem;">Approve</button>
+            </form>
+            <form method="post" style="margin: 0;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="change_waiter">
+              <input type="hidden" name="transfer_action" value="resolve">
+              <input type="hidden" name="transfer_id" value="{{ pending_waiter_transfer.id }}">
+              <button type="submit" name="resolve_decision" value="deny" style="padding: 0.5rem 1rem; border-radius: 8px; border: 0; background: #fef2f2; color: #b91c1c; font-weight: 700; cursor: pointer; font-size: 0.75rem;">Deny</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="td-current-list">
           <p class="td-current-sub">
             <span class="mat">notes</span>
@@ -2082,9 +2141,7 @@ sidebar_extra %}
           </p>
 
           {% for item in current_order_item_rows_without_notes %}
-          <div
-            class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}"
-          >
+          <div class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}">
             <div class="td-current-info">
               <p class="td-current-name">{{ item.name }}</p>
               <p class="td-current-sub">{{ item.summary_display }}</p>
@@ -2094,26 +2151,9 @@ sidebar_extra %}
               <form method="post" class="td-current-update">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_item" />
-                <input
-                  type="hidden"
-                  name="order_item_id"
-                  value="{{ item.id }}"
-                />
-                <input
-                  type="number"
-                  min="0.5"
-                  step="0.01"
-                  class="td-qty-input"
-                  name="quantity"
-                  value="{{ item.quantity_input }}"
-                />
-                <input
-                  type="text"
-                  class="td-note-input"
-                  name="notes"
-                  value="{{ item.notes }}"
-                  placeholder="Note"
-                />
+                <input type="hidden" name="order_item_id" value="{{ item.id }}" />
+                <input type="number" min="0.5" step="0.01" class="td-qty-input" name="quantity" value="{{ item.quantity_input }}" />
+                <input type="text" class="td-note-input" name="notes" value="{{ item.notes }}" placeholder="Note" />
                 <button class="td-btn-update" type="submit">
                   <span class="mat">update</span>
                   Update
@@ -2123,11 +2163,7 @@ sidebar_extra %}
               <form method="post" class="td-current-delete">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_item" />
-                <input
-                  type="hidden"
-                  name="order_item_id"
-                  value="{{ item.id }}"
-                />
+                <input type="hidden" name="order_item_id" value="{{ item.id }}" />
                 <button class="td-btn-delete" type="submit">
                   <span class="mat">delete</span>
                   Delete
@@ -2145,9 +2181,7 @@ sidebar_extra %}
           </p>
 
           {% for item in current_order_item_rows_with_notes %}
-          <div
-            class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}"
-          >
+          <div class="td-current-item {% if item.has_print_job %}td-item-printed{% endif %}">
             <div class="td-current-info">
               <p class="td-current-name">{{ item.name }}</p>
               <p class="td-current-sub">{{ item.summary_display }}</p>
@@ -2158,26 +2192,9 @@ sidebar_extra %}
               <form method="post" class="td-current-update">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_item" />
-                <input
-                  type="hidden"
-                  name="order_item_id"
-                  value="{{ item.id }}"
-                />
-                <input
-                  type="number"
-                  min="0.5"
-                  step="0.01"
-                  class="td-qty-input"
-                  name="quantity"
-                  value="{{ item.quantity_input }}"
-                />
-                <input
-                  type="text"
-                  class="td-note-input"
-                  name="notes"
-                  value="{{ item.notes }}"
-                  placeholder="Note"
-                />
+                <input type="hidden" name="order_item_id" value="{{ item.id }}" />
+                <input type="number" min="0.5" step="0.01" class="td-qty-input" name="quantity" value="{{ item.quantity_input }}" />
+                <input type="text" class="td-note-input" name="notes" value="{{ item.notes }}" placeholder="Note" />
                 <button class="td-btn-update" type="submit">
                   <span class="mat">update</span>
                   Update
@@ -2187,11 +2204,7 @@ sidebar_extra %}
               <form method="post" class="td-current-delete">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_item" />
-                <input
-                  type="hidden"
-                  name="order_item_id"
-                  value="{{ item.id }}"
-                />
+                <input type="hidden" name="order_item_id" value="{{ item.id }}" />
                 <button class="td-btn-delete" type="submit">
                   <span class="mat">delete</span>
                   Delete
@@ -2204,7 +2217,6 @@ sidebar_extra %}
           {% endfor %}
         </div>
       </div>
-      {% endif %}
 
       <!-- CREATE ORDER -->
       <form method="post" id="tdCreateForm">
@@ -2219,19 +2231,11 @@ sidebar_extra %}
               Categories
             </p>
             <div class="td-category-nav">
-              <button
-                type="button"
-                class="td-category-btn td-active"
-                data-category-target="all"
-              >
+              <button type="button" class="td-category-btn td-active" data-category-target="all">
                 All
               </button>
               {% for entry in products_by_category %}
-              <button
-                type="button"
-                class="td-category-btn"
-                data-category-target="{{ entry.category.id }}"
-              >
+              <button type="button" class="td-category-btn" data-category-target="{{ entry.category.id }}">
                 {{ entry.category.name }}
               </button>
               {% endfor %}
@@ -2241,55 +2245,25 @@ sidebar_extra %}
           <section class="td-products-panel">
             <div class="td-products-grid">
               {% for product in products_flat %}
-              <div
-                class="td-product-card"
-                data-product-item
-                data-category-id="{{ product.category_id }}"
-                data-product-name="{{ product.name }}"
-                data-product-price="{{ product.current_price }}"
-                data-product-id="{{ product.id }}"
-              >
+              <div class="td-product-card" data-product-item data-category-id="{{ product.category_id }}" data-product-name="{{ product.name }}" data-product-price="{{ product.current_price }}" data-product-id="{{ product.id }}">
                 <div class="td-product-card-body">
                   <div class="td-product-card-header">
                     <p class="td-product-name">{{ product.name }}</p>
                     <p class="td-product-meta">{{ product.meta_text }}</p>
                   </div>
 
-                  <input
-                    type="text"
-                    class="td-note-input"
-                    style="width: 100%"
-                    name="note_{{ product.id }}"
-                    placeholder="Add note (optional)"
-                  />
+                  <input type="text" class="td-note-input" style="width: 100%" name="note_{{ product.id }}" placeholder="Add note (optional)" />
                 </div>
 
                 <div class="td-product-card-footer">
                   <div class="td-pick">
-                    <button type="button" class="td-minus" data-qty-minus>
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      class="td-qty-input"
-                      name="qty_{{ product.id }}"
-                      value="0"
-                      data-qty-input
-                    />
-                    <button type="button" class="td-plus" data-qty-plus>
-                      +
-                    </button>
+                    <button type="button" class="td-minus" data-qty-minus>-</button>
+                    <input type="number" min="0" step="0.01" class="td-qty-input" name="qty_{{ product.id }}" value="0" data-qty-input />
+                    <button type="button" class="td-plus" data-qty-plus>+</button>
                   </div>
 
                   <label class="td-send-toggle">
-                    <input
-                      type="checkbox"
-                      name="send_{{ product.id }}"
-                      value="1"
-                      data-send-check
-                    />
+                    <input type="checkbox" name="send_{{ product.id }}" value="1" data-send-check />
                     <span>Send</span>
                   </label>
                 </div>
@@ -2353,20 +2327,10 @@ sidebar_extra %}
 </div>
 
 <!-- PAYMENT MODAL -->
-<div
-  class="td-modal"
-  id="paymentModal"
-  aria-hidden="true"
-  style="display: none"
->
+<div class="td-modal" id="paymentModal" aria-hidden="true" style="display: none">
   <div class="td-modal-overlay" data-close-payment-modal></div>
 
-  <div
-    class="td-modal-card"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="paymentModalTitle"
-  >
+  <div class="td-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
     <div class="td-modal-header">
       <div class="td-modal-header-content">
         <div class="td-modal-icon">
@@ -2381,12 +2345,7 @@ sidebar_extra %}
         </div>
       </div>
 
-      <button
-        type="button"
-        class="td-modal-close"
-        data-close-payment-modal
-        aria-label="Close payment window"
-      >
+      <button type="button" class="td-modal-close" data-close-payment-modal aria-label="Close payment window">
         <span class="mat">close</span>
       </button>
     </div>
@@ -2437,12 +2396,7 @@ sidebar_extra %}
         {% if money_sources %}
         <div class="td-payment-select-wrap">
           <span class="mat td-select-icon">savings</span>
-          <select
-            id="moneySourceSelect"
-            name="money_source_id"
-            class="td-payment-select"
-            required
-          >
+          <select id="moneySourceSelect" name="money_source_id" class="td-payment-select" required>
             <option value="" disabled selected>
               Choose a payment account…
             </option>
@@ -2496,30 +2450,71 @@ sidebar_extra %}
   </div>
 </div>
 
-<!-- CHANGE TABLE MODAL -->
-<div
-  class="td-modal"
-  id="changeTableModal"
-  aria-hidden="true"
-  style="display: none"
->
-  <div class="td-modal-overlay" data-close-change-table-modal></div>
+<!-- NEW: CHANGE WAITER MODAL -->
+<div class="td-modal" id="waiterModal" aria-hidden="true" style="display: none">
+  <div class="td-modal-overlay" data-close-waiter-modal></div>
 
-  <div
-    class="td-modal-card"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="changeTableModalTitle"
-  >
+  <div class="td-modal-card" role="dialog" aria-modal="true" aria-labelledby="waiterModalTitle">
     <div class="td-modal-header">
       <div class="td-modal-header-content">
-        <div
-          class="td-modal-icon"
-          style="
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            color: #2563eb;
-          "
-        >
+        <div class="td-modal-icon" style="background: linear-gradient(135deg, #f3e8ff 0%, #d8b4fe 100%); color: #7e22ce;">
+          <span class="mat">person_add</span>
+        </div>
+        <div class="td-modal-title-group">
+          <span class="td-modal-eyebrow" style="color: #7e22ce">Transfer Order</span>
+          <h3 id="waiterModalTitle">Change Waiter</h3>
+          <p class="td-modal-description">
+            If you are a manager, this takes effect immediately. If you are a waiter, the new waiter must approve it.
+          </p>
+        </div>
+      </div>
+      <button type="button" class="td-modal-close" data-close-waiter-modal aria-label="Close">
+        <span class="mat">close</span>
+      </button>
+    </div>
+
+    <form method="post" class="td-payment-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="change_waiter">
+      <input type="hidden" name="transfer_action" value="create">
+
+      <div class="td-payment-field">
+        <label for="newWaiterSelect">
+          <span class="mat">badge</span>
+          Select New Waiter <span class="td-required">*</span>
+        </label>
+        <div class="td-payment-select-wrap">
+          <span class="mat td-select-icon">person</span>
+          <select id="newWaiterSelect" name="new_waiter_id" class="td-payment-select" required>
+            <option value="" disabled selected>Choose a waiter…</option>
+            {% for w in waiters %}
+              {% if w.id != current_order.waiter_id %}
+                <option value="{{ w.id }}">{{ w.username }} ({{ w.get_full_name|default:w.username }})</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="td-payment-actions">
+        <button type="button" class="btn-modal-cancel" data-close-waiter-modal>Cancel</button>
+        <button type="submit" class="btn-modal-submit">
+          <span class="mat">check_circle</span>
+          <span>Confirm Transfer</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CHANGE TABLE MODAL -->
+<div class="td-modal" id="changeTableModal" aria-hidden="true" style="display: none">
+  <div class="td-modal-overlay" data-close-change-table-modal></div>
+
+  <div class="td-modal-card" role="dialog" aria-modal="true" aria-labelledby="changeTableModalTitle">
+    <div class="td-modal-header">
+      <div class="td-modal-header-content">
+        <div class="td-modal-icon" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #2563eb;">
           <span class="mat">swap_horiz</span>
         </div>
         <div class="td-modal-title-group">
@@ -2533,12 +2528,7 @@ sidebar_extra %}
         </div>
       </div>
 
-      <button
-        type="button"
-        class="td-modal-close"
-        data-close-change-table-modal
-        aria-label="Close change table window"
-      >
+      <button type="button" class="td-modal-close" data-close-change-table-modal aria-label="Close change table window">
         <span class="mat">close</span>
       </button>
     </div>
@@ -2556,12 +2546,7 @@ sidebar_extra %}
       </div>
 
       <div class="ct-step" id="ctStepTable" hidden>
-        <button
-          type="button"
-          class="ct-back-btn"
-          id="ctBackBtn"
-          aria-label="Back to sections"
-        >
+        <button type="button" class="ct-back-btn" id="ctBackBtn" aria-label="Back to sections">
           <span class="mat">arrow_back</span>
           Back to sections
         </button>
@@ -2580,6 +2565,131 @@ sidebar_extra %}
           <span>No available tables in this section.</span>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCOUNT MODAL -->
+<div class="td-modal" id="discountModal" aria-hidden="true" style="display: none">
+  <div class="td-modal-overlay" data-close-discount-modal></div>
+
+  <div class="td-modal-card" role="dialog" aria-modal="true" aria-labelledby="discountModalTitle">
+    <div class="td-modal-header">
+      <div class="td-modal-header-content">
+        <div class="td-modal-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309;">
+          <span class="mat">local_offer</span>
+        </div>
+        <div class="td-modal-title-group">
+          <span class="td-modal-eyebrow" style="color: #b45309">
+            Order Adjustment
+          </span>
+          <h3 id="discountModalTitle">Apply Discount</h3>
+          <p class="td-modal-description">
+            Enter an amount to subtract from this order's total.
+          </p>
+        </div>
+      </div>
+
+      <button type="button" class="td-modal-close" data-close-discount-modal aria-label="Close discount window">
+        <span class="mat">close</span>
+      </button>
+    </div>
+
+    <div class="td-payment-form">
+      <div class="td-payment-summary">
+        <div class="td-payment-summary-row">
+          <span class="td-payment-summary-label">
+            <span class="mat">receipt_long</span>
+            Order Reference
+          </span>
+          <span class="td-payment-summary-value">
+            #{{ current_order.id }}
+          </span>
+        </div>
+
+        <div class="td-payment-summary-row">
+          <span class="td-payment-summary-label">
+            <span class="mat">receipt</span>
+            Subtotal
+          </span>
+          <span class="td-payment-summary-value">
+            {{ current_order.subtotal|floatformat:2 }}
+          </span>
+        </div>
+
+        <div class="td-payment-summary-row">
+          <span class="td-payment-summary-label">
+            <span class="mat">percent</span>
+            Tax
+          </span>
+          <span class="td-payment-summary-value">
+            {{ current_order.tax|floatformat:2 }}
+          </span>
+        </div>
+
+        <div class="td-payment-summary-row">
+          <span class="td-payment-summary-label">
+            <span class="mat">local_offer</span>
+            Current Discount
+          </span>
+          <span class="td-payment-summary-value" style="color: #059669">
+            - {{ current_order.discount|floatformat:2 }}
+          </span>
+        </div>
+
+        <div class="td-payment-summary-row td-payment-total">
+          <span class="td-payment-summary-label">
+            <span class="mat">account_balance_wallet</span>
+            Total
+          </span>
+          <span class="td-payment-summary-value">
+            {{ order_total_display }}
+          </span>
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="apply_discount" />
+
+        <div class="td-payment-field">
+          <label for="discountAmount">
+            <span class="mat">local_offer</span>
+            Discount Amount
+          </label>
+
+          <div class="td-payment-select-wrap">
+            <span class="mat td-select-icon">payments</span>
+            <input id="discountAmount" type="number" min="0" step="0.01" name="discount_amount" class="td-payment-select" placeholder="0.00" value="{{ current_order.discount|floatformat:2 }}" style="background-image: none; padding-right: 1.15rem" required />
+          </div>
+
+          <p class="td-payment-hint">
+            <span class="mat">info</span>
+            <span>Discount is subtracted from subtotal + tax.</span>
+          </p>
+        </div>
+
+        <div class="td-payment-actions">
+          <button type="button" class="btn-modal-cancel" data-close-discount-modal>
+            Cancel
+          </button>
+          <button type="submit" class="btn-modal-submit">
+            <span class="mat">check_circle</span>
+            <span>Apply Discount</span>
+          </button>
+        </div>
+      </form>
+
+      {% if current_order.discount > 0 %}
+      <form method="post" style="margin-top: 0.75rem">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear_discount" />
+        <button type="submit" class="btn-modal-cancel" style="width: 100%; height: 42px">
+          <span class="mat">cancel</span>
+          <span>Clear Current Discount</span>
+        </button>
+      </form>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -2685,6 +2795,120 @@ sidebar_extra %}
     });
 
     // =========================================================
+    // NEW: WAITER MODAL
+    // =========================================================
+    const waiterModal = document.getElementById("waiterModal");
+    const waiterTriggers = document.querySelectorAll("[data-open-waiter-modal]");
+    const closeWaiterButtons = document.querySelectorAll("[data-close-waiter-modal]");
+
+    function openWaiterModal() {
+      if (!waiterModal) return;
+      waiterModal.style.display = "flex";
+      waiterModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeWaiterModal() {
+      if (!waiterModal) return;
+      waiterModal.style.display = "none";
+      waiterModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    waiterTriggers.forEach(function (button) {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        openWaiterModal();
+      });
+    });
+
+    closeWaiterButtons.forEach(function (button) {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        closeWaiterModal();
+      });
+    });
+
+    if (waiterModal) {
+      waiterModal.addEventListener("click", function (e) {
+        if (e.target === waiterModal || e.target.classList.contains("td-modal-overlay")) {
+          closeWaiterModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && waiterModal && waiterModal.style.display !== "none") {
+        closeWaiterModal();
+      }
+    });
+
+    // =========================================================
+    // DISCOUNT MODAL
+    // =========================================================
+    const discountModal = document.getElementById("discountModal");
+    const discountTriggers = document.querySelectorAll(
+      "[data-open-discount-modal]",
+    );
+    const closeDiscountButtons = document.querySelectorAll(
+      "[data-close-discount-modal]",
+    );
+
+    function openDiscountModal() {
+      if (!discountModal) return;
+      discountModal.style.display = "flex";
+      discountModal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      const discountInput = document.getElementById("discountAmount");
+      if (discountInput) {
+        window.setTimeout(() => discountInput.focus(), 50);
+      }
+    }
+
+    function closeDiscountModal() {
+      if (!discountModal) return;
+      discountModal.style.display = "none";
+      discountModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    discountTriggers.forEach(function (button) {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        openDiscountModal();
+      });
+    });
+
+    closeDiscountButtons.forEach(function (button) {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        closeDiscountModal();
+      });
+    });
+
+    if (discountModal) {
+      discountModal.addEventListener("click", function (e) {
+        if (
+          e.target === discountModal ||
+          e.target.classList.contains("td-modal-overlay")
+        ) {
+          closeDiscountModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "Escape" &&
+        discountModal &&
+        discountModal.style.display !== "none"
+      ) {
+        closeDiscountModal();
+      }
+    });
+
+    // =========================================================
     // CHANGE TABLE MODAL
     // =========================================================
     const changeTableModal = document.getElementById("changeTableModal");
@@ -2718,7 +2942,6 @@ sidebar_extra %}
     function ctShowStepSection() {
       ctStepSection.hidden = false;
       ctStepTable.hidden = true;
-      // Reset stale state so we never show "no tables" while on the section list
       if (ctNoTables) ctNoTables.hidden = true;
     }
 

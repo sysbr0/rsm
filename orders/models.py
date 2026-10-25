@@ -13,6 +13,14 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 
 from Financial.services import receive_money
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+
+
+from decimal import Decimal, InvalidOperation
+from django.core.exceptions import ValidationError
+from django.db import transaction
+
 
 
 from django.utils import timezone
@@ -362,11 +370,17 @@ class Order(TimeStampedModel):
     def set_order_as_printed(self):
         self.status = OrderStatus.SERVED
 
-        self.table.status = TableStatus.ON_PAYMENT
-        self.table.save(update_fields=["status"])
+     
         from printers.services import print_customer_invoice
 
         self.save()
+
+        print("started printing")
+        if self.table.table_number:
+                        
+            RestaurantTable.objects.select_for_update().get(
+                    pk=self.table.table_number).set_as_on_payment()
+       
         return print_customer_invoice(self)
 
        
@@ -374,20 +388,61 @@ class Order(TimeStampedModel):
 
     
 
-    def apply_discount(self, discount_amount: Decimal):
-        self.discount = discount_amount
 
+    @transaction.atomic
+    def apply_discount(self, discount_amount: Decimal):
+        """
+        Apply a discount to this order and recalculate the total.
+
+        The discount cannot be negative, and cannot exceed
+        subtotal + tax (the total would otherwise go negative).
+        """
+        try:
+            discount_amount = Decimal(str(discount_amount))
+        except (InvalidOperation, TypeError, ValueError):
+            raise ValidationError("Invalid discount amount.")
+
+        discount_amount = discount_amount.quantize(Decimal("0.01"))
+
+        if discount_amount < Decimal("0.00"):
+            raise ValidationError("Discount cannot be negative.")
+
+        max_discount = (self.subtotal + self.tax).quantize(Decimal("0.01"))
+
+        if discount_amount > max_discount:
+            raise ValidationError(
+                f"Discount cannot exceed the order subtotal + tax "
+                f"({max_discount})."
+            )
+
+        self.discount = discount_amount
         self.total = max(
             Decimal("0.00"),
             self.subtotal + self.tax - self.discount,
         )
 
-        self.save()
+        self.save(update_fields=["discount", "total", "updated_at"])
+        return self
+
+
+    @transaction.atomic
+    def clear_discount(self):
+        self.discount = Decimal("0.00")
+        self.total = self.subtotal + self.tax
+        self.save(update_fields=["discount", "total", "updated_at"])
+        return self
+
+
+
 
     def __str__(self):
         return f"Order #{self.id}"
 
+    
     def print_customer_invoice(self, width=42):
+
+       
+        
   
     
 
@@ -729,6 +784,8 @@ class Order(TimeStampedModel):
             printer=cashier_printer,
             content=invoice,
         )
+  
+
 
         # ==========================================================
         # RETURN
@@ -803,7 +860,12 @@ class OrderItem(TimeStampedModel):
         else:
             self.order.table.set_as_occupied()
 
+     
+
+
+
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return super().__str__()
@@ -1356,6 +1418,8 @@ class OrderItem(TimeStampedModel):
     
     @classmethod
     def cancel_and_print(cls, order_item):
+
+
         from printers.models import (
             PrintJob,
             PrintJobStatus,
@@ -1427,3 +1491,337 @@ class OrderItem(TimeStampedModel):
         process_print_job(job)
 
         return job
+
+
+from django.conf import settings
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import models, transaction
+from django.utils import timezone
+
+# Keep your existing TimeStampedModel import.
+# from your_app.models import TimeStampedModel
+
+
+class TransferStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    APPROVED = "APPROVED", "Approved"
+    DENIED = "DENIED", "Denied"
+
+
+class ChangeOrderWaiter(TimeStampedModel):
+    order = models.ForeignKey(
+        "Order",
+        on_delete=models.CASCADE,
+        related_name="waiter_changes",
+    )
+
+    current_waiter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="current_waiter_changes",
+    )
+
+    seted_waiter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="seted_waiter_changes",
+    )
+
+    # Kept for compatibility with your existing API.
+    # True means approved; False means pending or denied.
+    is_approved = models.BooleanField(default=False)
+
+    status = models.CharField(
+        max_length=10,
+        choices=TransferStatus.choices,
+        default=TransferStatus.PENDING,
+        db_index=True,
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_waiter_changes",
+    )
+
+    resolved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    denial_reason = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    class Meta:
+        ordering = ["-id"]
+        indexes = [
+            models.Index(
+                fields=["order", "status"],
+                name="waiter_change_order_status_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"Transfer for Order {self.order_id}: "
+            f"{self.current_waiter_id} -> {self.seted_waiter_id} "
+            f"({self.status})"
+        )
+
+    @staticmethod
+    def _is_manager(user):
+        if not user or not user.is_authenticated:
+            return False
+
+        return (
+            user.is_staff
+            or user.is_superuser
+            or getattr(user, "role", "") == "MANAGER"
+        )
+
+    @staticmethod
+    def _is_active_waiter(user):
+        if user is None or not user.is_active:
+            return False
+
+        return getattr(user, "role", "") == "WAITER"
+
+    @classmethod
+    def create_transfer_request(
+        cls,
+        order,
+        created_by_user,
+        seted_waiter,
+    ):
+        """
+        Create a waiter transfer request.
+
+        Manager:
+            Approves the transfer immediately.
+
+        Waiter:
+            Creates a pending request requiring approval
+            from a manager or the receiving waiter.
+        """
+
+        if not created_by_user or not created_by_user.is_authenticated:
+            raise PermissionDenied("Authentication is required.")
+
+        with transaction.atomic():
+            # Lock the order to prevent concurrent transfer requests
+            # from processing against the same order simultaneously.
+            order = (
+                order.__class__.objects
+                .select_for_update()
+                .get(pk=order.pk)
+            )
+
+            order_status = getattr(order.status, "value", order.status)
+
+            if order_status in ("PAID", "CANCELLED"):
+                raise ValidationError(
+                    "Cannot transfer a paid or cancelled order."
+                )
+
+            if order_status not in (
+                "OPEN",
+                "CONFIRMED",
+                "PREPARING",
+                "READY",
+                "SERVED",
+            ):
+                raise ValidationError(
+                    "The order is not active."
+                )
+
+            if not cls._is_active_waiter(seted_waiter):
+                raise ValidationError(
+                    "The selected user must be an active waiter."
+                )
+
+            if order.waiter_id == seted_waiter.pk:
+                raise ValidationError(
+                    "The new waiter is already assigned to this order."
+                )
+
+            is_manager = cls._is_manager(created_by_user)
+
+            # Only a manager or the current waiter can initiate a transfer.
+            if not is_manager and order.waiter_id != created_by_user.pk:
+                raise PermissionDenied(
+                    "Only the current waiter or a manager can request "
+                    "a waiter transfer."
+                )
+
+            # Keep only one pending transfer per order.
+            cls.objects.filter(
+                order=order,
+                status=TransferStatus.PENDING,
+            ).delete()
+
+            transfer = cls.objects.create(
+                order=order,
+                current_waiter=order.waiter,
+                seted_waiter=seted_waiter,
+                is_approved=False,
+                status=TransferStatus.PENDING,
+            )
+
+            if is_manager:
+                transfer._approve_locked(
+                    actioning_user=created_by_user,
+                    order=order,
+                )
+
+            return transfer
+
+    def _approve_locked(self, actioning_user, order):
+        """
+        Internal helper. Call inside transaction.atomic()
+        with the order row locked.
+        """
+
+        if self.status != TransferStatus.PENDING:
+            raise ValidationError(
+                "This transfer request has already been processed."
+            )
+
+        if self.seted_waiter_id is None:
+            raise ValidationError(
+                "The receiving waiter no longer exists."
+            )
+
+        if not self._is_active_waiter(self.seted_waiter):
+            raise ValidationError(
+                "The receiving waiter is no longer active."
+            )
+
+        order_status = getattr(order.status, "value", order.status)
+
+        if order_status not in (
+            "OPEN",
+            "CONFIRMED",
+            "PREPARING",
+            "READY",
+            "SERVED",
+        ):
+            raise ValidationError(
+                "The order is no longer active."
+            )
+
+        # Ensure the order has not changed waiters since the request.
+        if order.waiter_id != self.current_waiter_id:
+            raise ValidationError(
+                "The order's assigned waiter has changed. "
+                "Create a new transfer request."
+            )
+
+        order.waiter = self.seted_waiter
+        order.save(update_fields=["waiter"])
+
+        self.is_approved = True
+        self.status = TransferStatus.APPROVED
+        self.approved_by = actioning_user
+        self.resolved_at = timezone.now()
+        self.denial_reason = ""
+
+        self.save(
+            update_fields=[
+                "is_approved",
+                "status",
+                "approved_by",
+                "resolved_at",
+                "denial_reason",
+            ]
+        )
+
+    def approve_or_deny_transfer(
+        self,
+        actioning_user,
+        approve=True,
+        denial_reason="",
+    ):
+        """
+        Approve or deny a pending transfer.
+
+        Authorized users:
+            - Managers
+            - The receiving waiter
+
+        Denied requests are retained for auditing.
+        """
+
+        if not actioning_user or not actioning_user.is_authenticated:
+            raise PermissionDenied("Authentication is required.")
+
+        if not isinstance(approve, bool):
+            raise ValidationError(
+                "The approve argument must be a Boolean."
+            )
+
+        with transaction.atomic():
+            # Lock the order first, using a consistent lock order.
+            order = (
+                self.order.__class__.objects
+                .select_for_update()
+                .get(pk=self.order_id)
+            )
+
+            # Lock and refresh the transfer record.
+            transfer = (
+                ChangeOrderWaiter.objects
+                .select_for_update()
+                .get(pk=self.pk)
+            )
+
+            if transfer.status != TransferStatus.PENDING:
+                raise ValidationError(
+                    "This transfer request has already been processed."
+                )
+
+            is_manager = self._is_manager(actioning_user)
+            is_receiving_waiter = (
+                transfer.seted_waiter_id == actioning_user.pk
+            )
+
+            if not (is_manager or is_receiving_waiter):
+                raise PermissionDenied(
+                    "Only a manager or the receiving waiter can "
+                    "approve or deny this transfer."
+                )
+
+            if approve:
+                transfer._approve_locked(
+                    actioning_user=actioning_user,
+                    order=order,
+                )
+            else:
+                transfer.status = TransferStatus.DENIED
+                transfer.is_approved = False
+                transfer.approved_by = actioning_user
+                transfer.resolved_at = timezone.now()
+                transfer.denial_reason = denial_reason
+
+                transfer.save(
+                    update_fields=[
+                        "status",
+                        "is_approved",
+                        "approved_by",
+                        "resolved_at",
+                        "denial_reason",
+                    ]
+                )
+
+            # Refresh the current Python instance for callers
+            # that use the original object after processing.
+            self.refresh_from_db()
+
+            return self

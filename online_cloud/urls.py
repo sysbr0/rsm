@@ -147,7 +147,8 @@ urlpatterns = [
     # -----------------------------------------------------------------
     path(
         "products/<uuid:product_id>/images/",
-        
+        product_images_page,
+
         name="product_images_page",
     ),
     path(

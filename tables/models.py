@@ -80,3 +80,10 @@ class RestaurantTable(models.Model):
     def set_as_occupied(self):
         self.status = TableStatus.OCCUPIED
         self.save(update_fields=["status"])
+
+
+
+    def set_as_on_payment(self):
+        self.status = TableStatus.ON_PAYMENT
+        self.save(update_fields=["status"])
+        
