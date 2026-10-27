@@ -1,4 +1,3 @@
-
 import logging
 
 from channels.db import database_sync_to_async
@@ -22,17 +21,11 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
 
     WebSocket URL:
         /ws/chat/<user_id>/
-
-    Authentication:
-        Uses the authenticated user provided by ASGI middleware.
-        Supports Django session authentication or token authentication
-        when configured in the project's ASGI middleware.
     """
 
     async def connect(self):
         self.user = self.scope["user"]
 
-        # Log connection details without exposing cookies or tokens.
         headers = {
             key.decode("latin1").lower(): value.decode("latin1")
             for key, value in self.scope.get("headers", [])
@@ -61,14 +54,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4000)
             return
 
-        if self.other_user_id == self.user.pk:
-            await self.close(code=4003)
-            return
-
-        if not await self.user_exists(self.other_user_id):
-            await self.close(code=4004)
-            return
-
         self.user_group = f"chat_user_{self.user.pk}"
 
         try:
@@ -86,28 +71,28 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
                 self.other_user_id,
             )
 
-            # Mark previously unread messages from this recipient as read.
-            read_ids = await self.mark_messages_read(
-                sender_id=self.other_user_id,
-            )
-
-            # Tell the original sender that those messages have been read.
-            if read_ids:
-                await self.channel_layer.group_send(
-                    f"chat_user_{self.other_user_id}",
-                    {
-                        "type": "chat_read_receipt",
-                        "message_ids": read_ids,
-                        "reader_id": self.user.pk,
-                    },
+            # If connecting to a specific recipient (not self), load history & mark read
+            if self.other_user_id != self.user.pk:
+                read_ids = await self.mark_messages_read(
+                    sender_id=self.other_user_id,
                 )
 
-            messages = await self.get_history(self.other_user_id)
+                if read_ids:
+                    await self.channel_layer.group_send(
+                        f"chat_user_{self.other_user_id}",
+                        {
+                            "type": "chat_read_receipt",
+                            "message_ids": read_ids,
+                            "reader_id": self.user.pk,
+                        },
+                    )
 
-            await self.send_json({
-                "type": "chat_history",
-                "messages": messages,
-            })
+                messages = await self.get_history(self.other_user_id)
+
+                await self.send_json({
+                    "type": "chat_history",
+                    "messages": messages,
+                })
 
         except Exception:
             logger.exception("CHAT WS ERROR during connection setup")
@@ -133,8 +118,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
 
         message_type = content.get("type")
 
-        # Allow the browser to explicitly signal that the conversation
-        # is currently visible and incoming messages can be marked read.
         if message_type == "mark_read":
             message_ids = content.get("message_ids", [])
 
@@ -142,7 +125,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_error("message_ids must be a list.")
                 return
 
-            # Limit the amount of work a single request can trigger.
             message_ids = [
                 message_id
                 for message_id in message_ids[:HISTORY_LIMIT]
@@ -185,6 +167,10 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
             )
             return
 
+        if self.other_user_id == self.user.pk:
+            await self.send_error("Cannot send message to yourself.")
+            return
+
         saved = await self.save_message(
             sender_id=self.user.pk,
             recipient_id=self.other_user_id,
@@ -223,53 +209,44 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
     async def chat_message(self, event):
         message_data = event["message_data"]
 
-        from_other_to_me = (
-            message_data["sender_id"] == self.other_user_id
-            and message_data["recipient_id"] == self.user.pk
-        )
-
-        from_me_to_other = (
-            message_data["sender_id"] == self.user.pk
-            and message_data["recipient_id"] == self.other_user_id
-        )
-
-        if not (from_other_to_me or from_me_to_other):
-            return
-
-        if from_other_to_me:
-            # A message arriving while this conversation is connected
-            # is marked read. For stricter "actually viewed" semantics,
-            # use the browser's explicit mark_read event instead.
-            was_marked_read = await self.mark_single_message_read(
-                message_id=message_data["id"],
-                sender_id=self.other_user_id,
-            )
-
-            if was_marked_read:
-                await self.channel_layer.group_send(
-                    f"chat_user_{self.other_user_id}",
-                    {
-                        "type": "chat_read_receipt",
-                        "message_ids": [message_data["id"]],
-                        "reader_id": self.user.pk,
-                    },
+        # 1. If this message is directed to me (recipient_id == my_id)
+        if message_data["recipient_id"] == self.user.pk:
+            # If the socket is open specifically with this sender, mark as read
+            if message_data["sender_id"] == self.other_user_id:
+                was_marked_read = await self.mark_single_message_read(
+                    message_id=message_data["id"],
+                    sender_id=self.other_user_id,
                 )
 
-                message_data["is_read"] = True
+                if was_marked_read:
+                    await self.channel_layer.group_send(
+                        f"chat_user_{self.other_user_id}",
+                        {
+                            "type": "chat_read_receipt",
+                            "message_ids": [message_data["id"]],
+                            "reader_id": self.user.pk,
+                        },
+                    )
 
-        await self.send_json({
-            "type": "chat_message",
-            "message_data": message_data,
-        })
+                    message_data["is_read"] = True
+
+            # Deliver the message payload over WebSocket to trigger background notification!
+            await self.send_json({
+                "type": "chat_message",
+                "message_data": message_data,
+            })
+            return
+
+        # 2. If I am the sender and this socket is open with the recipient
+        if message_data["sender_id"] == self.user.pk and message_data["recipient_id"] == self.other_user_id:
+            await self.send_json({
+                "type": "chat_message",
+                "message_data": message_data,
+            })
 
     async def chat_read_receipt(self, event):
-        """
-        Deliver read receipts to the sender's connected chat sockets.
-        """
         reader_id = event.get("reader_id")
 
-        # Only the other participant in this private conversation
-        # can be the reader.
         if reader_id != self.other_user_id:
             return
 
@@ -363,9 +340,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def mark_messages_read(self, sender_id):
-        """
-        Mark all unread messages from sender_id to the current user.
-        """
         queryset = Message.objects.filter(
             sender_id=sender_id,
             recipient_id=self.user.pk,
@@ -383,9 +357,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def mark_single_message_read(self, message_id, sender_id):
-        """
-        Mark one message read only if it belongs to this conversation.
-        """
         updated = Message.objects.filter(
             pk=message_id,
             sender_id=sender_id,
@@ -397,9 +368,6 @@ class PrivateChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def mark_specific_messages_read(self, message_ids, sender_id):
-        """
-        Mark only messages from the selected sender to the current user.
-        """
         if not message_ids:
             return []
 

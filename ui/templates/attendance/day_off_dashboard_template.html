@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manager | Day-Off Requests</title>
+    <style>
+      :root {
+        --primary: #7f1d1d;
+        --primary-dark: #641717;
+        --purple: #4c1d95;
+        --bg: #f5f6fa;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --green: #15803d;
+        --red: #b91c1c;
+        --orange: #c2410c;
+        --blue: #1d4ed8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+          sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .page {
+        width: min(1500px, 100%);
+        margin: auto;
+        padding: 28px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 26px;
+      }
+
+      .heading h1 {
+        margin: 0;
+        font-size: 27px;
+        letter-spacing: -0.7px;
+      }
+
+      .heading p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .date-label {
+        background: white;
+        border: 1px solid var(--border);
+        padding: 10px 13px;
+        border-radius: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .btn {
+        border: 0;
+        padding: 10px 15px;
+        border-radius: 9px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: 0.15s;
+      }
+
+      .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        color: white;
+        background: var(--primary);
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-approve {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .btn-reject {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .btn-approve:hover {
+        background: #bbf7d0;
+      }
+
+      .btn-reject:hover {
+        background: #fecaca;
+      }
+
+      .notice {
+        display: none;
+        padding: 13px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+      }
+
+      .notice.show {
+        display: block;
+      }
+
+      .notice.error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .notice.success {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .notice.info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        min-width: 0;
+      }
+
+      .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stat-number {
+        margin-top: 13px;
+        font-size: 30px;
+        font-weight: 750;
+        letter-spacing: -1px;
+      }
+
+      .stat-icon {
+        width: 35px;
+        height: 35px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: #f3f4f6;
+        font-size: 17px;
+      }
+
+      .stat.present .stat-icon {
+        background: #dcfce7;
+      }
+
+      .stat.absent .stat-icon {
+        background: #fee2e2;
+      }
+
+      .stat.dayoff .stat-icon {
+        background: #ede9fe;
+      }
+
+      .stat.pending .stat-icon {
+        background: #ffedd5;
+      }
+
+      .stat.notchecked .stat-icon {
+        background: #dbeafe;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 20px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-title h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .panel-title p {
+        color: var(--muted);
+        margin: 6px 0 0;
+        font-size: 13px;
+      }
+
+      .panel-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .control {
+        border: 1px solid var(--border);
+        background: white;
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 9px;
+        min-width: 140px;
+        outline: none;
+      }
+
+      .control:focus {
+        border-color: var(--purple);
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+      }
+
+      th {
+        text-align: left;
+        background: #fafafa;
+        padding: 13px 20px;
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.55px;
+        font-weight: 700;
+      }
+
+      td {
+        padding: 16px 20px;
+        border-top: 1px solid #f0f1f4;
+        font-size: 13px;
+        vertical-align: middle;
+      }
+
+      tbody tr:hover {
+        background: #fcfcfd;
+      }
+
+      .employee {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+
+      .avatar {
+        width: 37px;
+        height: 37px;
+        border-radius: 50%;
+        background: #f3e8ff;
+        color: var(--purple);
+        display: grid;
+        place-items: center;
+        font-weight: 750;
+        flex-shrink: 0;
+        text-transform: uppercase;
+      }
+
+      .employee-name {
+        font-weight: 650;
+        color: #111827;
+      }
+
+      .employee-id {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .badge-present {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .badge-absent {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .badge-dayoff {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+
+      .badge-notchecked {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .badge-checkedout {
+        background: #f3f4f6;
+        color: #4b5563;
+      }
+
+      .badge-holiday,
+      .badge-sickleave {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+
+      .badge-pending {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+
+      .badge-approved {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .badge-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .request-reason {
+        white-space: normal;
+        min-width: 160px;
+        max-width: 280px;
+        line-height: 1.5;
+        color: #4b5563;
+      }
+
+      .request-actions {
+        display: flex;
+        gap: 7px;
+      }
+
+      .request-actions .btn {
+        padding: 8px 11px;
+      }
+
+      .empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .empty strong {
+        display: block;
+        color: #374151;
+        font-size: 15px;
+        margin-bottom: 7px;
+      }
+
+      .loading {
+        padding: 30px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .panel-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .help-text {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        background: white;
+        width: min(480px, 100%);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal h3 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+
+      .modal p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .modal label {
+        display: block;
+        margin: 18px 0 8px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .modal textarea {
+        width: 100%;
+        min-height: 95px;
+        resize: vertical;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 12px;
+        outline: none;
+      }
+
+      .modal textarea:focus {
+        border-color: var(--purple);
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 9px;
+        margin-top: 20px;
+      }
+
+      .footer-note {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 5px 0 15px;
+      }
+
+      @media (max-width: 1100px) {
+        .stats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          padding: 15px;
+        }
+
+        .heading h1 {
+          font-size: 23px;
+        }
+
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .stat {
+          padding: 14px;
+        }
+
+        .stat-number {
+          font-size: 25px;
+        }
+
+        .panel-header {
+          padding: 17px;
+        }
+
+        .panel-controls {
+          width: 100%;
+        }
+
+        .control {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+
+      .muted { color: var(--muted); }
+      .review-inline { display: flex; flex-direction: column; gap: 8px; min-width: 190px; }
+      .review-form { display: flex; flex-direction: column; gap: 6px; }
+      .review-note-input { width: 100%; min-width: 160px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+      .review-inline .btn { width: 100%; }
+      .help-text { color: var(--muted); font-size: 12px; }
+      .notice { margin-bottom: 12px; padding: 12px 14px; border-radius: 10px; display: none; }
+      .notice.show { display: block; }
+      .notice.success { color: #166534; background: #dcfce7; }
+      .notice.error { color: #991b1b; background: #fee2e2; }
+      .notice.info { color: #1e40af; background: #dbeafe; }
+      .panel-controls { align-items: center; }
+      @media (max-width: 700px) { .review-inline { min-width: 145px; } .review-note-input { min-width: 0; } }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="heading">
+          <h1>Employee Day-Off Management</h1>
+          <p>Review employee requests and manage approved days off.</p>
+        </div>
+        <div class="top-actions">
+          <div class="date-label">Today: <strong>{{ today|date:"D, d M Y" }}</strong></div>
+          <a class="btn btn-secondary" href="?status={{ filter_status|urlencode }}">↻ Refresh</a>
+        </div>
+      </header>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="notice show {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}" role="status">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <section class="stats">
+        <div class="stat pending">
+          <div class="stat-top"><span class="stat-label">Pending Requests</span><span class="stat-icon">◷</span></div>
+          <div class="stat-number">{{ pending_count }}</div>
+        </div>
+        <div class="stat present">
+          <div class="stat-top"><span class="stat-label">Approved Requests</span><span class="stat-icon">✓</span></div>
+          <div class="stat-number">{{ approved_count }}</div>
+        </div>
+        <div class="stat absent">
+          <div class="stat-top"><span class="stat-label">Rejected Requests</span><span class="stat-icon">×</span></div>
+          <div class="stat-number">{{ rejected_count }}</div>
+        </div>
+        <div class="stat dayoff">
+          <div class="stat-top"><span class="stat-label">Employees Off Today</span><span class="stat-icon">☾</span></div>
+          <div class="stat-number">{{ today_off_count }}</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <h2>Employee Day-Off Requests</h2>
+            <p>Approve or reject pending requests. Previously reviewed requests cannot be reviewed again.</p>
+          </div>
+          <form method="get" class="panel-controls">
+            <label class="help-text" for="statusFilter">Filter by status</label>
+            <select id="statusFilter" name="status" class="control" onchange="this.form.submit()">
+              <option value="ALL" {% if filter_status == "ALL" %}selected{% endif %}>All requests</option>
+              <option value="PENDING" {% if filter_status == "PENDING" %}selected{% endif %}>Pending</option>
+              <option value="APPROVED" {% if filter_status == "APPROVED" %}selected{% endif %}>Approved</option>
+              <option value="REJECTED" {% if filter_status == "REJECTED" %}selected{% endif %}>Rejected</option>
+            </select>
+            <noscript><button class="btn btn-secondary" type="submit">Apply filter</button></noscript>
+          </form>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Requested date</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Reviewed by</th>
+                <th>Review note</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for day_off in requests %}
+                <tr>
+                  <td>
+                    <div class="employee">
+                      <div class="avatar">{% firstof day_off.user.full_name day_off.user.username "E" as employee_name %}{{ employee_name|slice:":1"|upper }}</div>
+                      <div><div class="employee-name">{{ employee_name }}</div><div class="employee-id">{{ day_off.user.username }}</div></div>
+                    </div>
+                  </td>
+                  <td><strong>{{ day_off.date|date:"D, d M Y" }}</strong></td>
+                  <td><div class="request-reason">{% if day_off.reason %}{{ day_off.reason|linebreaksbr }}{% else %}<span class="muted">No reason provided</span>{% endif %}</div></td>
+                  <td>
+                    {% if day_off.status == "PENDING" %}<span class="badge badge-pending">Pending</span>
+                    {% elif day_off.status == "APPROVED" %}<span class="badge badge-approved">Approved</span>
+                    {% elif day_off.status == "REJECTED" %}<span class="badge badge-rejected">Rejected</span>
+                    {% else %}<span class="badge">{{ day_off.get_status_display|default:day_off.status }}</span>{% endif %}
+                  </td>
+                  <td>{% if day_off.reviewed_by %}{% firstof day_off.reviewed_by.full_name day_off.reviewed_by.username %}<div class="employee-id">{{ day_off.reviewed_at|date:"d M Y, H:i"|default:"" }}</div>{% else %}<span class="muted">—</span>{% endif %}</td>
+                  <td>{% if day_off.review_note %}{{ day_off.review_note|linebreaksbr }}{% else %}<span class="muted">—</span>{% endif %}</td>
+                  <td>
+                    {% if day_off.status == "PENDING" %}
+                      <div class="review-inline">
+                        <form method="post" action="{% url 'review_day_off_request' day_off.id %}" class="review-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="approve">
+                          <input type="text" name="review_note" class="control review-note-input" maxlength="500" placeholder="Optional note" aria-label="Approval note for {{ employee_name }}">
+                          <button class="btn btn-approve" type="submit" onclick="return confirm('Approve this day-off request?');">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'review_day_off_request' day_off.id %}" class="review-form">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="reject">
+                          <input type="text" name="review_note" class="control review-note-input" maxlength="500" placeholder="Optional note" aria-label="Rejection note for {{ employee_name }}">
+                          <button class="btn btn-reject" type="submit" onclick="return confirm('Reject this day-off request?');">Reject</button>
+                        </form>
+                      </div>
+                    {% else %}
+                      <span class="muted">Already reviewed</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7"><div class="empty"><strong>No requests found</strong><span>There are no day-off requests for this filter.</span></div></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="panel-footer">
+          <span>{{ requests|length }} request{{ requests|length|pluralize }} shown</span>
+          <span>Pending requests require manager review.</span>
+        </div>
+      </section>
+      <p class="footer-note">Manager dashboard · Employee day-off management</p>
+    </div>
+  </body>
+</html>

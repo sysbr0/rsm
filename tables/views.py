@@ -26,6 +26,9 @@ from tables.models import (
 
 
 def admin_tables(request):
+
+    RestaurantTable.sync_all_occupied_warnings()
+
     # ---------------------------------------------------------
     # Tables
     # ---------------------------------------------------------
@@ -50,6 +53,8 @@ def admin_tables(request):
     # ---------------------------------------------------------
     filter_type = request.GET.get("filter", "all")
     section_id = request.GET.get("section")
+
+  
 
     # ---------------------------------------------------------
     # Active Order Statuses
@@ -106,6 +111,7 @@ def admin_tables(request):
         order_created_at = None
         elapsed_display = ""
         elapsed_seconds = 0
+        warning_details = table.get_warning_details()
 
         # Only look for an order when the table is not available
         if table.status != TableStatus.AVAILABLE:
@@ -136,6 +142,7 @@ def admin_tables(request):
                         elapsed_display = f"{minutes}m {seconds}s"
                     else:
                         elapsed_display = f"{seconds}s"
+                
 
         order_total_display = (
             format_currency(order_total)
@@ -154,6 +161,9 @@ def admin_tables(request):
                     table.status,
                     "#ffffff",
                 ),
+                "worning": warning_details["has_warning"],
+                "warning_details": warning_details,
+                "has_active_order": table.id in latest_order_by_table,
                 "waiter_name": waiter_name,
                 "order_total_display": order_total_display,
                 "order_created_at": order_created_at,
@@ -171,20 +181,7 @@ def admin_tables(request):
 
     # ---------------------------------------------------------
     # Apply Filters
-    # ---------------------------------------------------------
-    if filter_type == "occupied":
-        dashboard_tables = [
-            table
-            for table in dashboard_tables
-            if table["status"] == TableStatus.OCCUPIED
-        ]
-
-    if section_id:
-        dashboard_tables = [
-            table
-            for table in dashboard_tables
-            if str(table["section_block_id"]) == str(section_id)
-        ]
+   
 
     # ---------------------------------------------------------
     # Dashboard Summary
@@ -222,6 +219,24 @@ def admin_tables(request):
         ).count(),
     }
 
+
+    if filter_type == "occupied":
+            dashboard_tables = [
+                table for table in dashboard_tables
+                if table["status"] == TableStatus.OCCUPIED
+            ]
+    elif filter_type == "available":
+            dashboard_tables = [
+                table for table in dashboard_tables
+                if table["status"] == TableStatus.AVAILABLE
+            ]
+    
+    if section_id:
+            dashboard_tables = [
+                table for table in dashboard_tables
+                if str(table["section_block_id"]) == str(section_id)
+        ]
+
     # ---------------------------------------------------------
     # Order Summary
     # ---------------------------------------------------------
@@ -243,6 +258,7 @@ def admin_tables(request):
             "table_id"
         ).distinct().count(),
     }
+    
 
     # ---------------------------------------------------------
     # Render
@@ -264,5 +280,6 @@ def admin_tables(request):
             "summary": summary,
             "product_summary": product_summary,
             "order_summary": order_summary,
+        
         },
     )

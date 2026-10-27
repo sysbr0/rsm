@@ -587,24 +587,16 @@
   .cm-list {
     display: grid;
     grid-template-columns: 1fr;
-  }
-  @media (min-width: 680px) {
-    .cm-list {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-  @media (min-width: 1400px) {
-    .cm-list {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
+    gap: 0.7rem;
+    padding: 0.7rem;
   }
 
   .cm-card {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.95rem;
-    padding: 1.25rem 1.3rem;
+    gap: 0.6rem;
+    padding: 0.85rem 0.9rem;
     border-right: 1px solid var(--cm-line-2);
     border-bottom: 1px solid var(--cm-line-2);
     transition: background 0.2s ease;
@@ -620,25 +612,25 @@
 
   .cm-card-head {
     display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
+    align-items: center;
+    gap: 0.6rem;
   }
   .cm-avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 68px;
-    height: 68px;
+    width: 38px;
+    height: 38px;
     flex-shrink: 0;
-    border-radius: 14px;
+    border-radius: 10px;
     background: var(--cm-grad);
     color: #fff;
-    box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.65);
+    box-shadow: 0 4px 10px -6px rgba(99, 102, 241, 0.5);
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: hidden;
   }
   .cm-avatar .mat {
-    font-size: 24px;
+    font-size: 18px;
   }
   .cm-avatar img {
     display: block;
@@ -646,7 +638,7 @@
     height: 100%;
     object-fit: contain;
     border-radius: inherit;
-    padding: 8px;
+    padding: 5px;
   }
   .cm-avatar.has-icon {
     background: #ffffff;
@@ -659,11 +651,11 @@
     min-width: 0;
   }
   .cm-title {
-    font-size: 0.94rem;
+    font-size: 0.88rem;
     font-weight: 800;
     color: var(--cm-ink);
     letter-spacing: -0.015em;
-    margin: 0 0 0.15rem;
+    margin: 0 0 0.1rem;
     line-height: 1.3;
     overflow-wrap: anywhere;
   }
@@ -671,8 +663,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
-    font-size: 0.72rem;
+    gap: 0.35rem;
+    font-size: 0.68rem;
     color: var(--cm-muted-2);
   }
   .cm-meta .d {
@@ -733,19 +725,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    padding-top: 0.8rem;
-    margin-top: auto;
+    padding-top: 0.5rem;
+    margin-top: 0.1rem;
     border-top: 1px dashed var(--cm-line);
   }
   .cm-date {
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     color: var(--cm-muted-2);
     display: flex;
     align-items: center;
     gap: 0.35rem;
   }
   .cm-date .mat {
-    font-size: 14px;
+    font-size: 12px;
   }
   .cm-card-actions {
     display: inline-flex;
@@ -1113,10 +1105,10 @@
      TABLE CARD internals
      ============================================ */
   .cm .cm-card-link {
-    display: contents;
+    display: block;
   }
   .cm .cm-card-link[hidden] {
-    display: none;
+    display: none !important;
   }
   .cm .cm-card-link .cm-card {
     min-height: 100%;
@@ -1125,11 +1117,11 @@
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.3rem 0.7rem;
+    padding: 0.22rem 0.5rem;
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.08);
     color: var(--cm-ink);
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     font-weight: 800;
     white-space: nowrap;
   }
@@ -1138,14 +1130,14 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    font-size: 0.8rem;
+    font-size: 0.74rem;
   }
   .cm .cm-detail-label {
     color: var(--cm-muted-2);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    font-size: 0.62rem;
   }
   .cm .cm-detail-row > div:last-child {
     font-weight: 700;
@@ -1154,12 +1146,12 @@
   .cm .cm-section-label {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.65rem;
-    border-radius: 8px;
+    gap: 0.25rem;
+    padding: 0.22rem 0.5rem;
+    border-radius: 7px;
     background: var(--cm-line-2);
     color: var(--cm-muted);
-    font-size: 0.72rem;
+    font-size: 0.64rem;
     font-weight: 700;
     width: fit-content;
   }
@@ -1188,93 +1180,131 @@
   }
 
   /* ============================================
-   PROFESSIONAL TABLE CARDS — refined
-   ============================================ */
+     PROFESSIONAL TABLE CARDS — refined (compact)
+     ============================================ */
 
-  /* Card: add a subtle border and lift the surface */
   .cm .cm-card-link .cm-card {
     border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 14px;
-    margin: 0.5rem;
+    border-radius: 12px;
+    margin: 0;
+    padding: 0.85rem 0.9rem;
+    gap: 0.6rem;
     box-shadow:
       0 1px 2px rgba(15, 23, 42, 0.04),
-      0 4px 12px -8px rgba(15, 23, 42, 0.08);
+      0 4px 10px -8px rgba(15, 23, 42, 0.08);
     transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease,
-      border-color 0.2s ease;
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease;
     overflow: hidden;
+    height: 100%;
   }
 
   .cm .cm-card-link .cm-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: rgba(99, 102, 241, 0.35);
     box-shadow:
       0 2px 4px rgba(15, 23, 42, 0.05),
-      0 16px 28px -14px rgba(99, 102, 241, 0.28);
+      0 12px 22px -14px rgba(99, 102, 241, 0.3);
   }
 
-  /* Remove the default grid cell borders from the base .cm-card */
-  .cm .cm-list .cm-card-link .cm-card {
-    border-right: 1px solid rgba(15, 23, 42, 0.08);
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  }
-
-  /* Refined details block */
-  .cm .cm-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    padding: 0.75rem 0.9rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(4px);
-  }
-
-  .cm .cm-detail-row {
-    display: flex;
+  /* Head row — tighter */
+  .cm .cm-card-link .cm-card-head {
+    gap: 0.6rem;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+  }
+
+  /* Smaller avatar */
+  .cm .cm-card-link .cm-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px -6px rgba(99, 102, 241, 0.5);
+  }
+
+  .cm .cm-card-link .cm-avatar .mat {
+    font-size: 18px;
+  }
+
+  /* Title + meta */
+  .cm .cm-card-link .cm-title {
+    font-size: 0.88rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .cm .cm-card-link .cm-meta {
+    gap: 0.35rem;
+    font-size: 0.68rem;
+  }
+
+  /* Table badge on the right — shrink */
+  .cm .cm-card-link .cm-card-head > .cm-table-badge {
+    padding: 0.22rem 0.5rem;
+    font-size: 0.66rem;
+  }
+
+  /* Details block — compact, no card background */
+  .cm .cm-card-link .cm-details {
+    padding: 0;
+    gap: 0.25rem;
+    background: transparent;
+    border: 0;
+    backdrop-filter: none;
+  }
+
+  .cm .cm-card-link .cm-detail-row {
+    font-size: 0.74rem;
+  }
+
+  .cm .cm-card-link .cm-detail-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+  }
+
+  .cm .cm-card-link .cm-detail-value {
+    font-size: 0.76rem;
+  }
+
+  .cm .cm-card-link .cm-detail-total {
     font-size: 0.8rem;
   }
 
-  .cm .cm-detail-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--cm-muted);
+  /* Section label — inline chip, smaller */
+  .cm .cm-card-link .cm-section-label {
+    background: rgba(99, 102, 241, 0.08);
+    color: var(--cm-brand-2);
+    font-size: 0.64rem;
+    padding: 0.22rem 0.5rem;
+    border-radius: 7px;
+    gap: 0.25rem;
   }
 
-  .cm .cm-detail-value {
-    font-weight: 700;
-    color: var(--cm-ink);
-    text-align: right;
-    overflow-wrap: anywhere;
+  .cm .cm-card-link .cm-section-label .mat {
+    font-size: 13px;
   }
 
-  .cm .cm-detail-total {
-    font-variant-numeric: tabular-nums;
-    font-size: 0.9rem;
-    color: var(--cm-ink);
-  }
-
-  /* Footer — subtle separator */
+  /* Footer */
   .cm .cm-card-link .cm-foot {
     border-top: 1px solid rgba(15, 23, 42, 0.06);
-    padding-top: 0.7rem;
-    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    margin-top: 0.1rem;
   }
 
-  .cm .cm-open-hint {
+  .cm .cm-card-link .cm-date {
+    font-size: 0.66rem;
+  }
+
+  .cm .cm-card-link .cm-date .mat {
+    font-size: 12px;
+  }
+
+  .cm .cm-card-link .cm-open-hint {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
     background: rgba(99, 102, 241, 0.08);
     color: var(--cm-brand);
     transition:
@@ -1289,92 +1319,92 @@
     transform: translateX(2px);
   }
 
-  .cm .cm-open-hint .mat {
-    font-size: 16px;
+  .cm .cm-card-link .cm-open-hint .mat {
+    font-size: 14px;
   }
 
-  /* Slightly larger avatar for the professional look */
-  .cm .cm-card-link .cm-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
+  /* Tighter grid — fit more cards, gap on both axes */
+  .cm .cm-list {
+    gap: 0.7rem;
+    padding: 0.7rem;
   }
 
-  .cm .cm-card-link .cm-avatar .mat {
-    font-size: 22px;
-  }
-
-  /* Table badge — softer */
-  .cm .cm-card-link .cm-table-badge {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--cm-brand-2);
-    font-weight: 800;
-    font-size: 0.7rem;
-    padding: 0.28rem 0.6rem;
-    border-radius: 8px;
-  }
-
-  /* Section label — chip style */
-  .cm .cm-card-link .cm-section-label {
-    background: rgba(99, 102, 241, 0.08);
-    color: var(--cm-brand-2);
-    font-size: 0.7rem;
-    padding: 0.28rem 0.6rem;
-    border-radius: 8px;
-  }
-
-  /* Responsive */
   @media (min-width: 680px) {
     .cm .cm-list {
       grid-template-columns: 1fr 1fr;
     }
   }
-  @media (min-width: 1400px) {
+  @media (min-width: 1100px) {
     .cm .cm-list {
       grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+  @media (min-width: 1500px) {
+    .cm .cm-list {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+  }
+
+  .cm-card-warning {
+    border: 2px solid #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  }
+
+  .cm-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 0;
+    padding: 10px 12px;
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+  }
+
+  .cm-warning > .mat {
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .cm-warning-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cm-warning-content strong {
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .cm-warning-reason {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .cm-live-warning {
+    display: inline-block;
+    color: #dc2626;
+    animation: warning-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes warning-pulse {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.3);
     }
   }
 </style>
 
 {% endblock %} {% block content %}
 <div class="cm">
-  {# ========================= HERO ========================== #}
-  <section class="cm-hero">
-    <div class="cm-hero-in">
-      <div>
-        <div class="cm-crumb">
-          <span class="mat">restaurant</span>
-          Restaurant Operations
-        </div>
-
-        <h1>Admin Dashboard</h1>
-
-        <p>
-          Monitor tables, products, orders, and section blocks from one clean
-          and responsive admin workspace.
-        </p>
-      </div>
-
-      <div class="cm-hero-badges">
-        <div class="cm-hero-badge">
-          <span class="mat">table_restaurant</span>
-          Total tables: {{ summary.total_tables }}
-        </div>
-
-        <div class="cm-hero-badge">
-          <span class="mat">pending_actions</span>
-          Occupied: {{ summary.occupied_tables }}
-        </div>
-
-        <div class="cm-hero-badge">
-          <span class="mat">check_circle</span>
-          Available: {{ summary.available_tables }}
-        </div>
-      </div>
-    </div>
-  </section>
-
-  {# ========================= KPI SUMMARY ========================== #}
   <div class="cm-kpis">
     <div class="cm-kpi t">
       <div class="cm-kpi-row">
@@ -1452,9 +1482,9 @@
           </a>
 
           <a
-            class="cm-filter-link {% if active_filter == 'free' %} db-active {% endif %}"
-            href="?filter=free"
-            data-filter="free"
+            class="cm-filter-link {% if active_filter == 'available' %} db-active {% endif %}"
+            href="?filter=available"
+            data-filter="available"
           >
             <div class="cm-filter-main">
               <span class="cm-filter-label">Free tables</span>
@@ -1527,9 +1557,10 @@
           data-status="{{ table.status|default:''|upper }}"
           data-section-id="{{ table.section_block_id|default:'' }}"
           data-has-order="{% if table.has_active_order %}true{% else %}false{% endif %}"
+          data-needs-attention="{% if table.worning %}true{% else %}false{% endif %}"
         >
           <article
-            class="cm-card"
+            class="cm-card {% if table.worning %}cm-card-warning{% endif %}"
             style="background: {{ table.background_color|default:'#ffffff' }}"
           >
             {# ---------- HEADER ---------- #}
@@ -1540,6 +1571,12 @@
 
               <div class="cm-title-wrap">
                 <h3 class="cm-title">{{ table.name }}</h3>
+                {% if table.worning %}
+
+                <span class="mat cm-live-warning" title="Table needs attention">
+                  warning
+                </span>
+                {% endif %}
                 <div class="cm-meta">
                   <span class="cm-table-badge">{{ table.status_label }}</span>
                   <span class="d"></span>
@@ -1550,7 +1587,6 @@
               <span class="cm-table-badge">#{{ table.table_number }}</span>
             </div>
 
-            {# ---------- SECTION ---------- #}
             <div class="cm-section-label">
               <span class="mat mat-sm">meeting_room</span>
               {{ table.section_block_name|default:"No section" }}
@@ -1560,9 +1596,9 @@
             <div class="cm-details">
               <div class="cm-detail-row">
                 <span class="cm-detail-label">Waiter</span>
-                <span class="cm-detail-value"
-                  >{{ table.waiter_name|default:"N/A" }}</span
-                >
+                <span class="cm-detail-value">
+                  {{ table.waiter_name|default:"N/A" }}
+                </span>
               </div>
 
               <div class="cm-detail-row">
@@ -1577,8 +1613,13 @@
             <div class="cm-foot">
               <span class="cm-date">
                 <span class="mat">schedule</span>
+
                 {% if table.elapsed_display %}
-                <p class="elapsed" data-seconds="{{ table.elapsed_seconds }}">
+                <p
+                  class="elapsed"
+                  data-seconds="{{ table.elapsed_seconds }}"
+                  style="margin: 0"
+                >
                   Time: {{ table.elapsed_display }}
                 </p>
                 {% endif %}
@@ -1618,72 +1659,96 @@
   {# ========================= SECTION BLOCKS ========================== #}
 </div>
 {% endblock %} {% block extra_scripts %}
+
 <script>
   (function () {
     "use strict";
 
     const filterLinks = document.querySelectorAll(
-      ".cm-filter-link[data-filter], " + ".cm-filter-link[data-section]",
+      ".cm-filter-link[data-filter], .cm-filter-link[data-section]",
     );
 
     const cards = Array.from(document.querySelectorAll(".cm-card-link"));
+
     const emptyMessage = document.getElementById("db-filter-empty");
 
-    function setActive(link) {
-      filterLinks.forEach(function (item) {
-        item.classList.remove("db-active");
+    // ---------------------------------------------------------
+    // Highlight active filters
+    // ---------------------------------------------------------
+    function setActiveLinks(filter, sectionId) {
+      filterLinks.forEach(function (link) {
+        link.classList.remove("db-active");
+
+        if (link.dataset.filter !== undefined) {
+          if (link.dataset.filter === filter) {
+            link.classList.add("db-active");
+          }
+        }
+
+        if (link.dataset.section !== undefined) {
+          if (sectionId && String(link.dataset.section) === String(sectionId)) {
+            link.classList.add("db-active");
+          }
+        }
       });
-      if (link) link.classList.add("db-active");
     }
 
+    // ---------------------------------------------------------
+    // Filter table cards
+    // ---------------------------------------------------------
     function filterCards(filter, sectionId) {
       let visibleCount = 0;
 
       cards.forEach(function (card) {
         const status = (card.dataset.status || "").trim().toUpperCase();
+
         const cardSectionId = (card.dataset.sectionId || "").trim();
-        const hasActiveOrder =
-          (card.dataset.hasOrder || "").toLowerCase() === "true";
 
         let visible = true;
 
+        // Status filter
         if (filter === "occupied") {
-          // Occupied status OR has an active order
-          visible = status === "OCCUPIED" || hasActiveOrder;
-        } else if (filter === "free") {
-          // Free = NOT occupied AND no active order
-          visible = status !== "OCCUPIED" && !hasActiveOrder;
+          visible = status === "OCCUPIED";
+        } else if (filter === "available") {
+          visible = status === "AVAILABLE";
         }
 
+        // Section filter
         if (sectionId) {
-          visible = visible && cardSectionId === sectionId;
+          visible = visible && cardSectionId === String(sectionId);
         }
+
+        // Show or hide card
+        card.hidden = !visible;
+        card.style.display = visible ? "" : "none";
 
         if (visible) {
-          card.hidden = false;
-          card.style.display = "";
           visibleCount++;
-        } else {
-          card.hidden = true;
-          card.style.display = "none";
         }
       });
 
+      // -----------------------------------------------------
+      // Empty state
+      // -----------------------------------------------------
       if (emptyMessage) {
         if (visibleCount === 0) {
           const titleEl = emptyMessage.querySelector("h3");
           const textEl = emptyMessage.querySelector("p");
 
-          if (filter === "free") {
-            titleEl.textContent = "No free tables";
-            textEl.textContent =
-              "All tables are currently occupied or in service.";
-          } else if (filter === "occupied") {
-            titleEl.textContent = "No occupied tables";
-            textEl.textContent = "Every table is currently free.";
-          } else {
-            titleEl.textContent = "No tables match";
-            textEl.textContent = "Try adjusting the status or section filter.";
+          if (titleEl && textEl) {
+            if (filter === "available") {
+              titleEl.textContent = "No available tables";
+              textEl.textContent =
+                "No available tables match your selected filters.";
+            } else if (filter === "occupied") {
+              titleEl.textContent = "No occupied tables";
+              textEl.textContent =
+                "No occupied tables match your selected filters.";
+            } else {
+              titleEl.textContent = "No tables match";
+              textEl.textContent =
+                "Try adjusting your status or section filter.";
+            }
           }
 
           emptyMessage.style.display = "block";
@@ -1693,52 +1758,89 @@
       }
     }
 
+    // ---------------------------------------------------------
+    // Read filters from URL and apply them
+    // ---------------------------------------------------------
     function applyFromUrl() {
       const params = new URLSearchParams(window.location.search);
+
       const filter = params.get("filter") || "all";
       const sectionId = params.get("section") || "";
-      let activeLink = null;
 
-      if (sectionId) {
-        filterLinks.forEach(function (link) {
-          if (String(link.dataset.section || "") === String(sectionId)) {
-            activeLink = link;
-          }
-        });
-      } else {
-        filterLinks.forEach(function (link) {
-          if (String(link.dataset.filter || "") === String(filter)) {
-            activeLink = link;
-          }
-        });
-      }
-
-      setActive(activeLink);
+      setActiveLinks(filter, sectionId);
       filterCards(filter, sectionId);
     }
 
+    // ---------------------------------------------------------
+    // Handle filter clicks
+    // ---------------------------------------------------------
     filterLinks.forEach(function (link) {
       link.addEventListener("click", function (event) {
         event.preventDefault();
 
-        const filter = this.dataset.filter || "";
-        const sectionId = this.dataset.section || "";
+        const url = new URL(window.location.href);
+
+        // Update status without removing the selected section
+        if (this.dataset.filter !== undefined) {
+          const selectedFilter = this.dataset.filter;
+
+          if (selectedFilter === "all") {
+            url.searchParams.delete("filter");
+          } else {
+            url.searchParams.set("filter", selectedFilter);
+          }
+        }
+
+        // Update section without removing the selected status
+        if (this.dataset.section !== undefined) {
+          const selectedSection = this.dataset.section;
+
+          if (url.searchParams.get("section") === selectedSection) {
+            // Click the same section again to clear it
+            url.searchParams.delete("section");
+          } else {
+            url.searchParams.set("section", selectedSection);
+          }
+        }
+
+        // Update URL without reloading the page
+        window.history.pushState({}, "", url);
+
+        // Apply updated filters
+        applyFromUrl();
+      });
+    });
+
+    // ---------------------------------------------------------
+    // Reset filters
+    // ---------------------------------------------------------
+    const resetButton = document.querySelector(".cm-actions button");
+
+    if (resetButton) {
+      resetButton.addEventListener("click", function (event) {
+        event.preventDefault();
+
         const url = new URL(window.location.href);
 
         url.searchParams.delete("filter");
         url.searchParams.delete("section");
 
-        if (filter && filter !== "all") url.searchParams.set("filter", filter);
-        if (sectionId) url.searchParams.set("section", sectionId);
-
         window.history.pushState({}, "", url);
-        setActive(this);
-        filterCards(filter || "all", sectionId);
-      });
-    });
 
+        applyFromUrl();
+      });
+    }
+
+    // ---------------------------------------------------------
+    // Browser back / forward
+    // ---------------------------------------------------------
     window.addEventListener("popstate", applyFromUrl);
+
+    // ---------------------------------------------------------
+    // Initial filtering
+    // ---------------------------------------------------------
     applyFromUrl();
   })();
 </script>
+
 {% endblock %}

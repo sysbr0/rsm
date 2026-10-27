@@ -18,7 +18,7 @@ Including another URLconf
 from django.urls import path ,include
 
 from ui.views import admin_table_detail, admin_tables , test
-
+from users.views import manager_attendance_page
 
 urlpatterns = [
 
@@ -30,6 +30,11 @@ urlpatterns = [
     path("tables/", include("tables.urls")),
      path("online/", include("online_cloud.urls")),
      path("menu/", include("menu.urls")),
+    path(
+        "attendance/",
+        manager_attendance_page,
+        name="manager_attendance",
+    ),
 ]
 
 

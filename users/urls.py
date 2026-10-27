@@ -17,10 +17,28 @@ Including another URLconf
 
 from django.contrib.auth import views
 from django.urls import path ,include
-from users.views import admin_login
+from users.views import *
+from api.views import employee_attendance_page
 
 urlpatterns = [
     path("login/as/admin/",admin_login, name="admin_login"),
+       path(
+        "attendance/<int:user_id>/",
+        employee_attendance_page,
+        name="employee_attendance_page",
+    ),
+    path(
+    "waiters/",
+    waiter_dashboard,
+    name="waiter_dashboard",
+),
+ path(
+        "day-off/",
+        day_off_dashboard,
+        name="day_off_dashboard",
+    ),
+  
+
 ]
 
 

@@ -1,0 +1,1206 @@
+{% extends "ui/admin_base.html" %} {% load static %} {% block content %}
+
+<style>
+  .attendance-page {
+    --att-green: #15803d;
+    --att-green-bg: #dcfce7;
+    --att-yellow: #a16207;
+    --att-yellow-bg: #fef3c7;
+    --att-red: #b91c1c;
+    --att-red-bg: #fee2e2;
+    --att-purple: #6d28d9;
+    --att-blue: #1d4ed8;
+    --att-blue-bg: #dbeafe;
+    --att-border: #e5e7eb;
+    --att-muted: #6b7280;
+
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    color: var(--text-color, #111827);
+  }
+
+  .att-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .att-title {
+    margin: 0;
+    font-size: 27px;
+    font-weight: 800;
+  }
+
+  .att-subtitle {
+    color: var(--att-muted);
+    margin-top: 6px;
+    font-size: 14px;
+  }
+
+  .att-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border: 1px solid var(--att-border);
+    border-radius: 9px;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .att-button:hover {
+    background: var(--hover-bg, #f3f4f6);
+  }
+
+  .att-button-primary {
+    background: var(--att-purple);
+    border-color: var(--att-purple);
+    color: white;
+  }
+
+  .att-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .att-stat {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--att-border);
+    border-radius: 13px;
+    padding: 18px;
+    min-width: 0;
+  }
+
+  .att-stat-label {
+    color: var(--att-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .att-stat-value {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .att-stat-note {
+    font-size: 12px;
+    color: var(--att-muted);
+    margin-top: 5px;
+  }
+
+  .att-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.8fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .att-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--att-border);
+    border-radius: 14px;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .att-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px;
+    border-bottom: 1px solid var(--att-border);
+  }
+
+  .att-card-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .att-card-body {
+    padding: 18px;
+  }
+
+  .att-month-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .att-month-label {
+    font-weight: 800;
+    min-width: 130px;
+    text-align: center;
+  }
+
+  .att-icon-button {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--att-border);
+    border-radius: 9px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 18px;
+  }
+
+  .att-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .att-weekday {
+    text-align: center;
+    padding: 8px 0;
+    color: var(--att-muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .att-day {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-height: 94px;
+    padding: 10px;
+    border: 1px solid var(--att-border);
+    border-radius: 10px;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+    min-width: 0;
+  }
+
+  .att-day:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px #0000000d;
+  }
+
+  .att-day:focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 2px;
+  }
+
+  .att-day-empty {
+    min-height: 94px;
+    border: 1px solid transparent;
+  }
+
+  .att-day-number {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .att-day-time {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+
+  .att-day-status {
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 5px;
+    text-transform: uppercase;
+  }
+
+  .att-day-completed {
+    background: var(--att-green-bg);
+    border-color: #86efac;
+    color: var(--att-green);
+  }
+
+  .att-day-short {
+    background: var(--att-yellow-bg);
+    border-color: #fcd34d;
+    color: var(--att-yellow);
+  }
+
+  .att-day-missing {
+    background: var(--att-red-bg);
+    border-color: #fca5a5;
+    color: var(--att-red);
+  }
+
+  .att-day-in_progress {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+    color: #5b21b6;
+  }
+
+  .att-day-day_off {
+    background: var(--att-blue-bg);
+    border-color: #93c5fd;
+    color: var(--att-blue);
+  }
+
+  .att-day-today {
+    outline: 2px solid #8b5cf6;
+    outline-offset: 1px;
+  }
+
+  .att-day-future {
+    opacity: 0.55;
+  }
+
+  .att-day-selected {
+    box-shadow: 0 0 0 3px #7c3aed;
+  }
+
+  .att-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .att-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--att-muted);
+    font-size: 12px;
+  }
+
+  .att-legend-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .att-detail-date {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .att-detail-subtitle {
+    color: var(--att-muted);
+    font-size: 13px;
+    margin-top: 5px;
+  }
+
+  .att-progress-track {
+    width: 100%;
+    height: 10px;
+    background: var(--progress-bg, #e5e7eb);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+
+  .att-progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--att-purple);
+    transition: width 0.25s ease;
+  }
+
+  .att-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--att-muted);
+  }
+
+  .att-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .att-session {
+    border: 1px solid var(--att-border);
+    border-radius: 11px;
+    padding: 14px;
+  }
+
+  .att-session-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .att-session-title,
+  .att-session-duration {
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .att-session-times {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .att-session-time-label {
+    font-size: 11px;
+    color: var(--att-muted);
+    margin-bottom: 5px;
+  }
+
+  .att-session-time-value {
+    font-size: 13px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .att-session-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--att-green);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .att-session-active::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .att-day-off-notice {
+    padding: 16px;
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .att-day-off-notice strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  .att-day-off-notice p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+  .att-empty {
+    text-align: center;
+    padding: 28px 12px;
+    color: var(--att-muted);
+    font-size: 13px;
+  }
+
+  .att-message {
+    padding: 12px 14px;
+    border-radius: 9px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+  }
+
+  .att-message-error {
+    display: block;
+    background: var(--att-red-bg);
+    color: var(--att-red);
+  }
+
+  .att-loading {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1200px) {
+    .att-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .att-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .att-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .attendance-page {
+      padding: 12px;
+    }
+
+    .att-title {
+      font-size: 22px;
+    }
+
+    .att-card-header,
+    .att-card-body {
+      padding: 13px;
+    }
+
+    .att-calendar {
+      gap: 4px;
+    }
+
+    .att-day {
+      min-height: 66px;
+      padding: 5px;
+      border-radius: 7px;
+    }
+
+    .att-day-empty {
+      min-height: 66px;
+    }
+
+    .att-day-number {
+      font-size: 12px;
+    }
+
+    .att-day-time {
+      font-size: 9px;
+      margin-top: 7px;
+    }
+
+    .att-day-status {
+      font-size: 8px;
+    }
+
+    .att-weekday {
+      font-size: 9px;
+    }
+
+    .att-month-label {
+      min-width: 105px;
+      font-size: 13px;
+    }
+
+    .att-stats {
+      gap: 8px;
+    }
+
+    .att-stat {
+      padding: 13px;
+    }
+
+    .att-stat-value {
+      font-size: 21px;
+    }
+  }
+</style>
+
+<div
+  class="attendance-page"
+  id="employeeAttendancePage"
+  data-employee-id="{{ employee.pk }}"
+  data-target-hours="{{ daily_target_hours|default:8 }}"
+>
+  <div class="att-header">
+    <div>
+      <h1 class="att-title">Employee Attendance</h1>
+      <div class="att-subtitle">
+        {{ employee.full_name|default:employee.get_username }} · Daily target:
+        <strong id="headerTarget">
+          {{ daily_target_hours|default:8 }} hours
+        </strong>
+      </div>
+    </div>
+
+    <a href="javascript:history.back()" class="att-button"> ← Back </a>
+  </div>
+
+  <div id="attError" class="att-message" role="alert"></div>
+
+  <div class="att-stats">
+    <div class="att-stat">
+      <div class="att-stat-label">Completed days</div>
+      <div class="att-stat-value" id="completedDays">—</div>
+      <div class="att-stat-note">Target hours reached</div>
+    </div>
+
+    <div class="att-stat">
+      <div class="att-stat-label">Short days</div>
+      <div class="att-stat-value" id="shortDays">—</div>
+      <div class="att-stat-note">Below daily target</div>
+    </div>
+
+    <div class="att-stat">
+      <div class="att-stat-label">Missing days</div>
+      <div class="att-stat-value" id="missingDays">—</div>
+      <div class="att-stat-note">
+        Past days without attendance or approved leave
+      </div>
+    </div>
+
+    <div class="att-stat">
+      <div class="att-stat-label">Approved days off</div>
+      <div class="att-stat-value" id="dayOffDays">—</div>
+      <div class="att-stat-note">Accepted requests</div>
+    </div>
+
+    <div class="att-stat">
+      <div class="att-stat-label">Total worked</div>
+      <div class="att-stat-value" id="totalWorked">—</div>
+      <div class="att-stat-note" id="monthSummaryLabel">Selected month</div>
+    </div>
+  </div>
+
+  <div class="att-layout">
+    <section class="att-card">
+      <div class="att-card-header">
+        <div>
+          <h2 class="att-card-title">Attendance calendar</h2>
+          <div class="att-subtitle">
+            Select a date to view attendance or an approved day off.
+          </div>
+        </div>
+
+        <div class="att-month-controls">
+          <button
+            type="button"
+            class="att-icon-button"
+            id="previousMonth"
+            aria-label="Previous month"
+          >
+            ‹
+          </button>
+
+          <div class="att-month-label" id="monthLabel">—</div>
+
+          <button
+            type="button"
+            class="att-icon-button"
+            id="nextMonth"
+            aria-label="Next month"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <div class="att-card-body">
+        <div class="att-calendar" id="calendarGrid">
+          <div class="att-empty">Loading calendar...</div>
+        </div>
+
+        <div class="att-legend">
+          <div class="att-legend-item">
+            <span class="att-legend-dot" style="background: #22c55e"></span>
+            Completed
+          </div>
+
+          <div class="att-legend-item">
+            <span class="att-legend-dot" style="background: #fbbf24"></span>
+            Short hours
+          </div>
+
+          <div class="att-legend-item">
+            <span class="att-legend-dot" style="background: #ef4444"></span>
+            Missing
+          </div>
+
+          <div class="att-legend-item">
+            <span class="att-legend-dot" style="background: #a78bfa"></span>
+            In progress
+          </div>
+
+          <div class="att-legend-item">
+            <span class="att-legend-dot" style="background: #60a5fa"></span>
+            Approved day off
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="att-card">
+      <div class="att-card-header">
+        <div>
+          <h2 class="att-card-title">Daily details</h2>
+          <div class="att-subtitle">Work sessions and daily progress</div>
+        </div>
+
+        <button type="button" class="att-button" id="todayButton">Today</button>
+      </div>
+
+      <div class="att-card-body">
+        <h3 class="att-detail-date" id="detailDate">Select a date</h3>
+
+        <div class="att-detail-subtitle" id="detailStatus">
+          Loading attendance...
+        </div>
+
+        <div class="att-progress-track">
+          <div class="att-progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="att-progress-labels">
+          <span id="progressWorked">Worked: —</span>
+          <span id="progressTarget">Target: —</span>
+        </div>
+
+        <div class="att-progress-labels">
+          <span id="progressRemaining">Remaining: —</span>
+          <span id="progressPercent">0%</span>
+        </div>
+
+        <div class="att-session-list" id="sessionList">
+          <div class="att-empty">Loading sessions...</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    const root = document.getElementById("employeeAttendancePage");
+    if (!root) return;
+
+    const employeeId = root.dataset.employeeId;
+    const initialTarget = Number(root.dataset.targetHours || 8);
+
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthLabel = document.getElementById("monthLabel");
+    const errorBox = document.getElementById("attError");
+
+    const completedDaysEl = document.getElementById("completedDays");
+    const shortDaysEl = document.getElementById("shortDays");
+    const missingDaysEl = document.getElementById("missingDays");
+    const dayOffDaysEl = document.getElementById("dayOffDays");
+    const totalWorkedEl = document.getElementById("totalWorked");
+    const monthSummaryLabel = document.getElementById("monthSummaryLabel");
+
+    const detailDateEl = document.getElementById("detailDate");
+    const detailStatusEl = document.getElementById("detailStatus");
+    const progressBar = document.getElementById("progressBar");
+    const progressWorked = document.getElementById("progressWorked");
+    const progressTarget = document.getElementById("progressTarget");
+    const progressRemaining = document.getElementById("progressRemaining");
+    const progressPercent = document.getElementById("progressPercent");
+    const sessionList = document.getElementById("sessionList");
+
+    const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    const state = {
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      selectedDate: localDateString(new Date()),
+      days: [],
+      targetHours: initialTarget,
+    };
+
+    function localDateString(value) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      const day = String(value.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    // Parse YYYY-MM-DD as a local date, avoiding UTC date shifts.
+    function parseDate(value) {
+      const parts = String(value).slice(0, 10).split("-").map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, function (char) {
+        return {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        }[char];
+      });
+    }
+
+    function formatHours(seconds) {
+      seconds = Math.max(0, Number(seconds) || 0);
+
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+    }
+
+    function formatDate(value) {
+      return parseDate(value).toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    function formatTime(value) {
+      if (!value) return "Not checked out";
+
+      // Supports values such as "2026-10-27T09:30:00+03:00"
+      // and "2026-10-27 09:30:00".
+      const match = String(value).match(
+        /^\d{4}-\d{2}-\d{2}[ T](\d{2}):(\d{2})/,
+      );
+
+      if (match) {
+        const time = new Date();
+        time.setHours(Number(match[1]), Number(match[2]), 0, 0);
+
+        return time.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      return escapeHtml(value);
+    }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.className = "att-message att-message-error";
+    }
+
+    function clearError() {
+      errorBox.textContent = "";
+      errorBox.className = "att-message";
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "same-origin",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          Accept: "application/json",
+        },
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The server returned an invalid response.");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.detail || `Request failed (${response.status}).`,
+        );
+      }
+
+      return data;
+    }
+
+    function renderCalendar(days) {
+      calendarGrid.innerHTML = "";
+
+      weekdays.forEach(function (weekday) {
+        const heading = document.createElement("div");
+        heading.className = "att-weekday";
+        heading.textContent = weekday;
+        calendarGrid.appendChild(heading);
+      });
+
+      const firstDay = new Date(state.year, state.month - 1, 1);
+      const offset = (firstDay.getDay() + 6) % 7;
+
+      for (let i = 0; i < offset; i++) {
+        const empty = document.createElement("div");
+        empty.className = "att-day-empty";
+        calendarGrid.appendChild(empty);
+      }
+
+      const todayString = localDateString(new Date());
+
+      days.forEach(function (day) {
+        const button = document.createElement("button");
+        button.type = "button";
+
+        let className = "att-day att-day-" + day.status;
+
+        if (day.date === todayString) {
+          className += " att-day-today";
+        }
+
+        if (day.date === state.selectedDate) {
+          className += " att-day-selected";
+        }
+
+        button.className = className;
+        button.dataset.date = day.date;
+
+        const statusText =
+          {
+            completed: "Complete",
+            short: "Short",
+            missing: "Missing",
+            in_progress: "Working",
+            today: "Today",
+            future: "Future",
+            day_off: "OFF",
+          }[day.status] ||
+          day.status ||
+          "Unknown";
+
+        button.setAttribute(
+          "aria-label",
+          `${day.date}: ${day.status === "day_off" ? "Approved day off" : statusText}`,
+        );
+
+        const dayNumber = parseDate(day.date).getDate();
+
+        const timeText =
+          day.status === "day_off" ? "Approved" : day.worked_time || "00:00";
+
+        button.innerHTML = `
+                <span class="att-day-number">${dayNumber}</span>
+                <span class="att-day-time">${escapeHtml(timeText)}</span>
+                <span class="att-day-status">${escapeHtml(statusText)}</span>
+            `;
+
+        button.addEventListener("click", function () {
+          selectDate(day.date);
+        });
+
+        calendarGrid.appendChild(button);
+      });
+
+      monthLabel.textContent = new Date(
+        state.year,
+        state.month - 1,
+        1,
+      ).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+      });
+    }
+
+    function renderMonthSummary(data) {
+      const summary = data.summary || {};
+
+      completedDaysEl.textContent = summary.completed_days ?? 0;
+      shortDaysEl.textContent = summary.short_days ?? 0;
+      missingDaysEl.textContent = summary.missing_days ?? 0;
+      dayOffDaysEl.textContent = summary.day_off_days ?? 0;
+      totalWorkedEl.textContent = summary.total_worked_time || "00:00";
+
+      monthSummaryLabel.textContent =
+        `${data.month_name || ""} ${data.year || ""}`.trim();
+
+      if (data.daily_target_hours != null) {
+        state.targetHours = Number(data.daily_target_hours);
+
+        document.getElementById("headerTarget").textContent =
+          `${state.targetHours} hours`;
+      }
+    }
+
+    function statusDescription(summary) {
+      const descriptions = {
+        completed: "Daily working-hour target completed.",
+        short: "The employee worked fewer than the target hours.",
+        missing: "No attendance session was recorded for this past day.",
+        in_progress: "The employee is currently checked in.",
+        today: "No attendance session recorded yet today.",
+        future: "Future date; attendance has not been recorded.",
+        day_off: "This employee has an approved day off.",
+      };
+
+      return descriptions[summary.status] || summary.status || "";
+    }
+
+    function renderSessions(sessions) {
+      sessionList.innerHTML = "";
+
+      if (!sessions || sessions.length === 0) {
+        sessionList.innerHTML = `
+                <div class="att-empty">
+                    No attendance sessions recorded for this date.
+                </div>
+            `;
+        return;
+      }
+
+      sessions.forEach(function (session, index) {
+        const item = document.createElement("div");
+        item.className = "att-session";
+
+        const active = Boolean(session.is_active);
+
+        item.innerHTML = `
+                <div class="att-session-top">
+                    <div class="att-session-title">Session ${index + 1}</div>
+                    <div class="att-session-duration">
+                        ${escapeHtml(session.worked_time || "00:00")}
+                    </div>
+                </div>
+
+                <div class="att-session-times">
+                    <div>
+                        <div class="att-session-time-label">Check in</div>
+                        <div class="att-session-time-value">
+                            ${formatTime(session.check_in)}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="att-session-time-label">Check out</div>
+                        <div class="att-session-time-value">
+                            ${
+                              active
+                                ? '<span class="att-session-active">Currently working</span>'
+                                : formatTime(session.check_out)
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        sessionList.appendChild(item);
+      });
+    }
+
+    function renderDayOff(data) {
+      const request = data.day_off || {};
+
+      progressBar.style.width = "0%";
+      progressBar.style.background = "#2563eb";
+
+      progressWorked.textContent = "Worked: —";
+      progressTarget.textContent = "Approved day off";
+      progressRemaining.textContent = "No hours required";
+      progressPercent.textContent = "OFF";
+
+      const reason = request.reason
+        ? escapeHtml(request.reason)
+        : "No reason provided.";
+
+      const reviewNote = request.review_note
+        ? `<p><strong>Manager's note:</strong> ${escapeHtml(request.review_note)}</p>`
+        : "";
+
+      const reviewedBy = request.reviewed_by
+        ? `<p><strong>Reviewed by:</strong> ${escapeHtml(request.reviewed_by)}</p>`
+        : "";
+
+      const reviewedAt = request.reviewed_at
+        ? `<p><strong>Reviewed at:</strong> ${escapeHtml(request.reviewed_at)}</p>`
+        : "";
+
+      sessionList.innerHTML = `
+            <div class="att-day-off-notice">
+                <strong>✓ Approved Day Off</strong>
+                <p><strong>Request reason:</strong> ${reason}</p>
+                ${reviewNote}
+                ${reviewedBy}
+                ${reviewedAt}
+            </div>
+        `;
+    }
+
+    function renderDayDetails(data) {
+      const summary = data.summary || {};
+
+      detailDateEl.textContent = formatDate(data.date);
+      detailStatusEl.textContent = statusDescription(summary);
+
+      if (summary.status === "day_off" || data.day_off) {
+        renderDayOff(data);
+        return;
+      }
+
+      const targetSeconds = Number(summary.target_seconds || 0);
+      const workedSeconds = Number(summary.worked_seconds || 0);
+      const remainingSeconds = Number(summary.remaining_seconds || 0);
+
+      const percentage =
+        targetSeconds > 0
+          ? Math.min(100, Math.round((workedSeconds / targetSeconds) * 100))
+          : 0;
+
+      progressBar.style.width = `${percentage}%`;
+
+      if (summary.status === "completed") {
+        progressBar.style.background = "#16a34a";
+      } else if (summary.status === "short") {
+        progressBar.style.background = "#d97706";
+      } else if (summary.status === "missing") {
+        progressBar.style.background = "#dc2626";
+      } else {
+        progressBar.style.background = "#7c3aed";
+      }
+
+      progressWorked.textContent = `Worked: ${formatHours(workedSeconds)}`;
+      progressTarget.textContent = `Target: ${formatHours(targetSeconds)}`;
+      progressRemaining.textContent = `Remaining: ${formatHours(remainingSeconds)}`;
+      progressPercent.textContent = `${percentage}%`;
+
+      renderSessions(data.sessions || []);
+    }
+
+    async function loadCalendar() {
+      clearError();
+      root.classList.add("att-loading");
+
+      calendarGrid.innerHTML =
+        '<div class="att-empty">Loading calendar...</div>';
+
+      const url = new URL(
+        `/api/v2/attendance/${encodeURIComponent(employeeId)}/calendar/`,
+        window.location.origin,
+      );
+
+      url.searchParams.set("year", state.year);
+      url.searchParams.set("month", state.month);
+
+      try {
+        const data = await fetchJson(url.toString());
+
+        state.days = data.days || [];
+
+        renderMonthSummary(data);
+        renderCalendar(state.days);
+      } catch (error) {
+        showError(error.message);
+
+        calendarGrid.innerHTML = `
+                <div class="att-empty">
+                    Unable to load the attendance calendar.
+                </div>
+            `;
+      } finally {
+        root.classList.remove("att-loading");
+      }
+    }
+
+    async function loadDay(dateValue) {
+      clearError();
+
+      sessionList.innerHTML =
+        '<div class="att-empty">Loading daily details...</div>';
+
+      const url = new URL(
+        `/api/v2/attendance/${encodeURIComponent(employeeId)}/day/`,
+        window.location.origin,
+      );
+
+      url.searchParams.set("date", dateValue);
+
+      try {
+        const data = await fetchJson(url.toString());
+        renderDayDetails(data);
+      } catch (error) {
+        showError(error.message);
+
+        detailDateEl.textContent = formatDate(dateValue);
+        detailStatusEl.textContent = "Unable to load attendance details.";
+
+        sessionList.innerHTML = `
+                <div class="att-empty">${escapeHtml(error.message)}</div>
+            `;
+      }
+    }
+
+    async function selectDate(dateValue) {
+      state.selectedDate = dateValue;
+
+      document.querySelectorAll(".att-day[data-date]").forEach(function (el) {
+        el.classList.toggle("att-day-selected", el.dataset.date === dateValue);
+      });
+
+      await loadDay(dateValue);
+    }
+
+    async function changeMonth(amount) {
+      state.month += amount;
+
+      if (state.month < 1) {
+        state.month = 12;
+        state.year--;
+      } else if (state.month > 12) {
+        state.month = 1;
+        state.year++;
+      }
+
+      await loadCalendar();
+
+      const selected = parseDate(state.selectedDate);
+
+      if (
+        selected.getFullYear() !== state.year ||
+        selected.getMonth() + 1 !== state.month
+      ) {
+        state.selectedDate = `${state.year}-${String(state.month).padStart(2, "0")}-01`;
+
+        await selectDate(state.selectedDate);
+      } else {
+        renderCalendar(state.days);
+      }
+    }
+
+    document
+      .getElementById("previousMonth")
+      .addEventListener("click", function () {
+        changeMonth(-1);
+      });
+
+    document.getElementById("nextMonth").addEventListener("click", function () {
+      changeMonth(1);
+    });
+
+    document
+      .getElementById("todayButton")
+      .addEventListener("click", async function () {
+        const today = new Date();
+
+        state.year = today.getFullYear();
+        state.month = today.getMonth() + 1;
+        state.selectedDate = localDateString(today);
+
+        await loadCalendar();
+        await selectDate(state.selectedDate);
+      });
+
+    async function initialize() {
+      await loadCalendar();
+      await loadDay(state.selectedDate);
+    }
+
+    initialize();
+  })();
+</script>
+
+{% endblock %}

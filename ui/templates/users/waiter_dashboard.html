@@ -1,0 +1,504 @@
+{% extends "ui/admin_base.html" %} {% block content %}
+<style>
+  .wd {
+    --wd-border: #e5e7eb;
+    --wd-muted: #6b7280;
+    --wd-purple: #6d28d9;
+    max-width: 1500px;
+    margin: auto;
+    padding: 24px;
+    color: var(--text-color, #111827);
+  }
+
+  .wd * {
+    box-sizing: border-box;
+  }
+
+  .wd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .wd-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 850;
+  }
+
+  .wd-subtitle {
+    margin-top: 6px;
+    color: var(--wd-muted);
+    font-size: 13px;
+  }
+
+  .wd-date {
+    padding: 10px 14px;
+    border: 1px solid var(--wd-border);
+    border-radius: 10px;
+    background: var(--card-bg, #fff);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .wd-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 24px;
+  }
+
+  .wd-kpi {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--wd-border);
+    border-radius: 14px;
+    padding: 20px;
+    min-width: 0;
+  }
+
+  .wd-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    color: var(--wd-muted);
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .wd-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: #ede9fe;
+    color: var(--wd-purple);
+    font-size: 18px;
+  }
+
+  .wd-kpi-value {
+    font-size: 30px;
+    font-weight: 850;
+    margin-top: 14px;
+  }
+
+  .wd-kpi-note {
+    font-size: 12px;
+    color: var(--wd-muted);
+    margin-top: 4px;
+  }
+
+  .wd-section {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--wd-border);
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .wd-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px;
+    border-bottom: 1px solid var(--wd-border);
+  }
+
+  .wd-section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .wd-search {
+    width: 250px;
+    max-width: 100%;
+    padding: 10px 13px;
+    border: 1px solid var(--wd-border);
+    border-radius: 9px;
+    background: var(--input-bg, #fff);
+    color: inherit;
+    outline: none;
+  }
+
+  .wd-search:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px #8b5cf622;
+  }
+
+  .wd-table-wrap {
+    overflow-x: auto;
+  }
+
+  .wd-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1050px;
+  }
+
+  .wd-table th {
+    text-align: left;
+    padding: 13px 16px;
+    background: var(--table-header-bg, #f9fafb);
+    color: var(--wd-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .wd-table td {
+    padding: 16px;
+    border-top: 1px solid var(--wd-border);
+    vertical-align: top;
+    font-size: 13px;
+  }
+
+  .wd-table tbody tr:hover {
+    background: var(--hover-bg, #fafafa);
+  }
+
+  .wd-person {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 180px;
+  }
+
+  .wd-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: #ede9fe;
+    color: #5b21b6;
+    font-weight: 850;
+    flex-shrink: 0;
+  }
+
+  .wd-person-name {
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .wd-person-username {
+    color: var(--wd-muted);
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .wd-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .wd-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .wd-status-working {
+    color: #166534;
+    background: #dcfce7;
+  }
+
+  .wd-status-off {
+    color: #6b7280;
+    background: #f3f4f6;
+  }
+
+  .wd-time {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .wd-muted {
+    margin-top: 4px;
+    color: var(--wd-muted);
+    font-size: 11px;
+  }
+
+  .wd-number {
+    font-size: 20px;
+    font-weight: 850;
+  }
+
+  .wd-number-label {
+    margin-top: 3px;
+    color: var(--wd-muted);
+    font-size: 11px;
+  }
+
+  .wd-table-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 270px;
+  }
+
+  .wd-table-pill {
+    padding: 6px 8px;
+    border: 1px solid #c4b5fd;
+    border-radius: 7px;
+    background: #f5f3ff;
+    color: #5b21b6;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .wd-no-tables {
+    color: var(--wd-muted);
+    font-size: 12px;
+  }
+
+  .wd-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--wd-muted);
+  }
+
+  .wd-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--wd-border);
+    color: var(--wd-muted);
+    font-size: 12px;
+  }
+
+  @media (max-width: 1000px) {
+    .wd-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 550px) {
+    .wd {
+      padding: 12px;
+    }
+    .wd-title {
+      font-size: 23px;
+    }
+    .wd-kpi {
+      padding: 14px;
+    }
+    .wd-kpi-value {
+      font-size: 25px;
+    }
+    .wd-section-header {
+      padding: 15px;
+    }
+    .wd-search {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="wd">
+  <div class="wd-header">
+    <div>
+      <h1 class="wd-title">Waiter Operations</h1>
+      <div class="wd-subtitle">
+        Live team overview, service activity, and today's performance.
+      </div>
+    </div>
+
+    <div class="wd-date">{{ today|date:"l, d F Y" }}</div>
+  </div>
+
+  <div class="wd-kpis">
+    <div class="wd-kpi">
+      <div class="wd-kpi-top">
+        TOTAL WAITERS
+        <span class="wd-kpi-icon">♙</span>
+      </div>
+      <div class="wd-kpi-value">{{ total_waiters }}</div>
+      <div class="wd-kpi-note">Registered waiter accounts</div>
+    </div>
+
+    <div class="wd-kpi">
+      <div class="wd-kpi-top">
+        CURRENTLY WORKING
+        <span class="wd-kpi-icon">●</span>
+      </div>
+      <div class="wd-kpi-value">{{ working_waiters }}</div>
+      <div class="wd-kpi-note">Active attendance sessions</div>
+    </div>
+
+    <div class="wd-kpi">
+      <div class="wd-kpi-top">
+        IDLE WAITERS
+        <span class="wd-kpi-icon">◷</span>
+      </div>
+      <div class="wd-kpi-value">{{ idle_waiters }}</div>
+      <div class="wd-kpi-note">Working without active tables</div>
+    </div>
+
+    <div class="wd-kpi">
+      <div class="wd-kpi-top">
+        ORDERS TODAY
+        <span class="wd-kpi-icon">▤</span>
+      </div>
+      <div class="wd-kpi-value">{{ total_orders_today }}</div>
+      <div class="wd-kpi-note">Orders assigned to waiters today</div>
+    </div>
+  </div>
+
+  <section class="wd-section">
+    <div class="wd-section-header">
+      <div>
+        <h2 class="wd-section-title">Waiter team</h2>
+        <div class="wd-subtitle">
+          Attendance, active tables, and daily workload
+        </div>
+      </div>
+
+      <input
+        type="search"
+        id="waiterSearch"
+        class="wd-search"
+        placeholder="Search waiter or table..."
+        aria-label="Search waiters or tables"
+      />
+    </div>
+
+    <div class="wd-table-wrap">
+      <table class="wd-table">
+        <thead>
+          <tr>
+            <th>Waiter</th>
+            <th>Status</th>
+            <th>Check-in</th>
+            <th>Worked today</th>
+            <th>Currently serving</th>
+            <th>Tables served today</th>
+            <th>Total orders today</th>
+          </tr>
+        </thead>
+
+        <tbody id="waiterTableBody">
+          {% for waiter in waiters %}
+          <tr class="wd-waiter-row">
+            <td>
+              <div class="wd-person">
+                <div class="wd-avatar">{{ waiter.name|first|upper }}</div>
+
+                <div>
+                  <div class="wd-person-name">{{ waiter.name }}</div>
+                  <div class="wd-person-username">@{{ waiter.username }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              {% if waiter.is_working %}
+              <span class="wd-status wd-status-working"> Working </span>
+              {% else %}
+              <span class="wd-status wd-status-off"> Not working </span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if waiter.is_working and waiter.check_in %}
+              <div class="wd-time">{{ waiter.check_in|date:"H:i" }}</div>
+              <div class="wd-muted">Active session</div>
+              {% elif waiter.check_in %}
+              <div class="wd-time">{{ waiter.check_in|date:"H:i" }}</div>
+              <div class="wd-muted">Last session today</div>
+              {% else %}
+              <span class="wd-muted">No check-in today</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="wd-time">{{ waiter.worked_time }}</div>
+              <div class="wd-muted">HH:MM</div>
+            </td>
+
+            <td>
+              {% if waiter.current_tables %}
+              <div class="wd-table-pills">
+                {% for table in waiter.current_tables %}
+                <span
+                  class="wd-table-pill"
+                  title="{{ table.orders_count }} active order(s)"
+                >
+                  <a
+                    href="{% url 'admin_table_detail' table.id %}"
+                    class="btn btn-primary"
+                  >
+                    {{ table.id }}
+                  </a>
+                </span>
+                {% endfor %}
+              </div>
+              <div class="wd-muted">
+                {{ waiter.current_tables_count }} active table(s)
+              </div>
+              {% else %}
+              <span class="wd-no-tables">No active tables</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="wd-number">{{ waiter.tables_served_today }}</div>
+              <div class="wd-number-label">Distinct tables</div>
+            </td>
+
+            <td>
+              <div class="wd-number">{{ waiter.total_orders_today }}</div>
+              <div class="wd-number-label">Today's orders</div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="wd-empty">No waiter accounts found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wd-footer" id="waiterCount">{{ total_waiters }} waiter(s)</div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById("waiterSearch");
+    const rows = Array.from(document.querySelectorAll(".wd-waiter-row"));
+    const countLabel = document.getElementById("waiterCount");
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", function () {
+      const query = searchInput.value.trim().toLowerCase();
+      let visible = 0;
+
+      rows.forEach(function (row) {
+        const matches = row.textContent.toLowerCase().includes(query);
+        row.style.display = matches ? "" : "none";
+
+        if (matches) visible++;
+      });
+
+      countLabel.textContent = `${visible} of ${rows.length} waiter(s) shown`;
+    });
+  })();
+</script>
+{% endblock %}

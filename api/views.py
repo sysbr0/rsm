@@ -5,30 +5,43 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework import status
-from datetime import timedelta
 from django.utils import timezone
-
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.urls import reverse
-from orders.models import *
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied, ValidationError
-
-
-
-# Assuming you have these helper functions in your utils or views
-# from .utils import get_current_order, can_manage_order 
-
-from orders.models import *
 from Financial.utils import format_currency
-from menu.models import Category, Product
+from menu.models import *
 from tables.models import *
+from users.models import *
+from orders.models import *
+from decimal import Decimal, InvalidOperation
+from django.conf import settings
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import logging
+import calendar
+from datetime import date, datetime, time, timedelta
+from rest_framework.authentication import TokenAuthentication
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
+from django.views import View
+from django.utils.dateparse import parse_date
+
+
+
+
+
+
+
 
 
 class WaiterMobileLoginAPIView(APIView):
@@ -109,6 +122,7 @@ class WaiterMobileLoginAPIView(APIView):
                     "id": user.pk,
                     "username": user.username,
                     "role": user.role,
+                    "state":user.state
                 },
                 "redirect": "/waiter/",
             },
@@ -121,17 +135,6 @@ class WaiterMobileLoginAPIView(APIView):
 #----------------------------------
 
 
-
-from django.utils import timezone
-
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
-from orders.models import Order, OrderStatus
-from Financial.utils import format_currency
-from menu.models import Category, Product
-from tables.models import RestaurantTable, SectionBlock, TableStatus
 
 
 # ==========================================================
@@ -395,34 +398,6 @@ def tables_dashboard_api(request):
 #-------------------------------
 # deitles of table 
 # -------------------------------
-from decimal import Decimal, InvalidOperation
-
-from django.conf import settings
-from django.db import transaction
-from django.shortcuts import get_object_or_404
-from django.core.exceptions import ValidationError
-
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-# ---- project imports (paths as used in your view) ----
-from orders.models import (
-    Order,
-    OrderItem,
-    OrderStatus,
-    PrintJobStatus,
-)
-from menu.models import Category, Product
-from tables.models import (
-    RestaurantTable,
-    SectionBlock,
-    TableStatus,
-)
-from users.models import User, UserRole
-from Financial.utils import format_currency
-
 
 # ------------------------------------------------------------------
 # Constants
@@ -959,7 +934,7 @@ def is_manager(user) -> bool:
     """
     role = getattr(user, "role", None)
     role_value = getattr(role, "value", role)
-    return role_value in {"ADMIN", "MANAGER"}
+    return role_value in {"ADMIN", "CASHIER"}
 
 
 def can_manage_order(user, order) -> bool:
@@ -1214,16 +1189,6 @@ class ApproveWaiterChangeView(APIView):
 
 
 
-import logging
-
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
-from django.shortcuts import get_object_or_404
-
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
@@ -1537,3 +1502,1298 @@ class PendingWaiterChangesView(APIView):
             "has_pending_requests": bool(data),
             "requests": data,
         }, status=status.HTTP_200_OK)
+
+
+
+
+
+class ManagerAttendanceAPI(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # Only managers and admins can access this API.
+        if request.user.role not in (
+            UserRole.MANAGER,
+            UserRole.ADMIN,
+        ):
+            raise PermissionDenied
+
+        today = timezone.localdate()
+        tomorrow = today + timedelta(days=1)
+
+        day_start = timezone.make_aware(
+            datetime.combine(today, time.min)
+        )
+        day_end = timezone.make_aware(
+            datetime.combine(tomorrow, time.min)
+        )
+
+        now = timezone.now()
+
+        users = User.objects.filter(
+                is_active=True,
+            ).exclude(
+                state="STOPPED"
+            ).order_by(
+                "full_name", "username"
+            )
+
+        attendance_records = Attendance.objects.filter(
+            check_in__lt=day_end,
+        ).filter(
+            Q(check_out__isnull=True)
+            | Q(check_out__gt=day_start)
+        ).select_related(
+            "user"
+        ).order_by("check_in")
+
+        records_by_user = {}
+
+        for record in attendance_records:
+            records_by_user.setdefault(
+                record.user_id, []
+            ).append(record)
+
+        employee_rows = []
+
+        for user in users:
+            records = records_by_user.get(user.id, [])
+
+            today_seconds = 0
+            active_record = None
+            sessions = []
+
+            for record in records:
+                session_start = max(
+                    record.check_in,
+                    day_start,
+                )
+
+                session_end = min(
+                    record.check_out or now,
+                    day_end,
+                    now,
+                )
+
+                if session_end > session_start:
+                    today_seconds += int(
+                        (
+                            session_end - session_start
+                        ).total_seconds()
+                    )
+
+                if record.check_out is None:
+                    active_record = record
+
+                duration_seconds = max(
+                    0,
+                    int(
+                        (
+                            (record.check_out or now)
+                            - record.check_in
+                        ).total_seconds()
+                    ),
+                )
+
+                sessions.append({
+                    "id": record.id,
+                    "check_in": timezone.localtime(
+                        record.check_in
+                    ).isoformat(),
+                    "check_out": (
+                        timezone.localtime(
+                            record.check_out
+                        ).isoformat()
+                        if record.check_out else None
+                    ),
+                    "is_working": record.check_out is None,
+                    "duration_seconds": duration_seconds,
+                    "duration_hours": round(
+                        duration_seconds / 3600, 2
+                    ),
+                })
+
+            today_hours, today_remainder = divmod(
+                today_seconds, 3600
+            )
+            today_minutes = today_remainder // 60
+
+            target_hours = float(user.daily_working_hours)
+            target_seconds = int(target_hours * 3600)
+
+            progress = min(
+                100,
+                round(today_seconds / target_seconds * 100)
+                if target_seconds > 0 else 0,
+            )
+
+            shift_seconds = 0
+
+            if active_record:
+                shift_seconds = max(
+                    0,
+                    int(
+                        (
+                            now - active_record.check_in
+                        ).total_seconds()
+                    ),
+                )
+
+            shift_hours, shift_remainder = divmod(
+                shift_seconds, 3600
+            )
+            shift_minutes = shift_remainder // 60
+
+            employee_rows.append({
+                "user_id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "role": user.role,
+                "role_display": user.get_role_display(),
+                "state": user.state,
+                "is_working": active_record is not None,
+
+                "current_check_in": (
+                    timezone.localtime(
+                        active_record.check_in
+                    ).isoformat()
+                    if active_record else None 
+                ),
+
+                "today": {
+                    "date": today.isoformat(),
+                    "total_seconds": today_seconds,
+                    "hours": today_hours,
+                    "minutes": today_minutes,
+                },
+
+                "daily_target": {
+                    "hours": target_hours,
+                    "seconds": target_seconds,
+                },
+
+                "progress": {
+                    "percentage": progress,
+                    "completed": (
+                        target_seconds > 0
+                        and today_seconds >= target_seconds
+                    ),
+                    "remaining_seconds": max(
+                        0,
+                        target_seconds - today_seconds,
+                    ),
+                },
+
+                "current_shift": {
+                    "seconds": shift_seconds,
+                    "hours": shift_hours,
+                    "minutes": shift_minutes,
+                },
+
+                "sessions": sessions,
+            })
+
+        working_count = sum(
+            1 for employee in employee_rows
+            if employee["is_working"]
+        )
+
+        total_today_seconds = sum(
+            employee["today"]["total_seconds"]
+            for employee in employee_rows
+        )
+
+        completed_count = sum(
+            1 for employee in employee_rows
+            if employee["progress"]["completed"]
+        )
+
+        return JsonResponse({
+            "success": True,
+            "date": today.isoformat(),
+            "timezone": timezone.get_current_timezone_name(),
+            "generated_at": timezone.localtime(now).isoformat(),
+
+            "summary": {
+                "employee_count": len(employee_rows),
+                "working_count": working_count,
+                "not_working_count": (
+                    len(employee_rows) - working_count
+                ),
+                "completed_count": completed_count,
+                "total_today_seconds": total_today_seconds,
+                "total_today_hours": round(
+                    total_today_seconds / 3600, 2
+                ),
+            },
+
+            "employees": employee_rows,
+        })
+
+
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+
+
+
+@login_required
+@require_POST
+def attendance_check_in(request, user_id):
+    # Get the selected user by ID
+    user = get_object_or_404(User, id=user_id)
+
+    # Managers and admins do not need attendance.
+    if user.role in ["MANAGER", "ADMIN"]:
+        return JsonResponse({
+            "success": False,
+            "message": "Attendance is not required for managers or admins.",
+        }, status=400)
+
+    # Prevent multiple active attendance sessions.
+    active_attendance = Attendance.objects.filter(
+        user=user,
+        check_out__isnull=True,
+    ).first()
+
+    if active_attendance:
+        return JsonResponse({
+            "success": False,
+            "message": "This user is already checked in.",
+            "user_id": user.id,
+            "check_in": timezone.localtime(
+                active_attendance.check_in
+            ).isoformat(),
+        }, status=400)
+
+    attendance = Attendance.objects.create(
+        user=user,
+        check_in=timezone.now(),
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": "Check-in successful.",
+        "user_id": user.id,
+        "check_in": timezone.localtime(
+            attendance.check_in
+        ).isoformat(),
+    })
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from orders.models import Order, OrderStatus
+
+
+ACTIVE_ORDER_STATUSES = (
+    OrderStatus.OPEN,
+    OrderStatus.CONFIRMED,
+    OrderStatus.PREPARING,
+    OrderStatus.READY,
+    OrderStatus.SERVED,
+)
+
+
+@login_required
+@require_POST
+def attendance_check_out(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    # Managers and admins do not require attendance.
+    if user.role in ("MANAGER", "ADMIN"):
+        return JsonResponse({
+            "success": False,
+            "message": "Attendance is not required for managers or admins.",
+        }, status=400)
+
+    # Find the user's active attendance session.
+    attendance = Attendance.objects.filter(
+        user=user,
+        check_out__isnull=True,
+    ).order_by("-check_in").first()
+
+    if not attendance:
+        return JsonResponse({
+            "success": False,
+            "message": "This user is not currently checked in.",
+            "user_id": user.id,
+        }, status=400)
+
+    # Block waiter checkout if they still have active orders.
+    if user.role == "WAITER":
+        active_orders = Order.objects.filter(
+            waiter=user,
+            status__in=ACTIVE_ORDER_STATUSES,
+        ).select_related("table")
+
+        if active_orders.exists():
+            orders_data = [
+                {
+                    "order_id": order.id,
+                    "table_id": order.table_id,
+                    "table": str(order.table),
+                    "status": order.status,
+                    "total": str(order.total),
+                }
+                for order in active_orders
+            ]
+
+            return JsonResponse({
+                "success": False,
+                "message": (
+                    "Checkout blocked. Please complete payment or "
+                    "transfer all active orders before checking out."
+                ),
+                "user_id": user.id,
+                "active_orders_count": len(orders_data),
+                "active_orders": orders_data,
+            }, status=400)
+
+    # Allow checkout when no active orders remain.
+    attendance.check_out = timezone.now()
+    attendance.save(update_fields=["check_out"])
+
+    return JsonResponse({
+        "success": True,
+        "message": "Check-out successful.",
+        "user_id": user.id,
+        "check_out": timezone.localtime(
+            attendance.check_out
+        ).isoformat(),
+        "working_hours": attendance.working_hours,
+        "working_time": attendance.working_time_display,
+    })
+
+
+
+
+
+
+
+import calendar
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal, InvalidOperation
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.views.decorators.http import require_GET
+
+
+
+
+User = get_user_model()
+
+
+# ---------------------------------------------------------
+# Permissions
+# ---------------------------------------------------------
+
+def _can_manage_attendance(user):
+    return (
+        user.is_superuser
+        or getattr(user, "role", "") in ("MANAGER", "ADMIN")
+    )
+
+
+def _employee_target_hours(employee):
+    """
+    Get the employee's daily working-hour target.
+    Falls back to 8 hours if the field is empty or invalid.
+    """
+    value = getattr(employee, "daily_working_hours", None)
+
+    try:
+        value = Decimal(str(value))
+        if not value.is_finite() or value <= 0:
+            return Decimal("8")
+        return value
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal("8")
+
+
+# ---------------------------------------------------------
+# Duration helpers
+# ---------------------------------------------------------
+
+def _duration_seconds(check_in, check_out=None):
+    if not check_in:
+        return 0
+
+    end = check_out or timezone.now()
+
+    # Avoid subtracting naive and aware datetimes.
+    if timezone.is_aware(check_in) and timezone.is_naive(end):
+        end = timezone.make_aware(end, timezone.get_current_timezone())
+    elif timezone.is_naive(check_in) and timezone.is_aware(end):
+        check_in = timezone.make_aware(
+            check_in,
+            timezone.get_current_timezone(),
+        )
+
+    return max(0, int((end - check_in).total_seconds()))
+
+
+def _format_duration(total_seconds):
+    total_seconds = max(0, int(total_seconds))
+
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes = remainder // 60
+
+    return f"{hours:02d}:{minutes:02d}"
+
+
+def _local_datetime(value):
+    if not value:
+        return None
+
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+
+    return value.strftime("%Y-%m-%d %H:%M:%S")
+
+
+# ---------------------------------------------------------
+# Attendance queries
+# ---------------------------------------------------------
+
+def _attendance_for_user(employee, start, end):
+    """
+    Get sessions that start inside the requested date range.
+    """
+    return list(
+        Attendance.objects.filter(
+            user=employee,
+            check_in__gte=start,
+            check_in__lt=end,
+        ).order_by("check_in")
+    )
+
+
+def _daily_sessions(sessions, day):
+    """
+    Group attendance sessions by the local date of check-in.
+    """
+    result = []
+
+    for session in sessions:
+        if not session.check_in:
+            continue
+
+        check_in = session.check_in
+
+        if timezone.is_aware(check_in):
+            check_in = timezone.localtime(check_in)
+
+        if check_in.date() == day:
+            result.append(session)
+
+    return result
+
+
+# ---------------------------------------------------------
+# Daily summary
+# ---------------------------------------------------------
+
+def _day_summary(day_sessions, target_hours, today, day):
+    target_hours = Decimal(str(target_hours or 8))
+    target_seconds = int(target_hours * 3600)
+
+    worked_seconds = sum(
+        _duration_seconds(session.check_in, session.check_out)
+        for session in day_sessions
+    )
+
+    has_active_session = any(
+        session.check_out is None
+        for session in day_sessions
+    )
+
+    if worked_seconds >= target_seconds and day_sessions:
+        status = "completed"
+
+    elif day_sessions:
+        if has_active_session and day == today:
+            status = "in_progress"
+        else:
+            status = "short"
+
+    elif day > today:
+        status = "future"
+
+    elif day == today:
+        status = "today"
+
+    else:
+        status = "missing"
+
+    remaining_seconds = max(0, target_seconds - worked_seconds)
+
+    return {
+        "date": day.isoformat(),
+        "status": status,
+        "worked_seconds": worked_seconds,
+        "worked_time": _format_duration(worked_seconds),
+        "target_seconds": target_seconds,
+        "target_hours": float(target_hours),
+        "remaining_seconds": remaining_seconds,
+        "remaining_time": _format_duration(remaining_seconds),
+        "sessions_count": len(day_sessions),
+        "has_active_session": has_active_session,
+    }
+
+
+# ---------------------------------------------------------
+# Employee attendance page
+# URL: manager/employees/<int:user_id>/attendance/
+# ---------------------------------------------------------
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+
+
+@login_required
+def employee_attendance_page(request, user_id):
+    if not _can_manage_attendance(request.user):
+        return JsonResponse(
+            {"error": "You do not have permission to view attendance."},
+            status=403,
+        )
+
+    employee = get_object_or_404(User, pk=user_id)
+    target_hours = _employee_target_hours(employee)
+
+    # Accepted day-off requests for this employee
+    accepted_day_offs = DayOffRequest.objects.filter(
+        user=employee,
+        status="ACCEPTED",
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "attendance/employee_attendance.html",
+        {
+            "employee": employee,
+            "daily_target_hours": float(target_hours),
+            "accepted_day_offs": accepted_day_offs,
+        },
+    )
+# ---------------------------------------------------------
+# Monthly attendance calendar API
+# URL: api/v1/attendance/<int:user_id>/calendar/
+# Query parameters: ?year=2026&month=10
+# ---------------------------------------------------------
+
+@login_required
+@require_GET
+def employee_attendance_calendar_api(request, user_id):
+    if not _can_manage_attendance(request.user):
+        return JsonResponse(
+            {"error": "You do not have permission to view attendance."},
+            status=403,
+        )
+
+    employee = get_object_or_404(User, pk=user_id)
+
+    today = timezone.localdate()
+    target_hours = _employee_target_hours(employee)
+
+    try:
+        year = int(request.GET.get("year", today.year))
+        month = int(request.GET.get("month", today.month))
+
+        if not 1 <= month <= 12:
+            raise ValueError
+
+        date(year, month, 1)
+
+    except (TypeError, ValueError):
+        return JsonResponse(
+            {"error": "Invalid year or month."},
+            status=400,
+        )
+
+    first_day = date(year, month, 1)
+    last_day_number = calendar.monthrange(year, month)[1]
+
+    next_month = (
+        date(year + 1, 1, 1)
+        if month == 12
+        else date(year, month + 1, 1)
+    )
+
+    start_datetime = timezone.make_aware(
+        datetime.combine(first_day, time.min),
+        timezone.get_current_timezone(),
+    )
+
+    end_datetime = timezone.make_aware(
+        datetime.combine(next_month, time.min),
+        timezone.get_current_timezone(),
+    )
+
+    # ---------------------------------------------------------
+    # Attendance sessions for the selected month
+    # ---------------------------------------------------------
+    sessions = _attendance_for_user(
+        employee,
+        start_datetime,
+        end_datetime,
+    )
+
+    # ---------------------------------------------------------
+    # Accepted day-off requests for the selected month
+    # Model fields: user, date, status
+    # ---------------------------------------------------------
+    accepted_day_off_dates = set(
+        DayOffRequest.objects.filter(
+            user=employee,
+            date__gte=first_day,
+            date__lt=next_month,
+        ).exclude(status="REJECTED").values_list("date", flat=True))
+
+    days = []
+
+    completed_days = 0
+    short_days = 0
+    missing_days = 0
+    day_off_days = 0
+    total_worked_seconds = 0
+
+    # ---------------------------------------------------------
+    # Build each calendar day
+    # ---------------------------------------------------------
+    for day_number in range(1, last_day_number + 1):
+        current_day = date(year, month, day_number)
+
+        day_sessions = _daily_sessions(
+            sessions,
+            current_day,
+        )
+
+        summary = _day_summary(
+            day_sessions=day_sessions,
+            target_hours=target_hours,
+            today=today,
+            day=current_day,
+        )
+
+        # Keep actual worked time even when the date is a day off.
+        total_worked_seconds += summary.get(
+            "worked_seconds", 0
+        )
+
+        if current_day in accepted_day_off_dates:
+            # An accepted day off must not be counted as missing.
+            summary["status"] = "day_off"
+            day_off_days += 1
+
+        elif summary["status"] == "completed":
+            completed_days += 1
+
+        elif summary["status"] == "short":
+            short_days += 1
+
+        elif summary["status"] == "missing":
+            missing_days += 1
+
+        days.append(summary)
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
+    return JsonResponse({
+        "employee": {
+            "id": employee.pk,
+            "name": (
+                getattr(employee, "full_name", None)
+                or employee.get_username()
+            ),
+        },
+        "year": year,
+        "month": month,
+        "month_name": calendar.month_name[month],
+        "daily_target_hours": float(target_hours),
+        "days_in_month": last_day_number,
+        "summary": {
+            "completed_days": completed_days,
+            "short_days": short_days,
+            "missing_days": missing_days,
+            "day_off_days": day_off_days,
+            "total_worked_seconds": total_worked_seconds,
+            "total_worked_time": _format_duration(
+                total_worked_seconds
+            ),
+        },
+        "days": days,
+    })
+
+# ---------------------------------------------------------
+# Attendance details for one day
+# URL: api/v1/attendance/<int:user_id>/day/
+# Query parameter: ?date=2026-10-27
+# ---------------------------------------------------------
+
+@login_required
+@require_GET
+def employee_attendance_day_api(request, user_id):
+    if not _can_manage_attendance(request.user):
+        return JsonResponse(
+            {"error": "You do not have permission to view attendance."},
+            status=403,
+        )
+
+    employee = get_object_or_404(User, pk=user_id)
+
+    target_hours = _employee_target_hours(employee)
+    today = timezone.localdate()
+
+    # ---------------------------------------------------------
+    # Read selected date
+    # ---------------------------------------------------------
+    date_value = request.GET.get("date")
+
+    if not date_value:
+        selected_day = today
+    else:
+        try:
+            selected_day = date.fromisoformat(date_value)
+        except (TypeError, ValueError):
+            return JsonResponse(
+                {"error": "Invalid date. Use YYYY-MM-DD."},
+                status=400,
+            )
+
+    # ---------------------------------------------------------
+    # Find accepted day-off request for this date
+    # ---------------------------------------------------------
+    day_off_request = (
+        DayOffRequest.objects.filter(
+            user=employee,date=selected_day
+        ).exclude(status="REJECTED").order_by("-created_at")
+        .first()
+    )
+
+    # ---------------------------------------------------------
+    # Get attendance sessions
+    # ---------------------------------------------------------
+    start_datetime = timezone.make_aware(
+        datetime.combine(selected_day, time.min),
+        timezone.get_current_timezone(),
+    )
+
+    end_datetime = start_datetime + timedelta(days=1)
+
+    sessions = _attendance_for_user(
+        employee,
+        start_datetime,
+        end_datetime,
+    )
+
+    # ---------------------------------------------------------
+    # Calculate the normal attendance summary
+    # ---------------------------------------------------------
+    summary = _day_summary(
+        day_sessions=sessions,
+        target_hours=target_hours,
+        today=today,
+        day=selected_day,
+    )
+
+    # ---------------------------------------------------------
+    # Override the status when the day off was accepted
+    # ---------------------------------------------------------
+    if day_off_request:
+        summary["status"] = "day_off"
+
+    # ---------------------------------------------------------
+    # Serialize attendance sessions
+    # ---------------------------------------------------------
+    session_data = []
+
+    for session in sessions:
+        duration = _duration_seconds(
+            session.check_in,
+            session.check_out,
+        )
+
+        session_data.append({
+            "id": session.pk,
+            "check_in": _local_datetime(session.check_in),
+            "check_out": _local_datetime(session.check_out),
+            "worked_seconds": duration,
+            "worked_time": _format_duration(duration),
+            "is_active": session.check_out is None,
+        })
+
+    # ---------------------------------------------------------
+    # Serialize accepted day-off request
+    # ---------------------------------------------------------
+    day_off_data = None
+
+    if day_off_request:
+        day_off_data = {
+            "id": day_off_request.pk,
+            "date": day_off_request.date.isoformat(),
+            "status": day_off_request.status,
+            "reason": day_off_request.reason,
+            "review_note": day_off_request.review_note,
+        }
+
+        if day_off_request.reviewed_at:
+            day_off_data["reviewed_at"] = (
+                _local_datetime(day_off_request.reviewed_at)
+            )
+
+        if day_off_request.reviewed_by:
+            day_off_data["reviewed_by"] = (
+                getattr(
+                    day_off_request.reviewed_by,
+                    "full_name",
+                    None,
+                )
+                or day_off_request.reviewed_by.get_username()
+            )
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
+    return JsonResponse({
+        "employee": {
+            "id": employee.pk,
+            "name": (
+                getattr(employee, "full_name", None)
+                or employee.get_username()
+            ),
+        },
+        "date": selected_day.isoformat(),
+        "daily_target_hours": float(target_hours),
+        "summary": summary,
+        "day_off": day_off_data,
+        "sessions": session_data,
+    })
+#phone 
+import calendar
+from datetime import date, datetime, time, timedelta
+
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+
+
+class AttendanceBaseAPIView(APIView):
+    """
+    Base class for attendance APIs.
+    Authentication: Authorization: Token <token>
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_employee(self, user_id):
+        employee = User.objects.filter(pk=user_id).first()
+
+        if employee is None:
+            return None
+
+        return employee
+
+    def can_manage(self, request):
+        return _can_manage_attendance(request.user)
+
+    def can_view_user_attendance(self, request, target_user_id):
+        """
+        Allow an employee to view their own attendance, or allow managers/admins to view any employee.
+        """
+        return (request.user.pk == target_user_id) or self.can_manage(request)
+
+    def employee_data(self, employee):
+        return {
+            "id": employee.pk,
+            "name": (
+                getattr(employee, "full_name", None)
+                or employee.get_username()
+            ),
+        }
+
+
+class EmployeeAttendanceCalendarAPI(AttendanceBaseAPIView):
+    """
+    GET /api/v1/attendance/<user_id>/calendar/?year=2026&month=10
+    """
+
+    def get(self, request, user_id):
+        if not self.can_view_user_attendance(request, user_id):
+            return Response(
+                {"error": "You do not have permission to view attendance."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        employee = self.get_employee(user_id)
+
+        if employee is None:
+            return Response(
+                {"error": "Employee not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        today = timezone.localdate()
+        target_hours = _employee_target_hours(employee)
+
+        try:
+            year = int(request.query_params.get("year", today.year))
+            month = int(request.query_params.get("month", today.month))
+
+            if not 1 <= month <= 12:
+                raise ValueError
+
+            date(year, month, 1)
+
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "Invalid year or month."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        first_day = date(year, month, 1)
+        last_day_number = calendar.monthrange(year, month)[1]
+
+        next_month = (
+            date(year + 1, 1, 1)
+            if month == 12
+            else date(year, month + 1, 1)
+        )
+
+        current_tz = timezone.get_current_timezone()
+
+        start_datetime = timezone.make_aware(
+            datetime.combine(first_day, time.min),
+            current_tz,
+        )
+
+        end_datetime = timezone.make_aware(
+            datetime.combine(next_month, time.min),
+            current_tz,
+        )
+
+        sessions = _attendance_for_user(
+            employee,
+            start_datetime,
+            end_datetime,
+        )
+
+        days = []
+        completed_days = 0
+        short_days = 0
+        missing_days = 0
+        total_worked_seconds = 0
+
+        for day_number in range(1, last_day_number + 1):
+            current_day = date(year, month, day_number)
+
+            day_sessions = _daily_sessions(
+                sessions,
+                current_day,
+            )
+
+            summary = _day_summary(
+                day_sessions=day_sessions,
+                target_hours=target_hours,
+                today=today,
+                day=current_day,
+            )
+
+            total_worked_seconds += summary["worked_seconds"]
+
+            if summary["status"] == "completed":
+                completed_days += 1
+            elif summary["status"] == "short":
+                short_days += 1
+            elif summary["status"] == "missing":
+                missing_days += 1
+
+            days.append(summary)
+
+        return Response({
+            "employee": self.employee_data(employee),
+            "year": year,
+            "month": month,
+            "month_name": calendar.month_name[month],
+            "daily_target_hours": float(target_hours),
+            "days_in_month": last_day_number,
+            "summary": {
+                "completed_days": completed_days,
+                "short_days": short_days,
+                "missing_days": missing_days,
+                "total_worked_seconds": total_worked_seconds,
+                "total_worked_time": _format_duration(
+                    total_worked_seconds
+                ),
+            },
+            "days": days,
+        })
+
+
+class EmployeeAttendanceDayAPI(AttendanceBaseAPIView):
+    """
+    GET /api/v1/attendance/<user_id>/day/?date=2026-10-27
+    """
+
+    def get(self, request, user_id):
+        if not self.can_view_user_attendance(request, user_id):
+            return Response(
+                {"error": "You do not have permission to view attendance."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        employee = self.get_employee(user_id)
+
+        if employee is None:
+            return Response(
+                {"error": "Employee not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        target_hours = _employee_target_hours(employee)
+        today = timezone.localdate()
+
+        date_value = request.query_params.get("date")
+
+        if not date_value:
+            selected_day = today
+        else:
+            try:
+                selected_day = date.fromisoformat(date_value)
+            except (TypeError, ValueError):
+                return Response(
+                    {"error": "Invalid date. Use YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        current_tz = timezone.get_current_timezone()
+
+        start_datetime = timezone.make_aware(
+            datetime.combine(selected_day, time.min),
+            current_tz,
+        )
+
+        end_datetime = start_datetime + timedelta(days=1)
+
+        sessions = _attendance_for_user(
+            employee,
+            start_datetime,
+            end_datetime,
+        )
+
+        summary = _day_summary(
+            day_sessions=sessions,
+            target_hours=target_hours,
+            today=today,
+            day=selected_day,
+        )
+
+        session_data = []
+
+        for session in sessions:
+            duration = _duration_seconds(
+                session.check_in,
+                session.check_out,
+            )
+
+            session_data.append({
+                "id": session.pk,
+                "check_in": _local_datetime(session.check_in),
+                "check_out": _local_datetime(session.check_out),
+                "worked_seconds": duration,
+                "worked_time": _format_duration(duration),
+                "is_active": session.check_out is None,
+            })
+
+        return Response({
+            "employee": self.employee_data(employee),
+            "date": selected_day.isoformat(),
+            "daily_target_hours": float(target_hours),
+            "summary": summary,
+            "sessions": session_data,
+        })
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user_profile(request):
+     """ GET /api/v1/auth/me/ Returns the latest user profile and working state. """ 
+     user = request.user
+     return Response({ "id": user.pk, "username": user.username, "email": user.email, "role": user.role, "state": user.state, })
+
+
+
+class EmployeeDayOffRequestsAPI(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def serialize_request(self, item):
+        reviewer = item.reviewed_by
+
+        return {
+            "id": item.id,
+            "user_id": item.user_id,
+            "employee_name": (
+                item.user.get_full_name()
+                or item.user.get_username()
+            ),
+            "date": item.date.isoformat(),
+            "reason": item.reason,
+            "status": item.status,
+            "reviewed_by": (
+                reviewer.get_full_name()
+                or reviewer.get_username()
+                if reviewer else None
+            ),
+            "reviewed_at": (
+                item.reviewed_at.isoformat()
+                if item.reviewed_at else None
+            ),
+            "review_note": item.review_note,
+            "created_at": item.created_at.isoformat(),
+        }
+
+    # GET: List the authenticated employee's requests
+    def get(self, request):
+        requests_qs = (
+            DayOffRequest.objects
+            .filter(user=request.user)
+            .select_related("user", "reviewed_by")
+            .order_by("-date", "-created_at")
+        )
+
+        return Response({
+            "success": True,
+            "count": requests_qs.count(),
+            "results": [
+                self.serialize_request(item)
+                for item in requests_qs
+            ],
+            "today": timezone.localdate().isoformat(),
+        })
+
+    # POST: Create a day-off request
+    def post(self, request):
+        requested_date_value = request.data.get("date")
+        reason = request.data.get("reason", "")
+
+        if not requested_date_value:
+            return Response(
+                {
+                    "success": False,
+                    "message": "The date field is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not isinstance(requested_date_value, str):
+            return Response(
+                {
+                    "success": False,
+                    "message": "The date must use YYYY-MM-DD format.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        requested_date = parse_date(requested_date_value)
+
+        if requested_date is None:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid date. Use YYYY-MM-DD format.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        today = timezone.localdate()
+
+        # Prevent requests for dates in the past.
+        if requested_date < today:
+            return Response(
+                {
+                    "success": False,
+                    "message": "You cannot request a day off in the past.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if reason is None:
+            reason = ""
+
+        if not isinstance(reason, str):
+            return Response(
+                {
+                    "success": False,
+                    "message": "The reason must be text.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reason = reason.strip()
+
+        if len(reason) > 500:
+            return Response(
+                {
+                    "success": False,
+                    "message": "The reason cannot exceed 500 characters.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Prevent duplicate pending or approved requests.
+        duplicate_exists = DayOffRequest.objects.filter(
+            user=request.user,
+            date=requested_date,
+            status__in=[
+                DayOffStatus.PENDING,
+                DayOffStatus.APPROVED,
+            ],
+        ).exists()
+
+        if duplicate_exists:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "You already have a pending or approved "
+                        "request for this date."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        day_off_request = DayOffRequest.objects.create(
+            user=request.user,
+            date=requested_date,
+            reason=reason,
+            status=DayOffStatus.PENDING,
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": "Day-off request submitted successfully.",
+                "request": self.serialize_request(day_off_request),
+            },
+            status=status.HTTP_201_CREATED,
+        )

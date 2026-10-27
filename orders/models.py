@@ -11,10 +11,11 @@ from collections import defaultdict
 from Financial.models import  *
 from django.db import transaction
 from django.core.exceptions import ValidationError
-
+from chat.models import Message
 from Financial.services import receive_money
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
+from django.contrib.auth import get_user_model
 
 
 from decimal import Decimal, InvalidOperation
@@ -859,6 +860,7 @@ class OrderItem(TimeStampedModel):
             self.order.table.set_as_reserved()
         else:
             self.order.table.set_as_occupied()
+     
 
      
 
@@ -889,6 +891,7 @@ class OrderItem(TimeStampedModel):
             f"[PRINT] OrderItem #{self.id} "
             f"marked as PRINTED."
         )
+       
 
     @classmethod
     def print_pending_items(cls, order , user):
@@ -1501,6 +1504,19 @@ from django.utils import timezone
 # Keep your existing TimeStampedModel import.
 # from your_app.models import TimeStampedModel
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import models, transaction
+from django.db.models import Q
+from django.utils import timezone
+
+# Adjust this import to match your Django messaging app.
+
+
+# Keep your existing TimeStampedModel import.
+# from your_app.models import TimeStampedModel
+
 
 class TransferStatus(models.TextChoices):
     PENDING = "PENDING", "Pending"
@@ -1532,7 +1548,6 @@ class ChangeOrderWaiter(TimeStampedModel):
     )
 
     # Kept for compatibility with your existing API.
-    # True means approved; False means pending or denied.
     is_approved = models.BooleanField(default=False)
 
     status = models.CharField(
@@ -1576,6 +1591,10 @@ class ChangeOrderWaiter(TimeStampedModel):
             f"({self.status})"
         )
 
+    # ==========================================================
+    # PERMISSIONS
+    # ==========================================================
+
     @staticmethod
     def _is_manager(user):
         if not user or not user.is_authenticated:
@@ -1594,6 +1613,70 @@ class ChangeOrderWaiter(TimeStampedModel):
 
         return getattr(user, "role", "") == "WAITER"
 
+    # ==========================================================
+    # MESSAGING
+    # ==========================================================
+
+    @staticmethod
+    def _send_transfer_message(sender, recipient, content):
+        """
+        Create a message in the existing Message app.
+
+        Messages are unread by default because Message.is_read
+        defaults to False.
+        """
+
+        if sender is None or recipient is None:
+            return
+
+        if sender.pk == recipient.pk:
+            return
+
+        Message.objects.create(
+            sender=sender,
+            recipient=recipient,
+            content=content,
+        )
+
+    @classmethod
+    def _notify_managers(cls, sender, order, transfer):
+        """
+        Notify all active managers and staff administrators
+        about a transfer request requiring approval.
+        """
+
+        User = get_user_model()
+
+        managers = (
+            User.objects.filter(
+                Q(role="MANAGER")
+                | Q(is_staff=True)
+                | Q(is_superuser=True),
+                is_active=True,
+            )
+            .exclude(pk=sender.pk)
+            .distinct()
+        )
+
+        content = (
+            f"Waiter transfer approval required for "
+            f"Order #{order.pk}.\n"
+            f"Current waiter: {transfer.current_waiter}\n"
+            f"Receiving waiter: {transfer.seted_waiter}\n"
+            f"Please review the transfer request."
+        )
+
+        for manager in managers.iterator():
+            cls._send_transfer_message(
+                sender=sender,
+                recipient=manager,
+                content=content,
+            )
+
+    # ==========================================================
+    # CREATE TRANSFER REQUEST
+    # ==========================================================
+
     @classmethod
     def create_transfer_request(
         cls,
@@ -1605,26 +1688,35 @@ class ChangeOrderWaiter(TimeStampedModel):
         Create a waiter transfer request.
 
         Manager:
-            Approves the transfer immediately.
+            Approves the transfer immediately and notifies
+            the previous and receiving waiters.
 
         Waiter:
-            Creates a pending request requiring approval
-            from a manager or the receiving waiter.
+            Creates a pending request and notifies the
+            receiving waiter and managers.
         """
 
-        if not created_by_user or not created_by_user.is_authenticated:
-            raise PermissionDenied("Authentication is required.")
+        if (
+            not created_by_user
+            or not created_by_user.is_authenticated
+        ):
+            raise PermissionDenied(
+                "Authentication is required."
+            )
 
         with transaction.atomic():
-            # Lock the order to prevent concurrent transfer requests
-            # from processing against the same order simultaneously.
+            # Lock the order to prevent concurrent transfer requests.
             order = (
                 order.__class__.objects
                 .select_for_update()
                 .get(pk=order.pk)
             )
 
-            order_status = getattr(order.status, "value", order.status)
+            order_status = getattr(
+                order.status,
+                "value",
+                order.status,
+            )
 
             if order_status in ("PAID", "CANCELLED"):
                 raise ValidationError(
@@ -1654,11 +1746,15 @@ class ChangeOrderWaiter(TimeStampedModel):
 
             is_manager = cls._is_manager(created_by_user)
 
-            # Only a manager or the current waiter can initiate a transfer.
-            if not is_manager and order.waiter_id != created_by_user.pk:
+            # Only a manager or the current waiter can initiate
+            # a transfer.
+            if (
+                not is_manager
+                and order.waiter_id != created_by_user.pk
+            ):
                 raise PermissionDenied(
-                    "Only the current waiter or a manager can request "
-                    "a waiter transfer."
+                    "Only the current waiter or a manager can "
+                    "request a waiter transfer."
                 )
 
             # Keep only one pending transfer per order.
@@ -1676,17 +1772,47 @@ class ChangeOrderWaiter(TimeStampedModel):
             )
 
             if is_manager:
+                # A manager's transfer is approved immediately.
                 transfer._approve_locked(
                     actioning_user=created_by_user,
                     order=order,
                 )
 
+            else:
+                # Notify the receiving waiter.
+                cls._send_transfer_message(
+                    sender=created_by_user,
+                    recipient=seted_waiter,
+                    content=(
+                        f"New waiter transfer request for "
+                        f"Order #{order.pk}.\n"
+                        f"Requested by: {created_by_user}\n"
+                        f"Table number  #{order.table}.\n"
+                        f"Current waiter: {transfer.current_waiter}\n"
+                        f"You are the receiving waiter.\n"
+                        f"Please approve or deny this request."
+                    ),
+                )
+
+                # Notify managers that approval is required.
+                cls._notify_managers(
+                    sender=created_by_user,
+                    order=order,
+                    transfer=transfer,
+                )
+          
+
             return transfer
+
+    # ==========================================================
+    # APPROVE TRANSFER
+    # ==========================================================
 
     def _approve_locked(self, actioning_user, order):
         """
-        Internal helper. Call inside transaction.atomic()
-        with the order row locked.
+        Internal helper.
+
+        Call inside transaction.atomic() with the order row locked.
         """
 
         if self.status != TransferStatus.PENDING:
@@ -1704,7 +1830,11 @@ class ChangeOrderWaiter(TimeStampedModel):
                 "The receiving waiter is no longer active."
             )
 
-        order_status = getattr(order.status, "value", order.status)
+        order_status = getattr(
+            order.status,
+            "value",
+            order.status,
+        )
 
         if order_status not in (
             "OPEN",
@@ -1717,16 +1847,21 @@ class ChangeOrderWaiter(TimeStampedModel):
                 "The order is no longer active."
             )
 
-        # Ensure the order has not changed waiters since the request.
+        # Ensure the assigned waiter has not changed since the request.
         if order.waiter_id != self.current_waiter_id:
             raise ValidationError(
                 "The order's assigned waiter has changed. "
                 "Create a new transfer request."
             )
 
-        order.waiter = self.seted_waiter
+        previous_waiter = self.current_waiter
+        receiving_waiter = self.seted_waiter
+
+        # Update the order's assigned waiter.
+        order.waiter = receiving_waiter
         order.save(update_fields=["waiter"])
 
+        # Update transfer status.
         self.is_approved = True
         self.status = TransferStatus.APPROVED
         self.approved_by = actioning_user
@@ -1742,6 +1877,36 @@ class ChangeOrderWaiter(TimeStampedModel):
                 "denial_reason",
             ]
         )
+
+        # Notify the previous waiter.
+        self._send_transfer_message(
+            sender=actioning_user,
+            recipient=previous_waiter,
+            content=(
+                f"Waiter transfer approved for Order #{order.pk}.\n"
+                f"Table number  #{order.table}.\n"
+                f"Previous waiter: {previous_waiter}\n"
+                f"New waiter: {receiving_waiter}\n"
+                f"The order has been assigned to the new waiter."
+            ),
+        )
+
+        # Notify the receiving waiter.
+        self._send_transfer_message(
+            sender=actioning_user,
+            recipient=receiving_waiter,
+            content=(
+                f"You have been assigned Order #{order.pk}.\n"
+                 f"Table number  #{order.table}.\n"
+                f"Previous waiter: {previous_waiter}\n"
+                f"The waiter transfer has been approved."
+            ),
+        )
+       
+
+    # ==========================================================
+    # APPROVE OR DENY TRANSFER REQUEST
+    # ==========================================================
 
     def approve_or_deny_transfer(
         self,
@@ -1759,8 +1924,13 @@ class ChangeOrderWaiter(TimeStampedModel):
         Denied requests are retained for auditing.
         """
 
-        if not actioning_user or not actioning_user.is_authenticated:
-            raise PermissionDenied("Authentication is required.")
+        if (
+            not actioning_user
+            or not actioning_user.is_authenticated
+        ):
+            raise PermissionDenied(
+                "Authentication is required."
+            )
 
         if not isinstance(approve, bool):
             raise ValidationError(
@@ -1788,6 +1958,7 @@ class ChangeOrderWaiter(TimeStampedModel):
                 )
 
             is_manager = self._is_manager(actioning_user)
+
             is_receiving_waiter = (
                 transfer.seted_waiter_id == actioning_user.pk
             )
@@ -1803,12 +1974,14 @@ class ChangeOrderWaiter(TimeStampedModel):
                     actioning_user=actioning_user,
                     order=order,
                 )
+
             else:
+                # Preserve the denied request for auditing.
                 transfer.status = TransferStatus.DENIED
                 transfer.is_approved = False
                 transfer.approved_by = actioning_user
                 transfer.resolved_at = timezone.now()
-                transfer.denial_reason = denial_reason
+                transfer.denial_reason = denial_reason.strip()
 
                 transfer.save(
                     update_fields=[
@@ -1820,8 +1993,56 @@ class ChangeOrderWaiter(TimeStampedModel):
                     ]
                 )
 
-            # Refresh the current Python instance for callers
-            # that use the original object after processing.
+                reason = (
+                    transfer.denial_reason
+                    or "No reason provided."
+                )
+
+                # Notify the original waiter.
+                self._send_transfer_message(
+                    sender=actioning_user,
+                    recipient=transfer.current_waiter,
+                    content=(
+                        f"Waiter transfer denied for "
+                        f"Order #{order.pk}.\n"
+                        f"Requested waiter: {transfer.seted_waiter}\n"
+                        f"Reason: {reason}"
+                    ),
+                )
+
+                # Notify the receiving waiter.
+                self._send_transfer_message(
+                    sender=actioning_user,
+                    recipient=transfer.seted_waiter,
+                    content=(
+                        f"Your waiter transfer request for "
+                        f"Order #{order.pk} was denied.\n"
+                        f"Reason: {reason}"
+                    ),
+                )
+
+            # Refresh the original Python instance.
             self.refresh_from_db()
 
             return self
+        User = get_user_model()
+
+        managers = User.objects.filter(
+            Q(role="MANAGER") | Q(is_staff=True) | Q(is_superuser=True),
+            is_active=True,
+        ).exclude(pk=sender.pk).distinct()
+
+        content = (
+            f"Waiter transfer approval required for Order #{order.pk} .\n"
+              f"Table number  #{order.table} .\n"
+            f"Current waiter: {transfer.current_waiter}\n"
+            f"Receiving waiter: {transfer.seted_waiter}\n"
+            f"Please review the transfer request."
+        )
+
+        for manager in managers.iterator():
+            cls._send_transfer_message(
+                sender=sender,
+                recipient=manager,
+                content=content,
+            )

@@ -244,3 +244,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
 }
+
+LANGUAGE_CODE = "en-us"
+
+TIME_ZONE = "Europe/Istanbul"
+
+USE_I18N = True
+
+USE_TZ = True

@@ -11,11 +11,16 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 
 User = get_user_model()
 
 
-@login_required
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def chat_staff_list(request):
     staff = (
         User.objects
@@ -43,8 +48,7 @@ def chat_staff_list(request):
         for user in staff
     ]
 
-    return JsonResponse({"results": results})
-
+    return Response({"results": results})
 @login_required
 def chat_page(request):
     return render(request, "chat/chat.html")

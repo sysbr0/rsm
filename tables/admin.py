@@ -9,7 +9,7 @@ from .models import SectionBlock, RestaurantTable, TableStatus
 class RestaurantTableInline(admin.TabularInline):
     model = RestaurantTable
     extra = 1
-    fields = ("table_number", "name", "capacity", "status", "is_active")
+    fields = ("table_number", "name", "capacity", "status", "is_active" , "worning")
     ordering = ("table_number",)
 
 

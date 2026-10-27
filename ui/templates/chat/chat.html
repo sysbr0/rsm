@@ -1,1019 +1,1095 @@
-{% load static %}
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Staff Chat | RMS</title>
+{% extends "ui/admin_base.html" %} {% block title %}Staff Messages - Admin{%
+endblock %} {% block content %}
 
-    <style>
-      :root {
-        --primary: #7f1d1d;
-        --primary-dark: #5f1515;
-        --purple: #4c1d95;
-        --background: #f5f6fa;
-        --surface: #ffffff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --border: #e5e7eb;
-        --success: #15803d;
-        --read-check: #60a5fa;
-        --unread: #dc2626;
-      }
+<style>
+  /* =====================================================
+     CHAT UI — scoped to .chat-app, uses base theme vars
+     ===================================================== */
+  .chat-app {
+    height: calc(100dvh - 140px);
+    min-height: 520px;
+    display: flex;
+    gap: 18px;
+    border-radius: var(--r-xl);
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-card);
+  }
 
-      * {
-        box-sizing: border-box;
-      }
+  /* ── Staff sidebar ─────────────────────────────────── */
+  .chat-sidebar {
+    width: 320px;
+    min-width: 260px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--line);
+    background: #fbfbff;
+  }
 
-      body {
-        margin: 0;
-        font-family:
-          Inter,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-        background: var(--background);
-        color: var(--text);
-      }
+  .chat-sidebar-header {
+    padding: 20px 20px 16px;
+    background: var(--grad);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .chat-sidebar-header::after {
+    content: "";
+    position: absolute;
+    top: -60%;
+    right: -20%;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+  .chat-sidebar-header h2 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+  .chat-sidebar-header p {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.85;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+  }
 
-      .app {
-        height: 100dvh;
-        display: flex;
-        padding: 18px;
-        gap: 18px;
-        max-width: 1600px;
-        margin: auto;
-      }
+  .chat-search {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .chat-search-wrap {
+    position: relative;
+  }
+  .chat-search-wrap .mat {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--muted-2);
+    pointer-events: none;
+  }
+  .chat-search input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--r);
+    outline: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .chat-search input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
 
-      .sidebar {
-        width: 310px;
-        min-width: 260px;
-        display: flex;
-        flex-direction: column;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        overflow: hidden;
-      }
+  .chat-staff-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .chat-staff-list::-webkit-scrollbar {
+    width: 5px;
+  }
+  .chat-staff-list::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 10px;
+  }
 
-      .sidebar-header {
-        padding: 22px;
-        color: white;
-        background: linear-gradient(135deg, var(--primary), var(--purple));
-      }
+  .chat-staff-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--r);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    position: relative;
+  }
+  .chat-staff-item:hover {
+    background: #f1f5ff;
+  }
+  .chat-staff-item.active {
+    background: #eef2ff;
+    outline: 1.5px solid #c7d2fe;
+  }
+  .chat-staff-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 22px;
+    background: var(--brand);
+    border-radius: 0 3px 3px 0;
+  }
 
-      .sidebar-header h1 {
-        font-size: 21px;
-        margin: 0 0 6px;
-      }
+  .chat-avatar {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--grad-soft);
+    color: var(--brand-2);
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    user-select: none;
+  }
 
-      .sidebar-header p {
-        margin: 0;
-        font-size: 13px;
-        opacity: 0.85;
-      }
+  .chat-staff-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .chat-staff-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+  .chat-staff-role {
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: capitalize;
+  }
 
-      .search-box {
-        padding: 15px;
-        border-bottom: 1px solid var(--border);
-      }
+  .chat-unread-badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .chat-unread-badge[hidden] {
+    display: none;
+  }
 
-      .search-box input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        outline: none;
-        font-size: 14px;
-      }
+  /* ── Chat panel ────────────────────────────────────── */
+  .chat-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+  }
 
-      .search-box input:focus {
-        border-color: var(--primary);
-      }
+  .chat-panel-header {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .chat-panel-header .chat-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
+  }
 
-      .staff-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 8px;
-      }
+  .chat-heading {
+    flex: 1;
+    min-width: 0;
+  }
+  .chat-heading h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+  }
 
-      .staff-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: background 0.15s;
-      }
+  .chat-status {
+    margin-top: 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chat-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .chat-status.connected {
+    color: var(--ok);
+  }
+  .chat-status.connected::before {
+    background: var(--ok);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+  .chat-status.error {
+    color: var(--danger);
+  }
+  .chat-status.error::before {
+    background: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  }
 
-      .staff-item:hover {
-        background: #f9fafb;
-      }
+  /* ── Messages ──────────────────────────────────────── */
+  .chat-messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding: 22px;
+    background-color: #fafbfd;
+    background-image: radial-gradient(#e2e8f0 0.6px, transparent 0.6px);
+    background-size: 20px 20px;
+  }
+  .chat-messages::-webkit-scrollbar {
+    width: 5px;
+  }
+  .chat-messages::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 10px;
+  }
 
-      .staff-item.active {
-        background: #fef2f2;
-        outline: 1px solid #fecaca;
-      }
+  .chat-empty {
+    margin: auto;
+    max-width: 320px;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.7;
+    padding: 24px;
+    font-size: 13px;
+  }
+  .chat-empty strong {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
 
-      .avatar {
-        width: 44px;
-        height: 44px;
-        flex-shrink: 0;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: #ede9fe;
-        color: var(--purple);
-        font-weight: 700;
-      }
+  .chat-msg-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 74%;
+    animation: chatMsgIn 0.2s ease;
+  }
+  @keyframes chatMsgIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .chat-msg-row.mine {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
 
-      .staff-info {
-        min-width: 0;
-        flex: 1;
-      }
+  .chat-msg-sender {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 10px 4px;
+    font-weight: 700;
+  }
 
-      .staff-name {
-        font-size: 14px;
-        font-weight: 650;
-        overflow-wrap: anywhere;
-      }
+  .chat-bubble {
+    padding: 10px 14px;
+    border-radius: 14px 14px 14px 4px;
+    background: #fff;
+    border: 1px solid var(--line);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.55;
+    font-size: 13.5px;
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+  }
+  .mine .chat-bubble {
+    color: #fff;
+    background: var(--grad);
+    border-color: transparent;
+    border-radius: 14px 14px 4px 14px;
+    box-shadow: 0 6px 16px -6px rgba(99, 102, 241, 0.5);
+  }
 
-      .staff-role {
-        margin-top: 4px;
-        color: var(--muted);
-        font-size: 12px;
-      }
+  .chat-msg-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin: 4px 6px 0;
+  }
+  .chat-msg-time {
+    font-size: 10px;
+    color: var(--muted-2);
+    font-weight: 600;
+  }
+  .chat-msg-status {
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: -3px;
+    padding-right: 3px;
+    color: var(--muted-2);
+    user-select: none;
+  }
+  .chat-msg-status.seen {
+    color: var(--info);
+  }
 
-      /* Unread messages badge */
-      .unread-badge {
-        min-width: 22px;
-        height: 22px;
-        padding: 0 7px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        background: var(--unread);
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
-        flex-shrink: 0;
-      }
+  /* ── Composer ──────────────────────────────────────── */
+  .chat-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    background: #fff;
+  }
+  .chat-composer textarea {
+    flex: 1;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 12px 15px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--r);
+    outline: none;
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.5;
+    background: #fbfbff;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+  .chat-composer textarea:focus {
+    border-color: var(--brand);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
 
-      .unread-badge[hidden] {
-        display: none;
-      }
+  .chat-send-btn {
+    min-width: 92px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--r);
+    background: var(--grad);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13.5px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.6);
+  }
+  .chat-send-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -8px rgba(99, 102, 241, 0.7);
+  }
+  .chat-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .chat-send-btn .mat {
+    font-size: 18px;
+  }
 
-      .chat-panel {
-        min-width: 0;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        overflow: hidden;
-      }
+  .chat-notice {
+    padding: 9px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #92400e;
+    background: #fffbeb;
+    border-top: 1px solid #fde68a;
+    display: none;
+  }
 
-      .chat-header {
-        min-height: 82px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px 22px;
-        border-bottom: 1px solid var(--border);
-      }
+  .chat-back-btn {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    border-radius: var(--r-sm);
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .chat-back-btn:hover {
+    border-color: var(--brand-2);
+    color: var(--brand-2);
+    background: #faf5ff;
+  }
+  .chat-back-btn .mat {
+    font-size: 18px;
+  }
 
-      .chat-header .avatar {
-        width: 46px;
-        height: 46px;
-      }
+  /* ── Responsive ────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .chat-app {
+      height: calc(100dvh - 120px);
+      border-radius: var(--r-lg);
+    }
+    .chat-sidebar {
+      width: 100%;
+      min-width: 0;
+      border-right: 0;
+    }
+    .chat-panel {
+      display: none;
+      width: 100%;
+    }
+    .chat-app.chat-open .chat-sidebar {
+      display: none;
+    }
+    .chat-app.chat-open .chat-panel {
+      display: flex;
+    }
+    .chat-back-btn {
+      display: inline-flex;
+    }
+    .chat-msg-row {
+      max-width: 88%;
+    }
+    .chat-messages {
+      padding: 16px;
+    }
+  }
 
-      .chat-heading {
-        flex: 1;
-        min-width: 0;
-      }
+  @media (max-width: 480px) {
+    .chat-app {
+      border-radius: var(--r);
+    }
+    .chat-panel-header {
+      padding: 12px 14px;
+      min-height: 64px;
+    }
+    .chat-composer {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .chat-send-btn {
+      min-width: 76px;
+      padding: 0 14px;
+    }
+  }
 
-      .chat-heading h2 {
-        margin: 0;
-        font-size: 16px;
-        overflow-wrap: anywhere;
-      }
-
-      .connection-status {
-        margin-top: 5px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .connection-status.connected {
-        color: var(--success);
-      }
-      .connection-status.error {
-        color: #b91c1c;
-      }
-
-      .messages {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        overflow-y: auto;
-        padding: 24px;
-        background: radial-gradient(#e5e7eb 0.7px, transparent 0.7px);
-        background-size: 18px 18px;
-        background-color: #fafafa;
-      }
-
-      .empty-state {
-        margin: auto;
-        max-width: 320px;
-        text-align: center;
-        color: var(--muted);
-        line-height: 1.6;
-        padding: 20px;
-      }
-
-      .message-row {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        max-width: 78%;
-      }
-
-      .message-row.mine {
-        align-self: flex-end;
-        align-items: flex-end;
-      }
-
-      .message-sender {
-        font-size: 11px;
-        color: var(--muted);
-        margin: 0 8px 4px;
-      }
-
-      .bubble {
-        padding: 11px 14px;
-        border-radius: 15px 15px 15px 4px;
-        background: white;
-        border: 1px solid var(--border);
-        overflow-wrap: anywhere;
-        white-space: pre-wrap;
-        line-height: 1.5;
-        font-size: 14px;
-      }
-
-      .mine .bubble {
-        color: white;
-        background: var(--primary);
-        border-color: var(--primary);
-        border-radius: 15px 15px 4px 15px;
-      }
-
-      .message-meta {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 5px;
-        margin: 5px 5px 0;
-      }
-
-      .message-time {
-        font-size: 10px;
-        color: var(--muted);
-      }
-
-      .message-status {
-        font-size: 12px;
-        line-height: 1;
-        letter-spacing: -3px;
-        padding-right: 3px;
-        color: #9ca3af;
-        user-select: none;
-      }
-
-      .message-status.seen {
-        color: var(--read-check);
-      }
-
-      .composer {
-        display: flex;
-        align-items: flex-end;
-        gap: 12px;
-        padding: 16px;
-        border-top: 1px solid var(--border);
-        background: white;
-      }
-
-      .composer textarea {
-        flex: 1;
-        resize: none;
-        min-height: 46px;
-        max-height: 130px;
-        padding: 13px 15px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        outline: none;
-        font: inherit;
-        font-size: 14px;
-      }
-
-      .composer textarea:focus {
-        border-color: var(--primary);
-      }
-
-      .send-button {
-        min-width: 90px;
-        height: 46px;
-        padding: 0 18px;
-        border: 0;
-        border-radius: 12px;
-        background: var(--primary);
-        color: white;
-        font-weight: 650;
-        cursor: pointer;
-      }
-
-      .send-button:hover {
-        background: var(--primary-dark);
-      }
-
-      .send-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .notice {
-        padding: 10px 16px;
-        font-size: 12px;
-        color: #92400e;
-        background: #fffbeb;
-        border-top: 1px solid #fde68a;
-        display: none;
-      }
-
-      .back-button {
-        display: none;
-        border: 1px solid var(--border);
-        background: white;
-        border-radius: 9px;
-        padding: 8px 10px;
-        cursor: pointer;
-      }
-
-      @media (max-width: 700px) {
-        .app {
-          height: 100dvh;
-          padding: 0;
-          gap: 0;
-        }
-
-        .sidebar {
-          width: 100%;
-          min-width: 0;
-          border: 0;
-          border-radius: 0;
-        }
-
-        .chat-panel {
-          display: none;
-          width: 100%;
-          border: 0;
-          border-radius: 0;
-        }
-
-        .app.chat-open .sidebar {
-          display: none;
-        }
-        .app.chat-open .chat-panel {
-          display: flex;
-        }
-        .back-button {
-          display: block;
-        }
-        .messages {
-          padding: 16px;
-        }
-        .message-row {
-          max-width: 90%;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="app" id="app">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <h1>RMS Messages</h1>
-          <p>Private staff conversations</p>
-        </div>
-
-        <div class="search-box">
-          <input
-            id="staffSearch"
-            type="search"
-            placeholder="Search staff..."
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="staff-list" id="staffList">
-          <div class="empty-state">Loading staff members...</div>
-        </div>
-      </aside>
-
-      <main class="chat-panel">
-        <header class="chat-header">
-          <button class="back-button" id="backButton" type="button">
-            ← Back
-          </button>
-
-          <div class="avatar" id="headerAvatar">?</div>
-
-          <div class="chat-heading">
-            <h2 id="chatTitle">Select a staff member</h2>
-            <div class="connection-status" id="connectionStatus">
-              Choose someone to start chatting
-            </div>
-          </div>
-        </header>
-
-        <div class="messages" id="messages">
-          <div class="empty-state">
-            <strong>Your staff chat</strong>
-            <p>
-              Select a staff member from the list to view your conversation and
-              send messages in real time.
-            </p>
-          </div>
-        </div>
-
-        <div class="notice" id="notice"></div>
-
-        <form class="composer" id="messageForm">
-          <textarea
-            id="messageInput"
-            placeholder="Write a message..."
-            maxlength="5000"
-            rows="1"
-            disabled
-          ></textarea>
-
-          <button class="send-button" id="sendButton" type="submit" disabled>
-            Send ➤
-          </button>
-        </form>
-      </main>
+  /* Mobile header title sync */
+  @media (max-width: 960px) {
+    .chat-app {
+      height: calc(100dvh - 100px);
+    }
+  }
+</style>
+<div class="chat-app" id="chatApp">
+  <!-- ── Staff sidebar ─────────────────────────────── -->
+  <aside class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <h2>Staff Messages</h2>
+      <p>Private staff conversations</p>
     </div>
 
-    <script>
-      (() => {
-        "use strict";
+    <div class="chat-search">
+      <div class="chat-search-wrap">
+        <span class="mat">search</span>
+        <input
+          id="staffSearch"
+          type="search"
+          placeholder="Search staff..."
+          autocomplete="off"
+        />
+      </div>
+    </div>
 
-        const CURRENT_USER_ID = Number("{{ request.user.id|escapejs }}");
-        const STAFF_API_URL = "/chat/staff/";
-        const WS_BASE_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+    <div class="chat-staff-list" id="staffList">
+      <div class="chat-empty">Loading staff members...</div>
+    </div>
+  </aside>
 
-        const app = document.getElementById("app");
-        const staffList = document.getElementById("staffList");
-        const staffSearch = document.getElementById("staffSearch");
-        const messagesBox = document.getElementById("messages");
-        const chatTitle = document.getElementById("chatTitle");
-        const headerAvatar = document.getElementById("headerAvatar");
-        const connectionStatus = document.getElementById("connectionStatus");
-        const messageForm = document.getElementById("messageForm");
-        const messageInput = document.getElementById("messageInput");
-        const sendButton = document.getElementById("sendButton");
-        const notice = document.getElementById("notice");
+  <!-- ── Chat panel ────────────────────────────────── -->
+  <main class="chat-panel">
+    <header class="chat-panel-header">
+      <button class="chat-back-btn" id="backButton" type="button">
+        <span class="mat">arrow_back</span> Back
+      </button>
 
-        let staffMembers = [];
-        let selectedStaff = null;
-        let socket = null;
-        let reconnectTimer = null;
-        let manualClose = false;
-        let loadingStaff = false;
+      <div class="chat-avatar" id="headerAvatar">?</div>
 
-        function displayName(user) {
-          return user.full_name || user.username || `Staff #${user.id}`;
-        }
+      <div class="chat-heading">
+        <h3 id="chatTitle">Select a staff member</h3>
+        <div class="chat-status" id="connectionStatus">
+          Choose someone to start chatting
+        </div>
+      </div>
+    </header>
 
-        function initials(name) {
-          return (
-            name
-              .trim()
-              .split(/\s+/)
-              .slice(0, 2)
-              .map((part) => part.charAt(0).toUpperCase())
-              .join("") || "?"
+    <div class="chat-messages" id="messages">
+      <div class="chat-empty">
+        <strong>Your staff chat</strong>
+        <p>
+          Select a staff member from the list to view your conversation and send
+          messages in real time.
+        </p>
+      </div>
+    </div>
+
+    <div class="chat-notice" id="notice"></div>
+
+    <form class="chat-composer" id="messageForm">
+      <textarea
+        id="messageInput"
+        placeholder="Write a message..."
+        maxlength="5000"
+        rows="1"
+        disabled
+      ></textarea>
+      <button class="chat-send-btn" id="sendButton" type="submit" disabled>
+        Send
+        <span class="mat">send</span>
+      </button>
+    </form>
+  </main>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  (() => {
+    "use strict";
+
+    const CURRENT_USER_ID = Number("{{ request.user.id|escapejs }}");
+    const STAFF_API_URL = "/chat/staff/";
+    const WS_BASE_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`;
+
+    const chatApp = document.getElementById("chatApp");
+    const staffList = document.getElementById("staffList");
+    const staffSearch = document.getElementById("staffSearch");
+    const messagesBox = document.getElementById("messages");
+    const chatTitle = document.getElementById("chatTitle");
+    const headerAvatar = document.getElementById("headerAvatar");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const messageForm = document.getElementById("messageForm");
+    const messageInput = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+    const notice = document.getElementById("notice");
+
+    let staffMembers = [];
+    let selectedStaff = null;
+    let socket = null;
+    let reconnectTimer = null;
+    let manualClose = false;
+    let loadingStaff = false;
+
+    function displayName(user) {
+      return user.full_name || user.username || `Staff #${user.id}`;
+    }
+
+    function initials(name) {
+      return (
+        name
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part.charAt(0).toUpperCase())
+          .join("") || "?"
+      );
+    }
+
+    function setStatus(text, type = "") {
+      connectionStatus.textContent = text;
+      connectionStatus.className = "chat-status";
+      if (type) connectionStatus.classList.add(type);
+    }
+
+    function showNotice(text) {
+      notice.textContent = text;
+      notice.style.display = "block";
+    }
+
+    function hideNotice() {
+      notice.style.display = "none";
+      notice.textContent = "";
+    }
+
+    async function loadStaff({ silent = false } = {}) {
+      if (loadingStaff) return;
+      loadingStaff = true;
+
+      if (!silent && staffMembers.length === 0) {
+        staffList.innerHTML =
+          '<div class="chat-empty">Loading staff members...</div>';
+      }
+
+      try {
+        const response = await fetch(STAFF_API_URL, {
+          method: "GET",
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+
+        if (!response.ok)
+          throw new Error(`Staff API returned HTTP ${response.status}`);
+
+        const data = await response.json();
+        const users = Array.isArray(data) ? data : data.results;
+
+        if (!Array.isArray(users))
+          throw new Error("Unexpected staff API response.");
+
+        staffMembers = users.filter(
+          (user) => Number(user.id) !== CURRENT_USER_ID,
+        );
+
+        if (selectedStaff) {
+          const refreshed = staffMembers.find(
+            (user) => Number(user.id) === Number(selectedStaff.id),
           );
+          if (refreshed) selectedStaff = refreshed;
         }
 
-        function setStatus(text, type = "") {
-          connectionStatus.textContent = text;
-          connectionStatus.className = "connection-status";
-          if (type) connectionStatus.classList.add(type);
+        renderStaff();
+      } catch (error) {
+        console.error("Failed to load staff:", error);
+        if (!silent || staffMembers.length === 0) {
+          staffList.innerHTML =
+            '<div class="chat-empty">Could not load staff. Check the staff API URL and your login session.</div>';
+        }
+      } finally {
+        loadingStaff = false;
+      }
+    }
+
+    function renderStaff() {
+      const query = staffSearch.value.trim().toLowerCase();
+
+      const filtered = staffMembers.filter((user) => {
+        const name = displayName(user).toLowerCase();
+        const role = String(user.role || "").toLowerCase();
+        return name.includes(query) || role.includes(query);
+      });
+
+      staffList.replaceChildren();
+
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "chat-empty";
+        empty.textContent = staffMembers.length
+          ? "No matching staff members."
+          : "No other staff members found.";
+        staffList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((user) => {
+        const name = displayName(user);
+        const unreadCount = Math.max(0, Number(user.unread_count || 0));
+
+        const item = document.createElement("div");
+        item.className = "chat-staff-item";
+        item.setAttribute("role", "button");
+        item.tabIndex = 0;
+
+        if (selectedStaff && Number(selectedStaff.id) === Number(user.id)) {
+          item.classList.add("active");
         }
 
-        function showNotice(text) {
-          notice.textContent = text;
-          notice.style.display = "block";
-        }
-
-        function hideNotice() {
-          notice.style.display = "none";
-          notice.textContent = "";
-        }
-
-        async function loadStaff({ silent = false } = {}) {
-          // Prevent overlapping background requests.
-          if (loadingStaff) return;
-          loadingStaff = true;
-
-          if (!silent && staffMembers.length === 0) {
-            staffList.innerHTML =
-              '<div class="empty-state">Loading staff members...</div>';
-          }
-
-          try {
-            const response = await fetch(STAFF_API_URL, {
-              method: "GET",
-              credentials: "same-origin",
-              headers: { Accept: "application/json" },
-              cache: "no-store",
-            });
-
-            if (!response.ok) {
-              throw new Error(`Staff API returned HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            const users = Array.isArray(data) ? data : data.results;
-
-            if (!Array.isArray(users)) {
-              throw new Error("Unexpected staff API response.");
-            }
-
-            staffMembers = users.filter(
-              (user) => Number(user.id) !== CURRENT_USER_ID,
-            );
-
-            // Update the selected staff object without resetting the conversation.
-            if (selectedStaff) {
-              const refreshed = staffMembers.find(
-                (user) => Number(user.id) === Number(selectedStaff.id),
-              );
-
-              if (refreshed) selectedStaff = refreshed;
-            }
-
-            renderStaff();
-          } catch (error) {
-            console.error("Failed to load staff:", error);
-
-            if (!silent || staffMembers.length === 0) {
-              staffList.innerHTML =
-                '<div class="empty-state">Could not load staff. Check the staff API URL and your login session.</div>';
-            }
-          } finally {
-            loadingStaff = false;
-          }
-        }
-
-        function renderStaff() {
-          const query = staffSearch.value.trim().toLowerCase();
-
-          const filtered = staffMembers.filter((user) => {
-            const name = displayName(user).toLowerCase();
-            const role = String(user.role || "").toLowerCase();
-            return name.includes(query) || role.includes(query);
-          });
-
-          staffList.replaceChildren();
-
-          if (!filtered.length) {
-            const empty = document.createElement("div");
-            empty.className = "empty-state";
-            empty.textContent = staffMembers.length
-              ? "No matching staff members."
-              : "No other staff members found.";
-            staffList.appendChild(empty);
-            return;
-          }
-
-          filtered.forEach((user) => {
-            const name = displayName(user);
-            const unreadCount = Math.max(0, Number(user.unread_count || 0));
-
-            const item = document.createElement("div");
-            item.className = "staff-item";
-            item.setAttribute("role", "button");
-            item.tabIndex = 0;
-
-            if (selectedStaff && Number(selectedStaff.id) === Number(user.id)) {
-              item.classList.add("active");
-            }
-
-            const avatar = document.createElement("div");
-            avatar.className = "avatar";
-            avatar.textContent = initials(name);
-
-            const info = document.createElement("div");
-            info.className = "staff-info";
-
-            const nameElement = document.createElement("div");
-            nameElement.className = "staff-name";
-            nameElement.textContent = name;
-
-            const roleElement = document.createElement("div");
-            roleElement.className = "staff-role";
-            roleElement.textContent = user.role || "Staff";
-
-            info.append(nameElement, roleElement);
-
-            const badge = document.createElement("span");
-            badge.className = "unread-badge";
-            badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
-            badge.hidden = unreadCount === 0;
-            badge.setAttribute(
-              "aria-label",
-              `${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`,
-            );
-
-            item.append(avatar, info, badge);
-
-            item.addEventListener("click", () => selectStaff(user));
-            item.addEventListener("keydown", (event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                selectStaff(user);
-              }
-            });
-
-            staffList.appendChild(item);
-          });
-        }
-
-        function selectStaff(user) {
-          selectedStaff = user;
-          manualClose = true;
-          clearTimeout(reconnectTimer);
-
-          if (socket) {
-            const oldSocket = socket;
-            socket = null;
-            oldSocket.close();
-          }
-
-          app.classList.add("chat-open");
-          hideNotice();
-
-          chatTitle.textContent = displayName(user);
-          headerAvatar.textContent = initials(displayName(user));
-          messagesBox.replaceChildren();
-
-          const empty = document.createElement("div");
-          empty.className = "empty-state";
-          empty.textContent = "Connecting to chat...";
-          messagesBox.appendChild(empty);
-
-          messageInput.disabled = true;
-          sendButton.disabled = true;
-          setStatus("Connecting...");
-
-          renderStaff();
-          connectWebSocket(Number(user.id));
-        }
-
-        function connectWebSocket(recipientId) {
-          if (!selectedStaff || Number(selectedStaff.id) !== recipientId) {
-            return;
-          }
-
-          const url = `${WS_BASE_URL}/ws/chat/${recipientId}/`;
-          manualClose = false;
-
-          try {
-            socket = new WebSocket(url);
-          } catch (error) {
-            console.error("Could not create WebSocket:", error);
-            setStatus("Could not connect", "error");
-            scheduleReconnect(recipientId);
-            return;
-          }
-
-          const thisSocket = socket;
-
-          thisSocket.addEventListener("open", () => {
-            if (socket !== thisSocket) return;
-
-            setStatus("Connected", "connected");
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
-          });
-
-          thisSocket.addEventListener("message", (event) => {
-            if (socket !== thisSocket) return;
-
-            let data;
-
-            try {
-              data = JSON.parse(event.data);
-            } catch (error) {
-              console.error("Invalid chat response:", event.data);
-              return;
-            }
-
-            if (data.type === "chat_history") {
-              messagesBox.replaceChildren();
-              (data.messages || []).forEach(addMessage);
-              scrollToBottom();
-              markVisibleIncomingMessagesRead();
-              refreshUnreadCountsSoon();
-            } else if (data.type === "chat_message") {
-              addMessage(data.message_data);
-              markVisibleIncomingMessagesRead();
-              refreshUnreadCountsSoon();
-            } else if (data.type === "chat_read_receipt") {
-              updateReadReceipts(data.message_ids || [], data.reader_id);
-              refreshUnreadCountsSoon();
-            } else if (data.type === "error") {
-              showNotice(data.message || "Could not send message.");
-            }
-          });
-
-          thisSocket.addEventListener("error", (error) => {
-            console.error("WebSocket error:", error);
-            setStatus("Connection error", "error");
-          });
-
-          thisSocket.addEventListener("close", (event) => {
-            if (socket !== thisSocket) return;
-
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-
-            if (
-              manualClose ||
-              !selectedStaff ||
-              Number(selectedStaff.id) !== recipientId
-            ) {
-              return;
-            }
-
-            setStatus(
-              event.code === 4001
-                ? "Not authenticated — sign in again"
-                : `Disconnected (${event.code})`,
-              "error",
-            );
-
-            scheduleReconnect(recipientId);
-          });
-        }
-
-        function scheduleReconnect(recipientId) {
-          clearTimeout(reconnectTimer);
-          if (manualClose) return;
-
-          reconnectTimer = setTimeout(() => {
-            if (selectedStaff && Number(selectedStaff.id) === recipientId) {
-              setStatus("Reconnecting...");
-              connectWebSocket(recipientId);
-            }
-          }, 2500);
-        }
-
-        function addMessage(message) {
-          if (!message || typeof message.message !== "string") return;
-
-          const senderId = Number(message.sender_id);
-          const mine = senderId === CURRENT_USER_ID;
-          const otherId = Number(selectedStaff?.id);
-
-          if (!otherId) return;
-
-          const belongsToConversation =
-            (senderId === CURRENT_USER_ID &&
-              Number(message.recipient_id) === otherId) ||
-            (senderId === otherId &&
-              Number(message.recipient_id) === CURRENT_USER_ID);
-
-          if (!belongsToConversation) return;
-
-          const messageId = message.id == null ? null : String(message.id);
-
-          if (
-            messageId &&
-            messagesBox.querySelector(
-              `[data-message-id="${CSS.escape(messageId)}"]`,
-            )
-          ) {
-            return;
-          }
-
-          const empty = messagesBox.querySelector(".empty-state");
-          if (empty) empty.remove();
-
-          const row = document.createElement("div");
-          row.className = `message-row${mine ? " mine" : ""}`;
-
-          if (messageId) row.dataset.messageId = messageId;
-
-          if (!mine) {
-            const sender = document.createElement("div");
-            sender.className = "message-sender";
-            sender.textContent =
-              message.sender_name || displayName(selectedStaff);
-            row.appendChild(sender);
-          }
-
-          const bubble = document.createElement("div");
-          bubble.className = "bubble";
-          bubble.textContent = message.message;
-
-          const meta = document.createElement("div");
-          meta.className = "message-meta";
-
-          const time = document.createElement("div");
-          time.className = "message-time";
-          time.textContent = formatTime(message.sent_at);
-          meta.appendChild(time);
-
-          if (mine) {
-            const status = document.createElement("span");
-            const isRead = message.is_read === true;
-
-            status.className = `message-status${isRead ? " seen" : ""}`;
-            status.textContent = isRead ? "✓✓" : "✓";
-            status.title = isRead ? "Read" : "Sent";
-            status.setAttribute("aria-label", status.title);
-
-            if (messageId) status.dataset.statusFor = messageId;
-
-            meta.appendChild(status);
-          }
-
-          row.append(bubble, meta);
-          messagesBox.appendChild(row);
-          scrollToBottom();
-        }
-
-        function updateReadReceipts(messageIds, readerId) {
-          if (!selectedStaff || Number(readerId) !== Number(selectedStaff.id)) {
-            return;
-          }
-
-          messageIds.forEach((id) => {
-            const messageId = String(id);
-
-            const row = messagesBox.querySelector(
-              `.message-row.mine[data-message-id="${CSS.escape(messageId)}"]`,
-            );
-
-            if (!row) return;
-
-            const status = row.querySelector(".message-status");
-            if (!status) return;
-
-            status.textContent = "✓✓";
-            status.classList.add("seen");
-            status.title = "Read";
-            status.setAttribute("aria-label", "Read");
-          });
-        }
-
-        function markVisibleIncomingMessagesRead() {
-          if (
-            !socket ||
-            socket.readyState !== WebSocket.OPEN ||
-            !selectedStaff ||
-            document.visibilityState !== "visible"
-          ) {
-            return;
-          }
-
-          if (
-            window.matchMedia("(max-width: 700px)").matches &&
-            !app.classList.contains("chat-open")
-          ) {
-            return;
-          }
-
-          const messageIds = Array.from(
-            messagesBox.querySelectorAll(
-              ".message-row:not(.mine)[data-message-id]",
-            ),
-          )
-            .map((row) => Number(row.dataset.messageId))
-            .filter((id) => Number.isInteger(id) && id > 0);
-
-          if (messageIds.length) {
-            socket.send(
-              JSON.stringify({
-                type: "mark_read",
-                message_ids: messageIds,
-              }),
-            );
-          }
-        }
-
-        function formatTime(value) {
-          if (!value) return "";
-
-          const date = new Date(value);
-          if (Number.isNaN(date.getTime())) return "";
-
-          return date.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
-
-        function scrollToBottom() {
-          messagesBox.scrollTop = messagesBox.scrollHeight;
-        }
-
-        function sendMessage() {
-          const text = messageInput.value.trim();
-
-          if (!text || !socket || socket.readyState !== WebSocket.OPEN) {
-            return;
-          }
-
-          if (text.length > 5000) {
-            showNotice("Messages cannot exceed 5000 characters.");
-            return;
-          }
-
-          hideNotice();
-
-          socket.send(JSON.stringify({ message: text }));
-
-          messageInput.value = "";
-          messageInput.style.height = "46px";
-          messageInput.focus();
-        }
-
-        function refreshUnreadCountsSoon() {
-          // Refresh counts after the backend has had time to save read status.
-          setTimeout(() => loadStaff({ silent: true }), 500);
-        }
-
-        messageForm.addEventListener("submit", (event) => {
-          event.preventDefault();
-          sendMessage();
-        });
-
-        messageInput.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
+        const avatar = document.createElement("div");
+        avatar.className = "chat-avatar";
+        avatar.textContent = initials(name);
+
+        const info = document.createElement("div");
+        info.className = "chat-staff-info";
+
+        const nameElement = document.createElement("div");
+        nameElement.className = "chat-staff-name";
+        nameElement.textContent = name;
+
+        const roleElement = document.createElement("div");
+        roleElement.className = "chat-staff-role";
+        roleElement.textContent = user.role || "Staff";
+
+        info.append(nameElement, roleElement);
+
+        const badge = document.createElement("span");
+        badge.className = "chat-unread-badge";
+        badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+        badge.hidden = unreadCount === 0;
+        badge.setAttribute(
+          "aria-label",
+          `${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`,
+        );
+
+        item.append(avatar, info, badge);
+
+        item.addEventListener("click", () => selectStaff(user));
+        item.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            sendMessage();
+            selectStaff(user);
           }
         });
 
-        messageInput.addEventListener("input", () => {
-          messageInput.style.height = "46px";
-          messageInput.style.height =
-            Math.min(messageInput.scrollHeight, 130) + "px";
-        });
+        staffList.appendChild(item);
+      });
+    }
 
-        staffSearch.addEventListener("input", renderStaff);
+    function selectStaff(user) {
+      selectedStaff = user;
+      manualClose = true;
+      clearTimeout(reconnectTimer);
 
-        document.addEventListener("visibilitychange", () => {
-          if (document.visibilityState === "visible") {
-            markVisibleIncomingMessagesRead();
-            loadStaff({ silent: true });
-          }
-        });
+      if (socket) {
+        const oldSocket = socket;
+        socket = null;
+        oldSocket.close();
+      }
 
-        window.addEventListener("focus", () => {
+      chatApp.classList.add("chat-open");
+      hideNotice();
+
+      chatTitle.textContent = displayName(user);
+      headerAvatar.textContent = initials(displayName(user));
+      messagesBox.replaceChildren();
+
+      const empty = document.createElement("div");
+      empty.className = "chat-empty";
+      empty.textContent = "Connecting to chat...";
+      messagesBox.appendChild(empty);
+
+      messageInput.disabled = true;
+      sendButton.disabled = true;
+      setStatus("Connecting...");
+
+      renderStaff();
+      connectWebSocket(Number(user.id));
+    }
+
+    function connectWebSocket(recipientId) {
+      if (!selectedStaff || Number(selectedStaff.id) !== recipientId) return;
+
+      const url = `${WS_BASE_URL}/ws/chat/${recipientId}/`;
+      manualClose = false;
+
+      try {
+        socket = new WebSocket(url);
+      } catch (error) {
+        console.error("Could not create WebSocket:", error);
+        setStatus("Could not connect", "error");
+        scheduleReconnect(recipientId);
+        return;
+      }
+
+      const thisSocket = socket;
+
+      thisSocket.addEventListener("open", () => {
+        if (socket !== thisSocket) return;
+        setStatus("Connected", "connected");
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+      });
+
+      thisSocket.addEventListener("message", (event) => {
+        if (socket !== thisSocket) return;
+
+        let data;
+        try {
+          data = JSON.parse(event.data);
+        } catch (error) {
+          console.error("Invalid chat response:", event.data);
+          return;
+        }
+
+        if (data.type === "chat_history") {
+          messagesBox.replaceChildren();
+          (data.messages || []).forEach(addMessage);
+          scrollToBottom();
           markVisibleIncomingMessagesRead();
-          loadStaff({ silent: true });
-        });
+          refreshUnreadCountsSoon();
+        } else if (data.type === "chat_message") {
+          addMessage(data.message_data);
+          markVisibleIncomingMessagesRead();
+          refreshUnreadCountsSoon();
+        } else if (data.type === "chat_read_receipt") {
+          updateReadReceipts(data.message_ids || [], data.reader_id);
+          refreshUnreadCountsSoon();
+        } else if (data.type === "error") {
+          showNotice(data.message || "Could not send message.");
+        }
+      });
 
-        document.getElementById("backButton").addEventListener("click", () => {
-          app.classList.remove("chat-open");
-          loadStaff({ silent: true });
-        });
+      thisSocket.addEventListener("error", (error) => {
+        console.error("WebSocket error:", error);
+        setStatus("Connection error", "error");
+      });
 
-        window.addEventListener("beforeunload", () => {
-          manualClose = true;
-          clearTimeout(reconnectTimer);
-          if (socket) socket.close();
-        });
+      thisSocket.addEventListener("close", (event) => {
+        if (socket !== thisSocket) return;
 
-        // Initial staff list.
-        loadStaff();
+        messageInput.disabled = true;
+        sendButton.disabled = true;
 
-        // Refresh unread counts every 10 seconds.
-        setInterval(() => {
-          loadStaff({ silent: true });
-        }, 10000);
-      })();
-    </script>
-  </body>
-</html>
+        if (
+          manualClose ||
+          !selectedStaff ||
+          Number(selectedStaff.id) !== recipientId
+        )
+          return;
+
+        setStatus(
+          event.code === 4001
+            ? "Not authenticated — sign in again"
+            : `Disconnected (${event.code})`,
+          "error",
+        );
+        scheduleReconnect(recipientId);
+      });
+    }
+
+    function scheduleReconnect(recipientId) {
+      clearTimeout(reconnectTimer);
+      if (manualClose) return;
+
+      reconnectTimer = setTimeout(() => {
+        if (selectedStaff && Number(selectedStaff.id) === recipientId) {
+          setStatus("Reconnecting...");
+          connectWebSocket(recipientId);
+        }
+      }, 2500);
+    }
+
+    function addMessage(message) {
+      if (!message || typeof message.message !== "string") return;
+
+      const senderId = Number(message.sender_id);
+      const mine = senderId === CURRENT_USER_ID;
+      const otherId = Number(selectedStaff?.id);
+      if (!otherId) return;
+
+      const belongsToConversation =
+        (senderId === CURRENT_USER_ID &&
+          Number(message.recipient_id) === otherId) ||
+        (senderId === otherId &&
+          Number(message.recipient_id) === CURRENT_USER_ID);
+      if (!belongsToConversation) return;
+
+      const messageId = message.id == null ? null : String(message.id);
+      if (
+        messageId &&
+        messagesBox.querySelector(
+          `[data-message-id="${CSS.escape(messageId)}"]`,
+        )
+      )
+        return;
+
+      const empty = messagesBox.querySelector(".chat-empty");
+      if (empty) empty.remove();
+
+      const row = document.createElement("div");
+      row.className = `chat-msg-row${mine ? " mine" : ""}`;
+      if (messageId) row.dataset.messageId = messageId;
+
+      if (!mine) {
+        const sender = document.createElement("div");
+        sender.className = "chat-msg-sender";
+        sender.textContent = message.sender_name || displayName(selectedStaff);
+        row.appendChild(sender);
+      }
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble";
+      bubble.textContent = message.message;
+
+      const meta = document.createElement("div");
+      meta.className = "chat-msg-meta";
+
+      const time = document.createElement("div");
+      time.className = "chat-msg-time";
+      time.textContent = formatTime(message.sent_at);
+      meta.appendChild(time);
+
+      if (mine) {
+        const status = document.createElement("span");
+        const isRead = message.is_read === true;
+        status.className = `chat-msg-status${isRead ? " seen" : ""}`;
+        status.textContent = isRead ? "✓✓" : "✓";
+        status.title = isRead ? "Read" : "Sent";
+        status.setAttribute("aria-label", status.title);
+        if (messageId) status.dataset.statusFor = messageId;
+        meta.appendChild(status);
+      }
+
+      row.append(bubble, meta);
+      messagesBox.appendChild(row);
+      scrollToBottom();
+    }
+
+    function updateReadReceipts(messageIds, readerId) {
+      if (!selectedStaff || Number(readerId) !== Number(selectedStaff.id))
+        return;
+
+      messageIds.forEach((id) => {
+        const messageId = String(id);
+        const row = messagesBox.querySelector(
+          `.chat-msg-row.mine[data-message-id="${CSS.escape(messageId)}"]`,
+        );
+        if (!row) return;
+
+        const status = row.querySelector(".chat-msg-status");
+        if (!status) return;
+
+        status.textContent = "✓✓";
+        status.classList.add("seen");
+        status.title = "Read";
+        status.setAttribute("aria-label", "Read");
+      });
+    }
+
+    function markVisibleIncomingMessagesRead() {
+      if (!socket || socket.readyState !== WebSocket.OPEN || !selectedStaff)
+        return;
+      if (document.visibilityState !== "visible") return;
+
+      if (
+        window.matchMedia("(max-width: 900px)").matches &&
+        !chatApp.classList.contains("chat-open")
+      )
+        return;
+
+      const messageIds = Array.from(
+        messagesBox.querySelectorAll(
+          ".chat-msg-row:not(.mine)[data-message-id]",
+        ),
+      )
+        .map((row) => Number(row.dataset.messageId))
+        .filter((id) => Number.isInteger(id) && id > 0);
+
+      if (messageIds.length) {
+        socket.send(
+          JSON.stringify({ type: "mark_read", message_ids: messageIds }),
+        );
+      }
+    }
+
+    function formatTime(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function scrollToBottom() {
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !socket || socket.readyState !== WebSocket.OPEN) return;
+
+      if (text.length > 5000) {
+        showNotice("Messages cannot exceed 5000 characters.");
+        return;
+      }
+
+      hideNotice();
+      socket.send(JSON.stringify({ message: text }));
+
+      messageInput.value = "";
+      messageInput.style.height = "44px";
+      messageInput.focus();
+    }
+
+    function refreshUnreadCountsSoon() {
+      setTimeout(() => loadStaff({ silent: true }), 500);
+    }
+
+    messageForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendMessage();
+    });
+
+    messageInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    messageInput.addEventListener("input", () => {
+      messageInput.style.height = "44px";
+      messageInput.style.height =
+        Math.min(messageInput.scrollHeight, 120) + "px";
+    });
+
+    staffSearch.addEventListener("input", renderStaff);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        markVisibleIncomingMessagesRead();
+        loadStaff({ silent: true });
+      }
+    });
+
+    window.addEventListener("focus", () => {
+      markVisibleIncomingMessagesRead();
+      loadStaff({ silent: true });
+    });
+
+    document.getElementById("backButton").addEventListener("click", () => {
+      chatApp.classList.remove("chat-open");
+      loadStaff({ silent: true });
+    });
+
+    window.addEventListener("beforeunload", () => {
+      manualClose = true;
+      clearTimeout(reconnectTimer);
+      if (socket) socket.close();
+    });
+
+    loadStaff();
+    setInterval(() => loadStaff({ silent: true }), 10000);
+  })();
+</script>
+{% endblock %} {% endblock %}
