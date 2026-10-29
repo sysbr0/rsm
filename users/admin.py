@@ -263,3 +263,113 @@ class WaiterAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return super().has_delete_permission(request, obj)
+
+from django.contrib import admin
+from django.utils import timezone
+
+from .models import DayOffRequest, DayOffStatus
+
+
+@admin.register(DayOffRequest)
+class DayOffRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "date",
+        "status",
+        "reason",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+    )
+
+    list_filter = (
+        "status",
+        "date",
+        "created_at",
+    )
+
+    search_fields = (
+        "user__username",
+        "user__full_name",
+        "user__email",
+        "reason",
+        "review_note",
+        "reviewed_by__username",
+    )
+
+    list_select_related = (
+        "user",
+        "reviewed_by",
+    )
+
+    date_hierarchy = "date"
+    ordering = ("date", "-created_at")
+    list_per_page = 25
+
+    readonly_fields = (
+        "created_at",
+        "reviewed_at",
+    )
+
+    fieldsets = (
+        ("Request Information", {
+            "fields": (
+                "user",
+                "date",
+                "reason",
+                "status",
+            )
+        }),
+        ("Review Information", {
+            "fields": (
+                "reviewed_by",
+                "reviewed_at",
+                "review_note",
+            )
+        }),
+        ("System Information", {
+            "fields": ("created_at",)
+        }),
+    )
+
+    actions = (
+        "approve_requests",
+        "reject_requests",
+    )
+
+    @admin.action(description="Approve selected day-off requests")
+    def approve_requests(self, request, queryset):
+        updated = 0
+
+        for day_off in queryset.exclude(
+            status=DayOffStatus.APPROVED
+        ):
+            day_off.status = DayOffStatus.APPROVED
+            day_off.reviewed_by = request.user
+            day_off.reviewed_at = timezone.now()
+            day_off.save()
+            updated += 1
+
+        self.message_user(
+            request,
+            f"{updated} day-off request(s) approved.",
+        )
+
+    @admin.action(description="Reject selected day-off requests")
+    def reject_requests(self, request, queryset):
+        updated = 0
+
+        for day_off in queryset.exclude(
+            status=DayOffStatus.REJECTED
+        ):
+            day_off.status = DayOffStatus.REJECTED
+            day_off.reviewed_by = request.user
+            day_off.reviewed_at = timezone.now()
+            day_off.save()
+            updated += 1
+
+        self.message_user(
+            request,
+            f"{updated} day-off request(s) rejected.",
+        )

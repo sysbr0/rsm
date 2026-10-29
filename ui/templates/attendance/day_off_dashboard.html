@@ -1,1644 +1,676 @@
-{% extends "ui/admin_base.html" %} {% load static %} {% block content %}
-<style>
-  :root {
-    --primary: #7f1d1d;
-    --primary-dark: #641717;
-    --purple: #4c1d95;
-    --bg: #f6f7fb;
-    --surface: #ffffff;
-    --text: #172033;
-    --muted: #778197;
-    --border: #e8ebf2;
-    --green: #15803d;
-    --red: #b91c1c;
-    --amber: #b45309;
-    --shadow: 0 8px 30px rgba(20, 28, 50, 0.055);
-    --radius: 16px;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family:
-      Inter,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
-    font-size: 14px;
-  }
-
-  button,
-  input,
-  select,
-  textarea {
-    font: inherit;
-  }
-  button {
-    cursor: pointer;
-  }
-
-  .app {
-    min-height: 100vh;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-  }
-
-  .brand-icon {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    background: var(--primary);
-    color: white;
-    border-radius: 12px;
-    font-size: 20px;
-  }
-
-  .brand small {
-    display: block;
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-  }
-
-  .today-label {
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .avatar {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: var(--primary);
-    background: #fce8e8;
-    font-weight: 800;
-  }
-
-  .container {
-    width: min(1500px, 100%);
-    margin: auto;
-    padding: 34px;
-  }
-
-  .page-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    margin-bottom: 28px;
-  }
-
-  .eyebrow {
-    color: var(--primary);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: clamp(25px, 3vw, 32px);
-    letter-spacing: -1px;
-  }
-
-  .subtitle {
-    color: var(--muted);
-    margin: 9px 0 0;
-    line-height: 1.6;
-  }
-
-  .btn {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 15px;
-    min-height: 42px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: white;
-    color: var(--text);
-    font-weight: 700;
-    transition: 0.18s ease;
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-  }
-  .btn:disabled {
-    opacity: 0.55;
-    cursor: wait;
-    transform: none;
-  }
-
-  .btn-primary {
-    color: white;
-    background: var(--primary);
-    border-color: var(--primary);
-  }
-
-  .btn-primary:hover {
-    background: var(--primary-dark);
-  }
-
-  .btn-success {
-    color: var(--green);
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-  }
-
-  .btn-danger {
-    color: var(--red);
-    background: #fef2f2;
-    border-color: #fecaca;
-  }
-
-  .btn-small {
-    min-height: 33px;
-    padding: 7px 10px;
-    font-size: 12px;
-    border-radius: 8px;
-  }
-
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-    margin-bottom: 28px;
-  }
-
-  .stat-card {
-    padding: 22px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    min-width: 0;
-  }
-
-  .stat-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .stat-label {
-    color: var(--muted);
-    font-weight: 600;
-    font-size: 12px;
-  }
-
-  .stat-icon {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    font-size: 18px;
-  }
-
-  .stat-value {
-    margin-top: 17px;
-    font-size: 32px;
-    line-height: 1;
-    font-weight: 800;
-    letter-spacing: -1px;
-  }
-
-  .stat-foot {
-    margin-top: 10px;
-    color: var(--muted);
-    font-size: 11px;
-  }
-  .icon-pending {
-    background: #fff7ed;
-  }
-  .icon-approved {
-    background: #f0fdf4;
-  }
-  .icon-rejected {
-    background: #fef2f2;
-  }
-  .icon-today {
-    background: #f5f3ff;
-  }
-
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-
-  .panel-heading {
-    padding: 23px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .panel-title {
-    font-size: 16px;
-    font-weight: 800;
-  }
-
-  .panel-subtitle {
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 6px;
-  }
-
-  .toolbar {
-    padding: 18px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-
-  .filter-btn {
-    padding: 9px 13px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .filter-btn:hover {
-    background: #f8f8fb;
-  }
-
-  .filter-btn.active {
-    color: var(--primary);
-    background: #fff1f1;
-    border-color: #fbd5d5;
-  }
-
-  .filter-count {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 19px;
-    height: 19px;
-    padding: 0 5px;
-    margin-left: 5px;
-    border-radius: 6px;
-    background: rgba(127, 29, 29, 0.08);
-    font-size: 10px;
-  }
-
-  .search-box {
-    position: relative;
-    width: min(300px, 100%);
-  }
-
-  .search-box input {
-    width: 100%;
-    height: 42px;
-    padding: 0 13px 0 38px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #fff;
-    outline: none;
-  }
-
-  .search-box input:focus,
-  .date-filter-field input:focus,
-  .field textarea:focus {
-    border-color: #c4a2a2;
-    box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.07);
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 13px;
-    top: 12px;
-    color: var(--muted);
-  }
-
-  /* Date range filter */
-  .date-filter-row {
-    padding: 18px 24px;
-    display: flex;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 12px;
-    background: #fcfcfe;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .date-filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-
-  .date-filter-field label {
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 800;
-  }
-
-  .date-filter-field input {
-    height: 42px;
-    min-width: 175px;
-    padding: 0 11px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: white;
-    color: var(--text);
-    outline: none;
-  }
-
-  .date-filter-actions {
-    display: flex;
-    gap: 8px;
-  }
-
-  .date-filter-hint {
-    width: 100%;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .table-scroll {
-    overflow-x: auto;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    white-space: nowrap;
-  }
-
-  thead {
-    background: #fafbfe;
-  }
-
-  th {
-    padding: 14px 20px;
-    color: #7d879a;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.7px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 17px 20px;
-    border-bottom: 1px solid #f0f2f6;
-    vertical-align: middle;
-  }
-
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-  tbody tr:hover {
-    background: #fcfcfe;
-  }
-
-  .employee {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-  }
-
-  .employee-avatar {
-    flex-shrink: 0;
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    background: #f1f0fa;
-    color: var(--purple);
-    border-radius: 11px;
-    font-size: 12px;
-    font-weight: 800;
-  }
-
-  .employee-name {
-    font-size: 13px;
-    font-weight: 800;
-  }
-
-  .employee-username {
-    margin-top: 5px;
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .date-main {
-    font-weight: 700;
-  }
-  .date-sub {
-    color: var(--muted);
-    margin-top: 5px;
-    font-size: 11px;
-  }
-
-  .reason {
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #606b80;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 10px;
-    border-radius: 7px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-  }
-
-  .badge::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .badge-pending {
-    background: #fff7ed;
-    color: #c2410c;
-  }
-  .badge-approved {
-    background: #f0fdf4;
-    color: #15803d;
-  }
-  .badge-rejected {
-    background: #fef2f2;
-    color: #b91c1c;
-  }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .review-info {
-    color: var(--muted);
-    font-size: 11px;
-    white-space: normal;
-    min-width: 120px;
-    max-width: 180px;
-    line-height: 1.6;
-  }
-
-  .review-info strong {
-    color: var(--text);
-  }
-
-  .table-footer {
-    padding: 16px 24px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .loading,
-  .empty-state,
-  .error-state {
-    padding: 65px 20px;
-    text-align: center;
-    color: var(--muted);
-  }
-
-  .loading-spinner {
-    width: 27px;
-    height: 27px;
-    border: 3px solid #eee;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    margin: 0 auto 14px;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .empty-icon {
-    font-size: 32px;
-    margin-bottom: 12px;
-  }
-  .empty-state strong {
-    display: block;
-    color: var(--text);
-    margin-bottom: 7px;
-  }
-
-  .toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: min(370px, calc(100% - 40px));
-  }
-
-  .toast {
-    background: white;
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--green);
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
-    border-radius: 11px;
-    padding: 15px;
-    animation: toast-in 0.2s ease;
-    line-height: 1.5;
-  }
-
-  .toast.error {
-    border-left-color: var(--red);
-  }
-
-  @keyframes toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(15, 23, 42, 0.48);
-    backdrop-filter: blur(4px);
-  }
-
-  .modal-backdrop.open {
-    display: flex;
-  }
-
-  .modal {
-    width: min(480px, 100%);
-    padding: 26px;
-    border-radius: 18px;
-    background: white;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
-    animation: modal-in 0.18s ease;
-  }
-
-  @keyframes modal-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px) scale(0.99);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  .modal-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 22px;
-  }
-
-  .modal-heading h2 {
-    font-size: 21px;
-    margin: 0;
-  }
-
-  .modal-heading p {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
-    margin: 8px 0 0;
-  }
-
-  .close-btn {
-    width: 34px;
-    height: 34px;
-    border: none;
-    border-radius: 9px;
-    background: #f3f4f6;
-    font-size: 20px;
-  }
-
-  .request-preview {
-    background: #f8f9fc;
-    border: 1px solid var(--border);
-    padding: 14px;
-    border-radius: 11px;
-    margin-bottom: 20px;
-  }
-
-  .preview-name {
-    font-weight: 800;
-  }
-  .preview-date {
-    color: var(--muted);
-    margin-top: 7px;
-    font-size: 12px;
-  }
-
-  .field {
-    margin-bottom: 20px;
-  }
-
-  .field label {
-    display: block;
-    font-weight: 700;
-    margin-bottom: 9px;
-    font-size: 12px;
-  }
-
-  .optional {
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  .field textarea {
-    width: 100%;
-    min-height: 95px;
-    resize: vertical;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    outline: none;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 9px;
-    padding-top: 5px;
-  }
-
-  .footer-note {
-    text-align: center;
-    color: #9aa2b1;
-    font-size: 11px;
-    padding: 24px 0 0;
-  }
-
-  @media (max-width: 1050px) {
-    .stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .container {
-      padding: 24px;
-    }
-  }
-
-  @media (max-width: 650px) {
-    .container {
-      padding: 22px 14px;
-    }
-    .page-heading {
-      flex-direction: column;
-    }
-    .page-heading > .btn {
-      width: 100%;
-    }
-    .stats {
-      gap: 10px;
-    }
-    .stat-card {
-      padding: 15px;
-    }
-    .stat-value {
-      font-size: 27px;
-    }
-    .stat-label {
-      font-size: 11px;
-    }
-    .panel-heading {
-      padding: 18px;
-    }
-    .toolbar {
-      padding: 15px;
-    }
-    .filters {
-      width: 100%;
-    }
-    .filter-btn {
-      flex: 1;
-      padding: 9px 5px;
-    }
-    .search-box {
-      width: 100%;
-    }
-    .today-label {
-      display: none;
-    }
-    .table-footer {
-      padding: 14px;
-    }
-    .date-filter-row {
-      padding: 15px;
-    }
-    .date-filter-field {
-      flex: 1 1 100%;
-    }
-    .date-filter-field input {
-      width: 100%;
-    }
-    .date-filter-actions {
-      width: 100%;
-    }
-    .date-filter-actions .btn {
-      flex: 1;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-</style>
-
-<body>
-  <div class="app">
-    <main class="container">
-      <section class="page-heading">
-        <div>
-          <div class="eyebrow">Workforce management</div>
-          <h1>Day-Off Requests</h1>
-          <p class="subtitle">
-            Review employee requests, manage approvals, and monitor today's
-            approved days off.
-          </p>
-          <span class="today-label" id="headerToday">Loading date...</span>
-        </div>
-
-        <button class="btn" id="refreshButton" type="button">
-          <span id="refreshIcon">↻</span>
-          Refresh dashboard
-        </button>
-      </section>
-
-      <section class="stats" aria-label="Request summary">
-        <article class="stat-card">
-          <div class="stat-top">
-            <span class="stat-label">Pending requests</span>
-            <span class="stat-icon icon-pending">◷</span>
-          </div>
-          <div class="stat-value" id="pendingCount">—</div>
-          <div class="stat-foot">Awaiting manager review</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-top">
-            <span class="stat-label">Approved requests</span>
-            <span class="stat-icon icon-approved">✓</span>
-          </div>
-          <div class="stat-value" id="approvedCount">—</div>
-          <div class="stat-foot">Requests approved</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-top">
-            <span class="stat-label">Rejected requests</span>
-            <span class="stat-icon icon-rejected">×</span>
-          </div>
-          <div class="stat-value" id="rejectedCount">—</div>
-          <div class="stat-foot">Requests declined</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-top">
-            <span class="stat-label">Off today</span>
-            <span class="stat-icon icon-today">♙</span>
-          </div>
-          <div class="stat-value" id="todayOffCount">—</div>
-          <div class="stat-foot">Employees with approved leave today</div>
-        </article>
-      </section>
-
-      <section class="panel">
-        <div class="panel-heading">
-          <div>
-            <div class="panel-title">Employee requests</div>
-            <div class="panel-subtitle" id="lastUpdated">
-              Loading requests...
-            </div>
-          </div>
-          <span class="badge badge-pending" id="pendingIndicator"
-            >PENDING REVIEW</span
-          >
-        </div>
-
-        <div class="toolbar">
-          <div class="filters" role="group" aria-label="Filter requests">
-            <button class="filter-btn active" data-status="ALL" type="button">
-              All
-            </button>
-            <button class="filter-btn" data-status="PENDING" type="button">
-              Pending
-              <span class="filter-count" id="pendingFilterCount">0</span>
-            </button>
-            <button class="filter-btn" data-status="APPROVED" type="button">
-              Approved
-            </button>
-            <button class="filter-btn" data-status="REJECTED" type="button">
-              Rejected
-            </button>
-          </div>
-
-          <div class="search-box">
-            <span class="search-icon">⌕</span>
-            <input
-              id="searchInput"
-              type="search"
-              placeholder="Search employee or reason..."
-              aria-label="Search employee or reason"
-            />
-          </div>
-        </div>
-
-        <!-- Date range filters -->
-        <div class="date-filter-row">
-          <div class="date-filter-field">
-            <label for="dateFrom">FROM DATE</label>
-            <input type="date" id="dateFrom" />
-          </div>
-
-          <div class="date-filter-field">
-            <label for="dateTo">TO DATE</label>
-            <input type="date" id="dateTo" />
-          </div>
-
-          <div class="date-filter-actions">
-            <button class="btn btn-primary" id="applyDateFilter" type="button">
-              Apply dates
-            </button>
-            <button class="btn" id="clearDateFilter" type="button">
-              Clear dates
-            </button>
-          </div>
-
-          <div class="date-filter-hint">
-            Both dates are inclusive. You can also filter using only one date.
-          </div>
-        </div>
-
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Requested date</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Review details</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="requestsTableBody">
-              <tr>
-                <td colspan="6">
-                  <div class="loading">
-                    <div class="loading-spinner"></div>
-                    Loading employee requests...
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="table-footer">
-          <span id="resultsCount">0 requests</span>
-          <span>Day-Off Management</span>
-        </div>
-      </section>
-
-      <div class="footer-note">
-        Restaurant RMS · Staff Attendance &amp; Leave Management
-      </div>
-    </main>
-  </div>
-
-  <!-- Review modal -->
-  <div
-    class="modal-backdrop"
-    id="reviewModal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modalTitle"
-  >
-    <div class="modal">
-      <div class="modal-heading">
-        <div>
-          <h2 id="modalTitle">Review request</h2>
-          <p id="modalDescription">Confirm your decision for this employee.</p>
-        </div>
-        <button
-          class="close-btn"
-          id="closeModalButton"
-          type="button"
-          aria-label="Close dialog"
-        >
-          ×
-        </button>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manager · Day‑off requests</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          sans-serif;
+      }
+      body {
+        background: #f5f7fc;
+        margin: 0;
+        padding: 1.5rem 1.5rem 3rem;
+        color: #1e293b;
+      }
+      .container {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
+      /* header / summary */
+      .page-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.75rem;
+      }
+      .page-header h1 {
+        font-size: 1.9rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0;
+        color: #0f172a;
+      }
+      .summary-cards {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        background: white;
+        border-radius: 20px;
+        padding: 0.9rem 1.4rem;
+        box-shadow:
+          0 4px 10px rgba(0, 0, 0, 0.02),
+          0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e9eef4;
+        min-width: 110px;
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+      }
+      .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: #0f172a;
+      }
+      .stat-value.pending {
+        color: #d97706;
+      }
+      .stat-value.approved {
+        color: #059669;
+      }
+      .stat-value.rejected {
+        color: #b91c1c;
+      }
+      .stat-value.today {
+        color: #2563eb;
+      }
+
+      /* filter bar */
+      .filter-bar {
+        background: white;
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.02),
+          0 2px 6px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e9eef4;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 130px;
+      }
+      .filter-group label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #475569;
+      }
+      .filter-group input,
+      .filter-group select {
+        background: #f8fafc;
+        border: 1px solid #d1d9e6;
+        border-radius: 12px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.9rem;
+        color: #0f172a;
+        outline: none;
+        transition:
+          0.15s border-color,
+          0.15s box-shadow;
+      }
+      .filter-group input:focus,
+      .filter-group select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: auto;
+      }
+      .btn {
+        border: none;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        padding: 0.65rem 1.4rem;
+        cursor: pointer;
+        transition:
+          0.15s background,
+          0.15s transform;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        background: white;
+        border: 1px solid #d1d9e6;
+        color: #1e293b;
+      }
+      .btn:hover {
+        background: #f1f5f9;
+      }
+      .btn-primary {
+        background: #2563eb;
+        border: 1px solid #2563eb;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+      .btn-sm {
+        padding: 0.4rem 0.9rem;
+        font-size: 0.8rem;
+        border-radius: 10px;
+      }
+      .btn-outline-success {
+        border: 1px solid #a7f3d0;
+        background: #ecfdf5;
+        color: #065f46;
+      }
+      .btn-outline-success:hover {
+        background: #d1fae5;
+      }
+      .btn-outline-danger {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #991b1b;
+      }
+      .btn-outline-danger:hover {
+        background: #fee2e2;
+      }
+
+      /* table card */
+      .table-wrapper {
+        background: white;
+        border-radius: 24px;
+        border: 1px solid #e9eef4;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+        overflow-x: auto;
+        padding: 0.25rem 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 1rem 1rem 0.8rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #475569;
+        background: #ffffff;
+        border-bottom: 1px solid #e9eef4;
+      }
+      td {
+        padding: 0.9rem 1rem 0.9rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .user-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .user-name {
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .user-meta {
+        font-size: 0.7rem;
+        color: #64748b;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        background: #f1f5f9;
+        color: #334155;
+      }
+      .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-approved {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .note-preview {
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #475569;
+        font-size: 0.8rem;
+      }
+      .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
+      .loading-indicator {
+        text-align: center;
+        padding: 2.5rem;
+        color: #64748b;
+      }
+      .error-banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 0.9rem 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .error-banner button {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #991b1b;
+      }
+      .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: #0f172a;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.2s;
+        pointer-events: none;
+        z-index: 100;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .date-range-hint {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 0.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Error banner (hidden by default) -->
+      <div id="errorBanner" class="error-banner" style="display: none">
+        <span id="errorMessage"></span>
+        <button type="button" onclick="hideError()">×</button>
       </div>
 
-      <div class="request-preview">
-        <div class="preview-name" id="previewEmployee">Employee</div>
-        <div class="preview-date" id="previewDate">Requested date</div>
+      <!-- Page header -->
+      <div class="page-header">
+        <h1>📋 Day‑off requests</h1>
+        <div class="summary-cards" id="summaryCards">
+          <!-- filled by JS -->
+        </div>
       </div>
 
-      <form id="reviewForm">
-        <input type="hidden" id="reviewRequestId" />
-
-        <div class="field">
-          <label for="reviewNote">
-            Review note <span class="optional">(optional)</span>
-          </label>
-          <textarea
-            id="reviewNote"
-            maxlength="500"
-            placeholder="Add a reason or note for your decision..."
-          ></textarea>
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="ALL" selected>
+              All (pending, approved, rejected)
+            </option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
         </div>
-
-        <div class="modal-actions">
-          <button class="btn" id="cancelReviewButton" type="button">
-            Cancel
+        <div class="filter-group">
+          <label for="filterDateFrom">From date</label>
+          <input type="date" id="filterDateFrom" />
+        </div>
+        <div class="filter-group">
+          <label for="filterDateTo">To date</label>
+          <input type="date" id="filterDateTo" />
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" id="applyFiltersBtn">
+            Apply filters
           </button>
-          <button class="btn btn-primary" id="submitReviewButton" type="submit">
-            Confirm decision
-          </button>
+          <button class="btn" id="resetFiltersBtn">Reset</button>
         </div>
-      </form>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper" id="tableWrapper">
+        <div class="loading-indicator" id="loadingIndicator">
+          Loading requests…
+        </div>
+        <table id="requestsTable" style="display: none">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Day off</th>
+              <th>Status</th>
+              <th>Reviewed by</th>
+              <th>Review note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="requestsBody">
+            <!-- rows inserted by JS -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display: none">
+          No requests match the current filters.
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div
-    class="toast-container"
-    id="toastContainer"
-    aria-live="polite"
-    aria-atomic="true"
-  ></div>
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
-  <form hidden>{% csrf_token %}</form>
+    <script>
+      // ------------------------------------------------------------------
+      // Globals & API endpoints (adjust if your base path differs)
+      // ------------------------------------------------------------------
+      const API_BASE = "/api/v1/manager/day-off-requests/";
+      const REVIEW_URL = (id) => `${API_BASE}${id}/review/`;
 
-  <script>
-    (() => {
-      "use strict";
+      // DOM references
+      const filterStatus = document.getElementById("filterStatus");
+      const filterDateFrom = document.getElementById("filterDateFrom");
+      const filterDateTo = document.getElementById("filterDateTo");
+      const applyBtn = document.getElementById("applyFiltersBtn");
+      const resetBtn = document.getElementById("resetFiltersBtn");
+      const summaryCards = document.getElementById("summaryCards");
+      const table = document.getElementById("requestsTable");
+      const tbody = document.getElementById("requestsBody");
+      const loadingIndicator = document.getElementById("loadingIndicator");
+      const emptyState = document.getElementById("emptyState");
+      const errorBanner = document.getElementById("errorBanner");
+      const errorMessage = document.getElementById("errorMessage");
+      const toast = document.getElementById("toast");
 
-      // ------------------------------------------------------
-      // API configuration
-      // ------------------------------------------------------
-
-      const API = {
-        requests: "/api/v1/manager/day-off-requests/",
-        review: (id) =>
-          `/api/v1/manager/day-off-requests/${encodeURIComponent(id)}/review/`,
-      };
-
-      // ------------------------------------------------------
-      // State
-      // ------------------------------------------------------
-
-      const state = {
-        requests: [],
-        summary: {
-          pending_count: 0,
-          approved_count: 0,
-          rejected_count: 0,
-          today_off_count: 0,
-        },
-        status: "ALL",
-        search: "",
-        dateFrom: "",
-        dateTo: "",
-        loading: false,
-        submitting: false,
-        reviewId: null,
-        reviewStatus: null,
-      };
-
-      const $ = (selector) => document.querySelector(selector);
-      const tbody = $("#requestsTableBody");
-      const modal = $("#reviewModal");
-
-      // ------------------------------------------------------
-      // Helpers
-      // ------------------------------------------------------
-
-      function escapeHTML(value) {
-        return String(value ?? "").replace(
-          /[&<>"']/g,
-          (char) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[char],
+      // Helper to show/hide errors and toast
+      function showError(msg) {
+        errorMessage.textContent = msg;
+        errorBanner.style.display = "flex";
+      }
+      function hideError() {
+        errorBanner.style.display = "none";
+      }
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(
+          () => toast.classList.remove("show"),
+          2800,
         );
       }
 
-      function getCSRFToken() {
-        const input = document.querySelector('[name="csrfmiddlewaretoken"]');
-
-        if (input?.value) return input.value;
-
-        return document.querySelector('meta[name="csrf-token"]')?.content || "";
+      // Format date (yyyy-mm-dd) to readable
+      function formatDate(dateStr) {
+        if (!dateStr) return "—";
+        try {
+          const d = new Date(dateStr + "T00:00:00");
+          return d.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        } catch {
+          return dateStr;
+        }
       }
 
-      function formatDate(value) {
-        if (!value) return "Not specified";
-
-        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-        const date = match
-          ? new Date(+match[1], +match[2] - 1, +match[3])
-          : new Date(value);
-
-        if (Number.isNaN(date.getTime())) return value;
-
-        return new Intl.DateTimeFormat(undefined, {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }).format(date);
+      // Render summary cards from summary object
+      function renderSummary(summary) {
+        if (!summary) return;
+        summaryCards.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value pending">${summary.pending_count ?? 0}</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value approved">${summary.approved_count ?? 0}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value rejected">${summary.rejected_count ?? 0}</div></div>
+      <div class="stat-card"><div class="stat-label">Today off</div><div class="stat-value today">${summary.today_off_count ?? 0}</div></div>
+    `;
       }
 
-      function formatDateTime(value) {
-        if (!value) return "";
+      // Build a single row for a request
+      function buildRow(item) {
+        const tr = document.createElement("tr");
+        const status = (item.status || "").toUpperCase();
+        let badgeClass = "badge";
+        if (status === "PENDING") badgeClass += " badge-pending";
+        else if (status === "APPROVED") badgeClass += " badge-approved";
+        else if (status === "REJECTED") badgeClass += " badge-rejected";
 
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "";
+        const userName =
+          item.username ||
+          item.user?.full_name ||
+          item.user?.username ||
+          item.user?.email ||
+          "User #" + (item.user_id || item.user?.id || "?");
+        const userMeta = item.user?.email || item.user?.department || "";
+        const dayOff = item.date ? formatDate(item.date) : "—";
+        const reviewedBy =
+          item.reviewed_by?.username || item.reviewed_by?.full_name || "—";
+        const reviewNote = item.review_note || "—";
 
-        return new Intl.DateTimeFormat(undefined, {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(date);
+        // Action buttons only for PENDING
+        let actionsHtml = "—";
+        if (status === "PENDING") {
+          actionsHtml = `
+        <div class="actions-cell">
+          <button class="btn btn-sm btn-outline-success" data-action="approve" data-id="${item.id}">Approve</button>
+          <button class="btn btn-sm btn-outline-danger" data-action="reject" data-id="${item.id}">Reject</button>
+        </div>
+      `;
+        }
+
+        tr.innerHTML = `
+      <td>
+        <div class="user-cell">
+          <span class="user-name">${escapeHtml(userName)}</span>
+          ${userMeta ? `<span class="user-meta">${escapeHtml(userMeta)}</span>` : ""}
+        </div>
+      </td>
+      <td>${dayOff}</td>
+      <td><span class="${badgeClass}">${status}</span></td>
+      <td>${escapeHtml(reviewedBy)}</td>
+      <td class="note-preview" title="${escapeHtml(reviewNote)}">${escapeHtml(reviewNote)}</td>
+      <td>${actionsHtml}</td>
+    `;
+        return tr;
       }
 
-      function initials(name) {
-        return (
-          String(name || "Employee")
-            .trim()
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part.charAt(0).toUpperCase())
-            .join("") || "E"
-        );
+      // Simple HTML escape
+      function escapeHtml(text) {
+        if (!text) return "";
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
       }
 
-      function statusLabel(status) {
-        return (
-          {
-            PENDING: "Pending",
-            APPROVED: "Approved",
-            REJECTED: "Rejected",
-          }[status] ||
-          status ||
-          "Unknown"
-        );
+      // Render the table body
+      function renderTable(results) {
+        tbody.innerHTML = "";
+        if (!results || results.length === 0) {
+          table.style.display = "none";
+          emptyState.style.display = "block";
+          return;
+        }
+        table.style.display = "table";
+        emptyState.style.display = "none";
+        results.forEach((item) => {
+          tbody.appendChild(buildRow(item));
+        });
       }
 
-      function statusBadge(status) {
-        const normalized = String(status || "").toUpperCase();
+      // ------------------------------------------------------------------
+      // Fetch requests (with filters)
+      // ------------------------------------------------------------------
+      async function fetchRequests() {
+        hideError();
+        loadingIndicator.style.display = "block";
+        table.style.display = "none";
+        emptyState.style.display = "none";
 
-        const cssClass =
-          {
-            PENDING: "badge-pending",
-            APPROVED: "badge-approved",
-            REJECTED: "badge-rejected",
-          }[normalized] || "badge-pending";
+        // Build query string
+        const params = new URLSearchParams();
+        const status = filterStatus.value;
+        const from = filterDateFrom.value;
+        const to = filterDateTo.value;
 
-        return `<span class="badge ${cssClass}">${escapeHTML(statusLabel(normalized))}</span>`;
-      }
+        if (status && status !== "ALL") params.set("status", status);
+        if (from) params.set("date_from", from);
+        if (to) params.set("date_to", to);
 
-      function showToast(message, type = "success") {
-        const toast = document.createElement("div");
-        toast.className = "toast" + (type === "error" ? " error" : "");
-        toast.textContent = message;
-        $("#toastContainer").appendChild(toast);
-        window.setTimeout(() => toast.remove(), 4500);
-      }
+        const url = `${API_BASE}?${params.toString()}`;
 
-      function showTableMessage(message, type = "empty") {
-        const icon = type === "error" ? "⚠" : "▤";
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+          });
 
-        tbody.innerHTML = `
-      <tr>
-        <td colspan="6">
-          <div class="${type === "error" ? "error-state" : "empty-state"}">
-            <div class="empty-icon">${icon}</div>
-            <strong>${
-              type === "error" ? "Unable to load requests" : "No requests found"
-            }</strong>
-            ${escapeHTML(message)}
-          </div>
-        </td>
-      </tr>`;
-      }
-
-      async function parseResponse(response) {
-        const contentType = response.headers.get("content-type") || "";
-
-        if (!contentType.includes("application/json")) {
-          if (response.status === 401 || response.status === 403) {
+          if (!response.ok) {
+            if (response.status === 401)
+              throw new Error("Authentication required. Please log in.");
+            if (response.status === 403)
+              throw new Error("Permission denied. Manager access required.");
+            const errData = await response.json().catch(() => ({}));
             throw new Error(
-              "Your session may have expired or you do not have permission.",
+              errData.error ||
+                errData.message ||
+                `Request failed (${response.status})`,
             );
           }
 
-          throw new Error(
-            "The server returned a non-JSON response. Check your API URL and authentication.",
-          );
-        }
+          const data = await response.json();
+          if (data.success === false)
+            throw new Error(data.error || "Failed to load requests");
 
-        const data = await response.json();
-
-        if (!response.ok || data.success === false) {
-          throw new Error(
-            data.message || `Request failed (${response.status}).`,
-          );
-        }
-
-        return data;
-      }
-
-      async function apiFetch(url, options = {}) {
-        const response = await fetch(url, {
-          credentials: "same-origin",
-          ...options,
-          headers: {
-            Accept: "application/json",
-            ...(options.body ? { "Content-Type": "application/json" } : {}),
-            ...(options.method === "POST"
-              ? { "X-CSRFToken": getCSRFToken() }
-              : {}),
-            ...(options.headers || {}),
-          },
-        });
-
-        return parseResponse(response);
-      }
-
-      // ------------------------------------------------------
-      // Dashboard loading
-      // ------------------------------------------------------
-
-      async function loadRequests() {
-        if (state.loading) return;
-
-        state.loading = true;
-
-        const refreshButton = $("#refreshButton");
-        refreshButton.disabled = true;
-        $("#refreshIcon").textContent = "…";
-
-        if (!state.requests.length) {
-          tbody.innerHTML = `
-        <tr>
-          <td colspan="6">
-            <div class="loading">
-              <div class="loading-spinner"></div>
-              Loading employee requests...
-            </div>
-          </td>
-        </tr>`;
-        }
-
-        try {
-          const params = new URLSearchParams();
-
-          if (state.status !== "ALL") {
-            params.set("status", state.status);
-          }
-
-          if (state.dateFrom) {
-            params.set("date_from", state.dateFrom);
-          }
-
-          if (state.dateTo) {
-            params.set("date_to", state.dateTo);
-          }
-
-          const queryString = params.toString();
-          const url = API.requests + (queryString ? `?${queryString}` : "");
-
-          const data = await apiFetch(url);
-
-          state.requests = Array.isArray(data.results) ? data.results : [];
-          state.summary = data.summary || state.summary;
-
-          if (data.today) {
-            $("#headerToday").textContent = formatDate(data.today);
-          }
-
-          renderSummary();
-          renderRequests();
-
-          $("#lastUpdated").textContent =
-            `Last updated ${new Intl.DateTimeFormat(undefined, {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            }).format(new Date())}`;
-        } catch (error) {
-          showToast(error.message, "error");
-
-          if (!state.requests.length) {
-            showTableMessage(error.message, "error");
-          }
+          renderSummary(data.summary);
+          renderTable(data.results);
+        } catch (err) {
+          showError(err.message);
+          table.style.display = "none";
+          emptyState.style.display = "block";
+          emptyState.textContent = "Could not load requests.";
         } finally {
-          state.loading = false;
-          refreshButton.disabled = false;
-          $("#refreshIcon").textContent = "↻";
+          loadingIndicator.style.display = "none";
         }
       }
 
-      function renderSummary() {
-        $("#pendingCount").textContent = state.summary.pending_count ?? 0;
-        $("#approvedCount").textContent = state.summary.approved_count ?? 0;
-        $("#rejectedCount").textContent = state.summary.rejected_count ?? 0;
-        $("#todayOffCount").textContent = state.summary.today_off_count ?? 0;
-        $("#pendingFilterCount").textContent = state.summary.pending_count ?? 0;
-
-        const pending = Number(state.summary.pending_count || 0);
-        const indicator = $("#pendingIndicator");
-
-        indicator.className =
-          "badge " + (pending > 0 ? "badge-pending" : "badge-approved");
-
-        indicator.textContent =
-          pending > 0 ? `${pending} PENDING` : "ALL REVIEWED";
-      }
-
-      // ------------------------------------------------------
-      // Search and table rendering
-      // ------------------------------------------------------
-
-      function getFilteredRequests() {
-        const query = state.search.trim().toLowerCase();
-
-        return state.requests.filter((item) => {
-          const statusMatch =
-            state.status === "ALL" || item.status === state.status;
-
-          const searchText = [
-            item.employee_name,
-            item.username,
-            item.reason,
-            item.review_note,
-            item.reviewed_by,
-            item.date,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-
-          return statusMatch && (!query || searchText.includes(query));
-        });
-      }
-
-      function renderRequests() {
-        const requests = getFilteredRequests();
-
-        $("#resultsCount").textContent =
-          `${requests.length} request${requests.length === 1 ? "" : "s"}`;
-
-        if (!requests.length) {
-          showTableMessage(
-            state.search
-              ? "Try changing your search, date range, or status filter."
-              : "There are no requests matching the selected filters.",
-          );
-          return;
-        }
-
-        tbody.innerHTML = requests
-          .map((item) => {
-            const id = escapeHTML(item.id);
-            const name = escapeHTML(
-              item.employee_name || item.username || "Employee",
-            );
-            const username = escapeHTML(item.username || "");
-            const reason = escapeHTML(item.reason || "No reason provided");
-            const date = escapeHTML(formatDate(item.date));
-            const status = String(item.status || "").toUpperCase();
-            const isPending = status === "PENDING";
-
-            const reviewDetails = item.reviewed_by
-              ? `<div class="review-info">
-            <strong>${escapeHTML(item.reviewed_by)}</strong>
-            ${
-              item.reviewed_at
-                ? `<div>${escapeHTML(formatDateTime(item.reviewed_at))}</div>`
-                : ""
-            }
-            ${
-              item.review_note
-                ? `<div title="${escapeHTML(item.review_note)}">Note: ${escapeHTML(item.review_note)}</div>`
-                : ""
-            }
-          </div>`
-              : `<span class="review-info">Not reviewed yet</span>`;
-
-            const actions = isPending
-              ? `<div class="actions">
-            <button class="btn btn-success btn-small"
-              data-action="approve" data-id="${id}" type="button">✓ Approve</button>
-            <button class="btn btn-danger btn-small"
-              data-action="reject" data-id="${id}" type="button">✕ Reject</button>
-          </div>`
-              : `<span class="review-info">Decision recorded</span>`;
-
-            return `
-        <tr>
-          <td>
-            <div class="employee">
-              <div class="employee-avatar">${escapeHTML(initials(item.employee_name || item.username))}</div>
-              <div>
-                <div class="employee-name">${name}</div>
-                <div class="employee-username">@${username}</div>
-              </div>
-            </div>
-          </td>
-          <td>
-            <div class="date-main">${date}</div>
-            <div class="date-sub">Day off</div>
-          </td>
-          <td><div class="reason" title="${reason}">${reason}</div></td>
-          <td>${statusBadge(status)}</td>
-          <td>${reviewDetails}</td>
-          <td>${actions}</td>
-        </tr>`;
-          })
-          .join("");
-      }
-
-      // ------------------------------------------------------
-      // Review modal
-      // ------------------------------------------------------
-
-      function openReviewModal(id, decision) {
-        const item = state.requests.find(
-          (request) => String(request.id) === String(id),
-        );
-
-        if (!item || item.status !== "PENDING") {
-          showToast(
-            "This request is no longer pending. Refresh the dashboard.",
-            "error",
-          );
-          return;
-        }
-
-        state.reviewId = item.id;
-        state.reviewStatus = decision === "approve" ? "APPROVED" : "REJECTED";
-
-        $("#modalTitle").textContent =
-          decision === "approve"
-            ? "Approve day-off request"
-            : "Reject day-off request";
-
-        $("#modalDescription").textContent =
-          decision === "approve"
-            ? "Confirm that you want to approve this employee's request."
-            : "Confirm that you want to reject this employee's request.";
-
-        $("#previewEmployee").textContent = item.employee_name || item.username;
-        $("#previewDate").textContent = formatDate(item.date);
-        $("#reviewRequestId").value = item.id;
-        $("#reviewNote").value = "";
-
-        const submitButton = $("#submitReviewButton");
-
-        submitButton.textContent =
-          decision === "approve" ? "✓ Approve request" : "✕ Reject request";
-
-        submitButton.className =
-          decision === "approve" ? "btn btn-success" : "btn btn-danger";
-
-        modal.classList.add("open");
-        $("#reviewNote").focus();
-      }
-
-      function closeReviewModal() {
-        if (state.submitting) return;
-
-        modal.classList.remove("open");
-        state.reviewId = null;
-        state.reviewStatus = null;
-      }
-
-      async function submitReview(event) {
-        event.preventDefault();
-
-        if (state.submitting || !state.reviewId || !state.reviewStatus) {
-          return;
-        }
-
-        const id = state.reviewId;
-        const decision = state.reviewStatus;
-        const note = $("#reviewNote").value.trim();
-        const button = $("#submitReviewButton");
-
-        state.submitting = true;
-        button.disabled = true;
-        $("#cancelReviewButton").disabled = true;
-        $("#closeModalButton").disabled = true;
-        button.textContent = "Saving decision...";
-
+      // ------------------------------------------------------------------
+      // Review action (approve / reject)
+      // ------------------------------------------------------------------
+      async function reviewRequest(requestId, newStatus) {
         try {
-          const data = await apiFetch(API.review(id), {
+          const response = await fetch(REVIEW_URL(requestId), {
             method: "POST",
-            body: JSON.stringify({
-              status: decision,
-              review_note: note,
-            }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({ status: newStatus }),
           });
 
-          modal.classList.remove("open");
-          state.reviewId = null;
-          state.reviewStatus = null;
+          const data = await response.json().catch(() => ({}));
 
-          showToast(data.message || "Request reviewed successfully.");
+          if (!response.ok) {
+            if (response.status === 409)
+              throw new Error("This request has already been reviewed.");
+            throw new Error(
+              data.error ||
+                data.message ||
+                `Review failed (${response.status})`,
+            );
+          }
 
-          await loadRequests();
-        } catch (error) {
-          showToast(error.message, "error");
-        } finally {
-          state.submitting = false;
-          button.disabled = false;
-          $("#cancelReviewButton").disabled = false;
-          $("#closeModalButton").disabled = false;
+          if (data.success === false)
+            throw new Error(data.error || "Review failed");
 
-          button.textContent =
-            decision === "APPROVED" ? "✓ Approve request" : "✕ Reject request";
+          showToast(
+            `Request ${newStatus === "APPROVED" ? "approved" : "rejected"} ✅`,
+          );
+          // Refresh the list to reflect changes
+          await fetchRequests();
+        } catch (err) {
+          showError(err.message);
         }
       }
 
-      // ------------------------------------------------------
+      // ------------------------------------------------------------------
       // Event listeners
-      // ------------------------------------------------------
+      // ------------------------------------------------------------------
+      // Delegate click events for approve / reject buttons
+      tbody.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        if (!id) return;
 
-      $("#refreshButton").addEventListener("click", loadRequests);
+        if (action === "approve") {
+          reviewRequest(id, "APPROVED");
+        } else if (action === "reject") {
+          reviewRequest(id, "REJECTED");
+        }
+      });
 
-      document.querySelectorAll(".filter-btn").forEach((button) => {
-        button.addEventListener("click", () => {
-          state.status = button.dataset.status;
+      // Apply filters
+      applyBtn.addEventListener("click", fetchRequests);
 
-          document.querySelectorAll(".filter-btn").forEach((btn) => {
-            btn.classList.toggle("active", btn === button);
-          });
+      // Reset filters
+      resetBtn.addEventListener("click", () => {
+        filterStatus.value = "ALL";
+        filterDateFrom.value = "";
+        filterDateTo.value = "";
+        fetchRequests();
+      });
 
-          loadRequests();
+      // Also trigger on Enter key in date inputs
+      [filterDateFrom, filterDateTo].forEach((input) => {
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") fetchRequests();
         });
       });
 
-      $("#searchInput").addEventListener("input", (event) => {
-        state.search = event.target.value;
-        renderRequests();
-      });
-
-      // Apply selected date range.
-      $("#applyDateFilter").addEventListener("click", () => {
-        const dateFrom = $("#dateFrom").value;
-        const dateTo = $("#dateTo").value;
-
-        if (dateFrom && dateTo && dateFrom > dateTo) {
-          showToast("The start date cannot be after the end date.", "error");
-          return;
-        }
-
-        state.dateFrom = dateFrom;
-        state.dateTo = dateTo;
-
-        loadRequests();
-      });
-
-      // Clear date range while keeping the selected status.
-      $("#clearDateFilter").addEventListener("click", () => {
-        $("#dateFrom").value = "";
-        $("#dateTo").value = "";
-        $("#dateFrom").max = "";
-        $("#dateTo").min = "";
-
-        state.dateFrom = "";
-        state.dateTo = "";
-
-        loadRequests();
-      });
-
-      // Prevent selecting an invalid range in the browser.
-      $("#dateFrom").addEventListener("change", () => {
-        const dateFrom = $("#dateFrom").value;
-        $("#dateTo").min = dateFrom || "";
-
-        if ($("#dateTo").value && dateFrom > $("#dateTo").value) {
-          $("#dateTo").value = "";
-        }
-      });
-
-      $("#dateTo").addEventListener("change", () => {
-        const dateTo = $("#dateTo").value;
-        $("#dateFrom").max = dateTo || "";
-
-        if ($("#dateFrom").value && dateTo < $("#dateFrom").value) {
-          $("#dateFrom").value = "";
-        }
-      });
-
-      tbody.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-action]");
-        if (!button) return;
-
-        openReviewModal(button.dataset.id, button.dataset.action);
-      });
-
-      $("#reviewForm").addEventListener("submit", submitReview);
-      $("#closeModalButton").addEventListener("click", closeReviewModal);
-      $("#cancelReviewButton").addEventListener("click", closeReviewModal);
-
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) closeReviewModal();
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && modal.classList.contains("open")) {
-          closeReviewModal();
-        }
-      });
-
-      // ------------------------------------------------------
-      // Initialize
-      // ------------------------------------------------------
-
-      loadRequests();
-    })();
-  </script>
-</body>
-
-{% endblock %}
+      // Initial load
+      fetchRequests();
+    </script>
+  </body>
+</html>

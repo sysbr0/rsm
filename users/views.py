@@ -1,19 +1,19 @@
 from django.core.serializers import python
-from django.shortcuts import render
-
 # Create your views here.
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from django.shortcuts import redirect, render
-from django.template.backends import django
-
 from rest_framework.generics import ListAPIView
 from .models import User, UserRole, UserState
 from .serializers import WorkingWaiterSerializer
-
 from django.contrib.auth.decorators import login_required
-
 from .models import *
+import json
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render ,redirect
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
 
 
 
@@ -462,16 +462,6 @@ def waiter_dashboard(request):
         context,
     )
 
-import json
-
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST
-
-from .models import DayOffRequest, DayOffStatus, UserRole
 
 
 def is_manager(user):
@@ -548,139 +538,169 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 
-@require_GET
+from datetime import date
+
+
+from datetime import date
+
+from django.http import JsonResponse
+from django.utils import timezone
+from django.views.decorators.http import require_GET
+
+
+
+# =========================================================
+# API: LIST MANAGER DAY-OFF REQUESTS
+# GET /api/v1/manager/day-off-requests/
+# =========================================================
+from datetime import date
+
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.http import JsonResponse
+from django.utils.dateparse import parse_date
+
+from .models import DayOffRequest, DayOffStatus
+
+# Pagination defaults (must match the frontend PAGE_SIZE = 20)
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 100
+
+
+def day_off_request_to_dict(item):
+    """Converts a DayOffRequest instance into a dictionary."""
+    return {
+        "id": item.id,
+        "user_id": item.user_id,
+        "username": item.user.get_username(),
+        "date": item.date.isoformat(),
+        "reason": item.reason,
+        "status": item.status,
+        "reviewed_by_id": item.reviewed_by_id,
+        "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+        "review_note": item.review_note,
+        "created_at": item.created_at.isoformat(),
+    }
+
+
+def _get_positive_int(value, default, maximum=None):
+    """Safely parse a positive int from query params."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    if parsed < 1:
+        return default
+    if maximum is not None and parsed > maximum:
+        return maximum
+    return parsed
+
+
 def manager_day_off_requests_api(request):
     if not request.user.is_authenticated:
-        return api_error("Authentication required.", 401)
+        return JsonResponse(
+            {"success": False, "error": "Authentication required."},
+            status=401,
+        )
 
-    if not is_manager(request.user):
-        return api_error("Permission denied.", 403)
+    today = date.today()
 
-    # ---------------------------------------------------------
-    # Filters
-    # ---------------------------------------------------------
-    filter_status = request.GET.get("status", "ALL").upper()
-    date_from = request.GET.get("date_from", "").strip()
-    date_to = request.GET.get("date_to", "").strip()
+    # --- Base queryset by permissions ---
+    # Staff/managers see all requests; regular users see only their own.
+    if request.user.is_staff:
+        base_qs = DayOffRequest.objects.all().select_related(
+            "user", "reviewed_by"
+        )
+    else:
+        base_qs = DayOffRequest.objects.filter(user=request.user).select_related(
+            "user", "reviewed_by"
+        )
+    requests_qs = base_qs
+    # --- 1. Status filter ---
+    filter_status = request.GET.get("status", "").strip().upper()
+    valid_statuses = [choice[0] for choice in DayOffStatus.choices]
 
-    valid_statuses = [
-        DayOffStatus.PENDING,
-        DayOffStatus.APPROVED,
-        DayOffStatus.REJECTED,
-    ]
+    if filter_status in valid_statuses:
+        requests_qs = requests_qs.filter(status=filter_status)
+    else:
+        filter_status = None  # Reset if empty or invalid
 
-    if filter_status != "ALL" and filter_status not in valid_statuses:
-        return api_error("Invalid status filter.")
+    # --- 2. Date range filter ---
+    date_from_str = request.GET.get("date_from", "").strip()
+    date_to_str = request.GET.get("date_to", "").strip()
 
-    # ---------------------------------------------------------
-    # Validate date range
-    # ---------------------------------------------------------
-    from datetime import date
+    date_from = parse_date(date_from_str) if date_from_str else None
+    date_to = parse_date(date_to_str) if date_to_str else None
 
-    parsed_date_from = None
-    parsed_date_to = None
-
+    # Invalid strings silently become None; keep them out of the filter.
     if date_from:
-        try:
-            parsed_date_from = date.fromisoformat(date_from)
-        except ValueError:
-            return api_error(
-                "Invalid date_from. Use YYYY-MM-DD."
-            )
-
+        requests_qs = requests_qs.filter(date__gte=date_from)
     if date_to:
-        try:
-            parsed_date_to = date.fromisoformat(date_to)
-        except ValueError:
-            return api_error(
-                "Invalid date_to. Use YYYY-MM-DD."
-            )
+        requests_qs = requests_qs.filter(date__lte=date_to)
 
-    if (
-        parsed_date_from
-        and parsed_date_to
-        and parsed_date_from > parsed_date_to
-    ):
-        return api_error(
-            "The start date cannot be after the end date."
-        )
-
-    # ---------------------------------------------------------
-    # Requests queryset
-    # ---------------------------------------------------------
-    requests_qs = (
-        DayOffRequest.objects
-        .select_related("user", "reviewed_by")
-        .order_by("-date", "-pk")
+    # Stable ordering so pages don't shuffle between requests.
+    # Newest first — matches the "review queue" UX in the modal.
+    requests_qs = requests_qs.order_by("date", "created_at", "id")
+    # --- 3. Pagination ---
+    page_size = _get_positive_int(
+        request.GET.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
     )
+    page_number = _get_positive_int(request.GET.get("page"), 1)
 
-    if filter_status != "ALL":
-        requests_qs = requests_qs.filter(
-            status=filter_status
-        )
+    paginator = Paginator(requests_qs, page_size)
+    total_count = paginator.count
+    total_pages = paginator.num_pages if total_count else 1
 
-    if parsed_date_from:
-        requests_qs = requests_qs.filter(
-            date__gte=parsed_date_from
-        )
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        # If the requested page is out of range, return the last page.
+        page_obj = paginator.page(total_pages)
 
-    if parsed_date_to:
-        requests_qs = requests_qs.filter(
-            date__lte=parsed_date_to
-        )
-
-    # ---------------------------------------------------------
-    # Summary counts (not affected by the filters)
-    # ---------------------------------------------------------
-    today = timezone.localdate()
-
-    all_requests = DayOffRequest.objects.all()
-
-    pending_count = all_requests.filter(
-        status=DayOffStatus.PENDING
+    # --- 4. Summary metrics (scope = base queryset, ignoring active filters) ---
+    pending_count = base_qs.filter(status=DayOffStatus.PENDING).count()
+    approved_count = base_qs.filter(status=DayOffStatus.APPROVED).count()
+    rejected_count = base_qs.filter(status=DayOffStatus.REJECTED).count()
+    today_off_count = base_qs.filter(
+        status=DayOffStatus.APPROVED, date=today
     ).count()
 
-    approved_count = all_requests.filter(
-        status=DayOffStatus.APPROVED
-    ).count()
-
-    rejected_count = all_requests.filter(
-        status=DayOffStatus.REJECTED
-    ).count()
-
-    today_off_count = (
-        all_requests.filter(
-            date=today,
-            status=DayOffStatus.APPROVED,
-        )
-        .values("user_id")
-        .distinct()
-        .count()
+    # --- 5. Final JSON response ---
+    return JsonResponse(
+        {
+            "success": True,
+            "results": [
+                day_off_request_to_dict(item) for item in page_obj.object_list
+            ],
+            "count": total_count,
+            "page": page_obj.number,
+            "page_size": page_size,
+            "total_pages": total_pages,
+            "has_next": page_obj.has_next(),
+            "has_previous": page_obj.has_previous(),
+            "next_page": (
+                page_obj.next_page_number() if page_obj.has_next() else None
+            ),
+            "previous_page": (
+                page_obj.previous_page_number()
+                if page_obj.has_previous()
+                else None
+            ),
+            "filters": {
+                "status": filter_status,
+                "date_from": date_from_str or None,
+                "date_to": date_to_str or None,
+            },
+            "summary": {
+                "pending_count": pending_count,
+                "approved_count": approved_count,
+                "rejected_count": rejected_count,
+                "today_off_count": today_off_count,
+            },
+            "today": today.isoformat(),
+        }
     )
-
-    # ---------------------------------------------------------
-    # Response
-    # ---------------------------------------------------------
-    return JsonResponse({
-        "success": True,
-        "results": [
-            day_off_request_to_dict(item)
-            for item in requests_qs
-        ],
-        "count": requests_qs.count(),
-        "filters": {
-            "status": filter_status,
-            "date_from": date_from or None,
-            "date_to": date_to or None,
-        },
-        "summary": {
-            "pending_count": pending_count,
-            "approved_count": approved_count,
-            "rejected_count": rejected_count,
-            "today_off_count": today_off_count,
-        },
-        "today": today.isoformat(),
-    })
 # ---------------------------------------------------------
 # API: APPROVE OR REJECT A REQUEST
 # POST /api/v1/manager/day-off-requests/<id>/review/
@@ -771,3 +791,377 @@ def review_day_off_request_api(request, request_id):
         ),
         "request": day_off_request_to_dict(day_off),
     })
+
+from django.utils.dateparse import parse_date
+
+ACTION_TO_STATUS = {
+    "approve": DayOffStatus.APPROVED,
+    "reject":  DayOffStatus.REJECTED,
+    "pending": DayOffStatus.PENDING,
+}
+
+
+@require_POST
+def review_day_off_request(request, request_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Authentication required."}, status=401)
+    if not request.user.is_staff:
+        return JsonResponse({"success": False, "error": "Permission denied."}, status=403)
+
+    try:
+        payload = json.loads(request.body or b"{}")
+    except ValueError:
+        return JsonResponse({"success": False, "error": "Invalid JSON."}, status=400)
+
+    action = str(payload.get("action", "")).strip().lower()
+    if action not in ACTION_TO_STATUS:
+        return JsonResponse(
+            {"success": False, "error": "Action must be approve, reject, or pending."},
+            status=400,
+        )
+
+    # Optional date override
+    new_date = None
+    raw_date = payload.get("date")
+    if raw_date:
+        new_date = parse_date(str(raw_date).strip())
+        if new_date is None:
+            return JsonResponse({"success": False, "error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+
+    try:
+        item = DayOffRequest.objects.get(pk=request_id)
+    except DayOffRequest.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Request not found."}, status=404)
+
+    item.status = ACTION_TO_STATUS[action]
+    item.review_note = str(payload.get("review_note", "")).strip()[:500]
+
+    if new_date is not None:
+        item.date = new_date
+
+    if action == "pending":
+        item.reviewed_by = None
+        item.reviewed_at = None
+    else:
+        item.reviewed_by = request.user
+        item.reviewed_at = timezone.now()
+
+    item.save()
+
+    return JsonResponse({
+        "success": True,
+        "message": f"Request {action}d successfully.",
+        "status": item.status,
+        "date": item.date.isoformat(),
+    })
+
+
+# views.py
+
+from datetime import date, datetime, time, timedelta
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.utils import timezone
+from django.views.decorators.http import require_GET
+
+from .models import Attendance, DayOffRequest, EmployeeSchedule
+from .models import DayOffStatus, UserRole, UserState
+
+
+User = get_user_model()
+
+
+def is_manager(user):
+    return (
+        user.is_authenticated
+        and user.is_active
+        and user.role in [UserRole.ADMIN, UserRole.MANAGER]
+    )
+
+
+def get_selected_date(request):
+    """
+    Read ?date=YYYY-MM-DD.
+    Defaults to today's date in Django's configured timezone.
+    """
+    value = request.GET.get("date")
+
+    if not value:
+        return timezone.localdate()
+
+    try:
+        return date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def duration_details(total_seconds):
+    """Return a non-negative duration as hours/minutes."""
+    total_seconds = max(int(total_seconds), 0)
+    total_minutes = total_seconds // 60
+    hours, minutes = divmod(total_minutes, 60)
+
+    return {
+        "hours": hours,
+        "minutes": minutes,
+        "display": f"{hours}h {minutes}m",
+    }
+
+
+def manager_employee_queryset():
+    """
+    Include active employees, excluding administrators and managers.
+    Change this filter if managers should also appear in the list.
+    """
+    return User.objects.filter(
+        is_active=True,
+        state=UserState.WORKING,
+    ).exclude(
+        role__in=[UserRole.ADMIN, UserRole.MANAGER]
+    ).order_by("full_name", "username")
+
+
+def build_attendance_dashboard(selected_date):
+    today = timezone.localdate()
+    now = timezone.now()
+
+    employees = list(manager_employee_queryset())
+
+    weekday = selected_date.strftime("%A").upper()
+
+    schedules = {
+        item.user_id: item
+        for item in EmployeeSchedule.objects.filter(
+            user_id__in=[employee.pk for employee in employees],
+            day_of_week=weekday,
+            is_active=True,
+        )
+    }
+
+    # Only attendance sessions that started on the selected local date.
+    start_of_day = timezone.make_aware(
+        datetime.combine(selected_date, time.min)
+    )
+    start_of_next_day = timezone.make_aware(
+        datetime.combine(selected_date + timedelta(days=1), time.min)
+    )
+
+    attendance_records = (
+        Attendance.objects.filter(
+            user_id__in=[employee.pk for employee in employees],
+            check_in__gte=start_of_day,
+            check_in__lt=start_of_next_day,
+        )
+        .select_related("user")
+        .order_by("-check_in")
+    )
+
+    attendance_by_user = {}
+
+    for record in attendance_records:
+        # Prefer an active attendance if one exists.
+        if record.user_id not in attendance_by_user:
+            attendance_by_user[record.user_id] = record
+
+        if record.check_out is None:
+            attendance_by_user[record.user_id] = record
+
+    day_off_requests = DayOffRequest.objects.filter(
+        user_id__in=[employee.pk for employee in employees],
+        date=selected_date,
+    ).select_related("reviewed_by")
+
+    approved_by_user = {}
+    pending_by_user = {}
+
+    for request in day_off_requests:
+        if request.status == DayOffStatus.APPROVED:
+            approved_by_user[request.user_id] = request
+        elif request.status == DayOffStatus.PENDING:
+            pending_by_user[request.user_id] = request
+
+    rows = []
+
+    for employee in employees:
+        schedule = schedules.get(employee.pk)
+        attendance = attendance_by_user.get(employee.pk)
+        approved_leave = approved_by_user.get(employee.pk)
+        pending_leave = pending_by_user.get(employee.pk)
+
+        target_hours = max(
+            float(employee.daily_working_hours or 0),
+            0,
+        )
+
+        target_seconds = int(target_hours * 3600)
+
+        elapsed_seconds = 0
+        remaining_seconds = target_seconds
+        progress = 0
+        overtime_seconds = 0
+
+        if attendance:
+            end_time = attendance.check_out or now
+
+            elapsed_seconds = max(
+                int((end_time - attendance.check_in).total_seconds()),
+                0,
+            )
+
+            remaining_seconds = max(
+                target_seconds - elapsed_seconds,
+                0,
+            )
+
+            overtime_seconds = max(
+                elapsed_seconds - target_seconds,
+                0,
+            )
+
+            progress = (
+                min(elapsed_seconds / target_seconds * 100, 100)
+                if target_seconds > 0
+                else 100
+            )
+
+        is_working = bool(attendance and attendance.check_out is None)
+        has_checked_in = attendance is not None
+        is_scheduled_day_off = bool(schedule and schedule.is_day_off)
+
+        if approved_leave:
+            status = "approved_day_off"
+
+        elif is_scheduled_day_off:
+            status = "scheduled_day_off"
+
+        elif is_working and overtime_seconds > 0:
+            status = "overtime"
+
+        elif is_working:
+            status = "working"
+
+        elif has_checked_in:
+            status = "checked_out"
+
+        elif pending_leave:
+            status = "pending_day_off"
+
+        elif schedule is None:
+            status = "no_schedule"
+
+        elif selected_date > today:
+            status = "upcoming"
+
+        elif selected_date < today:
+            status = "absent"
+
+        else:
+            # Don't mark an employee absent before their scheduled start.
+            shift_start = schedule.start_time
+
+            if shift_start:
+                scheduled_start = timezone.make_aware(
+                    datetime.combine(selected_date, shift_start)
+                )
+                is_past_start = now >= scheduled_start
+            else:
+                is_past_start = True
+
+            status = "absent" if is_past_start else "not_arrived_yet"
+
+        rows.append({
+            "id": employee.pk,
+            "name": employee.full_name or employee.username,
+            "username": employee.username,
+            "role": employee.get_role_display(),
+            "target_hours": target_hours,
+            "target_display": duration_details(target_seconds)["display"],
+            "check_in": (
+                timezone.localtime(attendance.check_in).strftime("%H:%M")
+                if attendance else None
+            ),
+            "check_out": (
+                timezone.localtime(attendance.check_out).strftime("%H:%M")
+                if attendance and attendance.check_out else None
+            ),
+            "elapsed": duration_details(elapsed_seconds),
+            "remaining": duration_details(remaining_seconds),
+            "overtime": duration_details(overtime_seconds),
+            "progress": round(progress, 1),
+            "status": status,
+            "schedule_start": (
+                schedule.start_time.strftime("%H:%M")
+                if schedule and schedule.start_time else None
+            ),
+            "schedule_end": (
+                schedule.end_time.strftime("%H:%M")
+                if schedule and schedule.end_time else None
+            ),
+            "day_off_reason": (
+                approved_leave.reason if approved_leave else ""
+            ),
+            "pending_reason": (
+                pending_leave.reason if pending_leave else ""
+            ),
+        })
+
+    # Summary cards
+    summary = {
+        "working": sum(row["status"] == "working" for row in rows),
+        "overtime": sum(row["status"] == "overtime" for row in rows),
+        "approved_day_off": sum(
+            row["status"] == "approved_day_off" for row in rows
+        ),
+        "scheduled_day_off": sum(
+            row["status"] == "scheduled_day_off" for row in rows
+        ),
+        "absent": sum(row["status"] == "absent" for row in rows),
+        "pending_day_off": sum(
+            row["status"] == "pending_day_off" for row in rows
+        ),
+        "checked_out": sum(
+            row["status"] == "checked_out" for row in rows
+        ),
+    }
+
+    return {
+        "date": selected_date.isoformat(),
+        "today": today.isoformat(),
+        "summary": summary,
+        "employees": rows,
+    }
+
+
+@login_required
+@user_passes_test(is_manager)
+@require_GET
+def manager_attendance_api(request):
+    selected_date = get_selected_date(request)
+
+    if selected_date is None:
+        return JsonResponse(
+            {"error": "Invalid date. Use YYYY-MM-DD."},
+            status=400,
+        )
+
+    data = build_attendance_dashboard(selected_date)
+    return JsonResponse(data)
+
+
+@login_required
+@user_passes_test(is_manager)
+def manager_attendance_dashboard(request):
+    selected_date = get_selected_date(request) or timezone.localdate()
+
+    return render(
+        request,
+        "users/attendance_dashboard.html",
+        {
+            "selected_date": selected_date.isoformat(),
+            "api_url": "/api/manager/attendance/",
+        },
+    )

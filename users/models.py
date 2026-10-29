@@ -78,6 +78,26 @@ class User(BaseAuth):
     help_text="Required working hours per day."
 )
 
+    
+
+
+    def check_in_user(self):
+        self.state = UserState.WORKING   # ✅ works
+        self.save(update_fields=["state"])  # ✅ works (saves only `state`)
+        self.save()
+    
+    
+        # ⚠️ redundant, possibly harmful
+
+    def check_out_user(self):
+        self.state = UserState.RESIGNED   # ✅ works
+        self.save(update_fields=["state"])  # ✅ works (saves only `state`)
+        self.save()
+        
+
+
+
+
 
 class Waiter(User):
     class Meta:
@@ -268,7 +288,7 @@ from django.utils import timezone
 
 
 class DayOffStatus(models.TextChoices):
-    PENDING = "PENDING", "Pending Approval"
+    PENDING = "PENDING", "Pending"
     APPROVED = "APPROVED", "Approved"
     REJECTED = "REJECTED", "Rejected"
 

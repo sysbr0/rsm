@@ -1,0 +1,3241 @@
+{% extends "ui/admin_base.html" %} {% load static %} {% block title %}Employee
+Attendance Dashboard{% endblock %} {% block content %}
+<div class="attendance-page">
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="page-header">
+    <div>
+      <div class="page-eyebrow">STAFF MANAGEMENT</div>
+      <h1>Attendance Dashboard</h1>
+      <p>Monitor employee attendance, working hours, absences and overtime.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="dayoff-btn" id="open-dayoff-btn">
+        <span>▦</span> Day-Off Requests
+        <span class="dayoff-badge" id="dayoff-pending-badge" hidden>0</span>
+      </button>
+      <button type="button" class="refresh-btn" id="refresh-btn">
+        <span>↻</span> Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- DATE NAV -->
+  <section class="date-toolbar">
+    <button
+      type="button"
+      class="date-nav-btn"
+      id="previous-day"
+      aria-label="Previous day"
+    >
+      ←
+    </button>
+    <div class="date-center">
+      <label for="attendance-date">Attendance date</label>
+      <input type="date" id="attendance-date" />
+      <span id="date-description">Loading date...</span>
+    </div>
+    <button
+      type="button"
+      class="date-nav-btn"
+      id="next-day"
+      aria-label="Next day"
+    >
+      →
+    </button>
+    <button type="button" class="today-btn" id="today-btn">Today</button>
+  </section>
+
+  <!-- SUMMARY CARDS -->
+  <section class="summary-grid">
+    <article class="summary-card">
+      <div class="summary-icon icon-blue">👥</div>
+      <div>
+        <span class="summary-label">Total Employees</span>
+        <strong id="summary-all">0</strong>
+        <small>In the attendance overview</small>
+      </div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-icon icon-green">✓</div>
+      <div>
+        <span class="summary-label">Currently Working</span>
+        <strong id="summary-working">0</strong>
+        <small>Checked in and working</small>
+      </div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-icon icon-orange">◷</div>
+      <div>
+        <span class="summary-label">Overtime</span>
+        <strong id="summary-overtime">0</strong>
+        <small>Exceeded daily working hours</small>
+      </div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-icon icon-purple">▦</div>
+      <div>
+        <span class="summary-label">Day Off</span>
+        <strong id="summary-day-off">0</strong>
+        <small>Approved or scheduled</small>
+      </div>
+    </article>
+    <article class="summary-card">
+      <div class="summary-icon icon-red">!</div>
+      <div>
+        <span class="summary-label">Absent / Not Arrived</span>
+        <strong id="summary-absent">0</strong>
+        <small>Expected but not checked in</small>
+      </div>
+    </article>
+  </section>
+
+  <!-- MAIN -->
+  <section class="attendance-layout">
+    <aside class="filter-sidebar">
+      <div class="sidebar-heading">
+        <div>
+          <h2>Employee Status</h2>
+          <p>Choose a category</p>
+        </div>
+        <span class="sidebar-heading-icon">☷</span>
+      </div>
+      <nav class="filter-list" aria-label="Filter employees">
+        <button type="button" class="status-filter active" data-filter="all">
+          <span class="filter-label"
+            ><span class="filter-icon">👥</span>All Employees</span
+          >
+          <span class="filter-count" id="count-all">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="working">
+          <span class="filter-label"
+            ><span class="filter-icon">✓</span>Working</span
+          >
+          <span class="filter-count" id="count-working">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="overtime">
+          <span class="filter-label"
+            ><span class="filter-icon">◷</span>Overtime</span
+          >
+          <span class="filter-count" id="count-overtime">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="day_off">
+          <span class="filter-label"
+            ><span class="filter-icon">▦</span>Day Off</span
+          >
+          <span class="filter-count" id="count-day_off">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="absent">
+          <span class="filter-label"
+            ><span class="filter-icon">!</span>Absent / Not Arrived</span
+          >
+          <span class="filter-count" id="count-absent">0</span>
+        </button>
+        <button
+          type="button"
+          class="status-filter"
+          data-filter="pending_day_off"
+        >
+          <span class="filter-label"
+            ><span class="filter-icon">◷</span>Pending Day Off</span
+          >
+          <span class="filter-count" id="count-pending_day_off">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="checked_out">
+          <span class="filter-label"
+            ><span class="filter-icon">↗</span>Checked Out</span
+          >
+          <span class="filter-count" id="count-checked_out">0</span>
+        </button>
+        <button type="button" class="status-filter" data-filter="upcoming">
+          <span class="filter-label"
+            ><span class="filter-icon">◴</span>Upcoming / Schedule</span
+          >
+          <span class="filter-count" id="count-upcoming">0</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="live-dot"></span><span>Attendance overview</span>
+      </div>
+    </aside>
+
+    <main class="attendance-main">
+      <div class="results-toolbar">
+        <div class="results-heading">
+          <h2 id="current-filter-title">All Employees</h2>
+          <p id="visible-count">0 employees</p>
+        </div>
+        <div class="toolbar-actions">
+          <div class="search-box">
+            <span>⌕</span>
+            <input
+              type="search"
+              id="employee-search"
+              placeholder="Search employee..."
+              autocomplete="off"
+            />
+            <button type="button" id="clear-search" aria-label="Clear search">
+              ×
+            </button>
+          </div>
+          <div class="view-switch" aria-label="Choose employee display">
+            <button type="button" class="view-btn active" id="list-view-btn">
+              <span>☷</span> List
+            </button>
+            <button type="button" class="view-btn" id="card-view-btn">
+              <span>▦</span> Cards
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading-state" class="state-message">
+        <div class="loading-spinner"></div>
+        <p>Loading attendance information...</p>
+      </div>
+      <div id="error-state" class="state-message error-state" hidden>
+        <div class="state-icon">!</div>
+        <h3>Unable to load attendance</h3>
+        <p id="error-message">Please check your connection and try again.</p>
+        <button type="button" class="retry-btn" id="retry-btn">
+          Try again
+        </button>
+      </div>
+      <div id="empty-state" class="state-message" hidden>
+        <div class="state-icon">⌕</div>
+        <h3>No employees found</h3>
+        <p>There are no employees matching this category or search.</p>
+      </div>
+
+      <div id="employee-list-view" class="employee-list-view" hidden>
+        <div class="table-scroll">
+          <table class="employee-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Status</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Worked</th>
+                <th>Remaining</th>
+                <th>Daily Progress</th>
+              </tr>
+            </thead>
+            <tbody id="employee-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="employee-card-view" class="employee-card-grid" hidden></div>
+
+      <div class="results-footer">
+        <span id="results-footer-text">Showing 0 employees</span>
+        <span id="last-updated">Not yet updated</span>
+      </div>
+    </main>
+  </section>
+</div>
+
+<!-- ============================================================
+     DAY-OFF REQUESTS MODAL
+     ============================================================ -->
+<div
+  class="dayoff-modal-backdrop"
+  id="dayoffModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dayoffModalTitle"
+>
+  <div class="dayoff-modal">
+    <header class="dayoff-modal-header">
+      <div>
+        <div class="dayoff-eyebrow">Workforce management</div>
+        <h2 id="dayoffModalTitle">Day-Off Requests</h2>
+        <p class="dayoff-subtitle">
+          Review employee requests, manage approvals, and see who is off on the
+          selected date.
+          <strong id="dayoffTodayLabel"></strong>
+        </p>
+      </div>
+      <div class="dayoff-header-actions">
+        <button
+          class="dayoff-refresh-btn"
+          id="dayoffRefreshButton"
+          type="button"
+        >
+          <span id="dayoffRefreshIcon">↻</span> Refresh
+        </button>
+        <button
+          class="dayoff-close-btn"
+          id="dayoffCloseButton"
+          type="button"
+          aria-label="Close day-off requests"
+        >
+          ×
+        </button>
+      </div>
+    </header>
+
+    <div class="dayoff-modal-body">
+      <section class="dayoff-stats" aria-label="Request summary">
+        <article class="dayoff-stat-card">
+          <div class="dayoff-stat-top">
+            <span class="dayoff-stat-label">Pending requests</span>
+            <span class="dayoff-stat-icon dayoff-icon-pending">◷</span>
+          </div>
+          <div class="dayoff-stat-value" id="dayoffPendingCount">—</div>
+          <div class="dayoff-stat-foot">Awaiting manager review</div>
+        </article>
+        <article class="dayoff-stat-card">
+          <div class="dayoff-stat-top">
+            <span class="dayoff-stat-label">Approved requests</span>
+            <span class="dayoff-stat-icon dayoff-icon-approved">✓</span>
+          </div>
+          <div class="dayoff-stat-value" id="dayoffApprovedCount">—</div>
+          <div class="dayoff-stat-foot">Requests approved</div>
+        </article>
+        <article class="dayoff-stat-card">
+          <div class="dayoff-stat-top">
+            <span class="dayoff-stat-label">Rejected requests</span>
+            <span class="dayoff-stat-icon dayoff-icon-rejected">×</span>
+          </div>
+          <div class="dayoff-stat-value" id="dayoffRejectedCount">—</div>
+          <div class="dayoff-stat-foot">Requests declined</div>
+        </article>
+        <article class="dayoff-stat-card">
+          <div class="dayoff-stat-top">
+            <span class="dayoff-stat-label">Off today</span>
+            <span class="dayoff-stat-icon dayoff-icon-today">♙</span>
+          </div>
+          <div class="dayoff-stat-value" id="dayoffTodayOffCount">—</div>
+          <div class="dayoff-stat-foot">Approved leave on selected date</div>
+        </article>
+      </section>
+
+      <section class="dayoff-panel">
+        <div class="dayoff-panel-heading">
+          <div>
+            <div class="dayoff-panel-title">Employee requests</div>
+            <div class="dayoff-panel-subtitle" id="dayoffLastUpdated">
+              Loading requests...
+            </div>
+          </div>
+          <span
+            class="dayoff-badge dayoff-badge-pending"
+            id="dayoffPendingIndicator"
+            >PENDING REVIEW</span
+          >
+        </div>
+
+        <div class="dayoff-toolbar">
+          <div class="dayoff-filters" role="group" aria-label="Filter requests">
+            <button
+              class="dayoff-filter-btn active"
+              data-dayoff-status="ALL"
+              type="button"
+            >
+              All
+            </button>
+            <button
+              class="dayoff-filter-btn"
+              data-dayoff-status="PENDING"
+              type="button"
+            >
+              Pending
+              <span class="dayoff-filter-count" id="dayoffPendingFilterCount"
+                >0</span
+              >
+            </button>
+            <button
+              class="dayoff-filter-btn"
+              data-dayoff-status="APPROVED"
+              type="button"
+            >
+              Approved
+            </button>
+            <button
+              class="dayoff-filter-btn"
+              data-dayoff-status="REJECTED"
+              type="button"
+            >
+              Rejected
+            </button>
+          </div>
+          <div class="dayoff-search-box">
+            <span class="dayoff-search-icon">⌕</span>
+            <input
+              id="dayoffSearchInput"
+              type="search"
+              placeholder="Search employee or reason..."
+              aria-label="Search employee or reason"
+            />
+          </div>
+        </div>
+
+        <div class="dayoff-date-filter-row">
+          <div class="dayoff-date-filter-field">
+            <label for="dayoffDateFrom">FROM DATE</label>
+            <input type="date" id="dayoffDateFrom" />
+          </div>
+          <div class="dayoff-date-filter-field">
+            <label for="dayoffDateTo">TO DATE</label>
+            <input type="date" id="dayoffDateTo" />
+          </div>
+          <div class="dayoff-date-filter-actions">
+            <button
+              class="dayoff-btn dayoff-btn-primary"
+              id="dayoffApplyDateFilter"
+              type="button"
+            >
+              Apply dates
+            </button>
+            <button class="dayoff-btn" id="dayoffClearDateFilter" type="button">
+              Clear dates
+            </button>
+          </div>
+          <div class="dayoff-date-filter-hint">
+            Both dates are inclusive. You can also filter using only one date.
+          </div>
+        </div>
+
+        <div class="dayoff-table-scroll">
+          <table class="dayoff-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Requested date</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Review details</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dayoffRequestsTableBody">
+              <tr>
+                <td colspan="6">
+                  <div class="dayoff-loading">
+                    <div class="dayoff-loading-spinner"></div>
+                    Loading employee requests...
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dayoff-table-footer">
+          <span id="dayoffResultsCount">0 requests</span>
+          <span>Day-Off Management</span>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div
+  class="dayoff-review-backdrop"
+  id="dayoffReviewModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="dayoffReviewModalTitle"
+>
+  <div class="dayoff-review-modal">
+    <div class="dayoff-review-heading">
+      <div>
+        <h2 id="dayoffReviewModalTitle">Review request</h2>
+        <p id="dayoffReviewModalDescription">
+          Confirm your decision for this employee.
+        </p>
+      </div>
+      <button
+        class="dayoff-review-close-btn"
+        id="dayoffReviewCloseButton"
+        type="button"
+        aria-label="Close dialog"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="dayoff-request-preview">
+      <div class="dayoff-preview-name" id="dayoffPreviewEmployee">Employee</div>
+      <div class="dayoff-preview-date" id="dayoffPreviewDate">
+        Requested date
+      </div>
+    </div>
+
+    <form id="dayoffReviewForm">
+      <input type="hidden" id="dayoffReviewRequestId" />
+      <div class="dayoff-field">
+        <label for="dayoffReviewNote"
+          >Review note <span class="dayoff-optional">(optional)</span></label
+        >
+        <textarea
+          id="dayoffReviewNote"
+          maxlength="500"
+          placeholder="Add a reason or note for your decision..."
+        ></textarea>
+      </div>
+      <div class="dayoff-review-actions">
+        <button class="dayoff-btn" id="dayoffCancelReviewButton" type="button">
+          Cancel
+        </button>
+        <button
+          class="dayoff-btn dayoff-btn-primary"
+          id="dayoffSubmitReviewButton"
+          type="submit"
+        >
+          Confirm decision
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div
+  class="dayoff-toast-container"
+  id="dayoffToastContainer"
+  aria-live="polite"
+  aria-atomic="true"
+></div>
+
+<form hidden>{% csrf_token %}</form>
+
+<!-- ============================================================
+     STYLES
+     ============================================================ -->
+<style>
+  /* ===== Attendance dashboard ===== */
+  .attendance-page {
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --surface: #ffffff;
+    --background: #f8fafc;
+    color: var(--text);
+    padding: 24px;
+    max-width: 1800px;
+    margin: 0 auto;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
+  .attendance-page * {
+    box-sizing: border-box;
+  }
+  .attendance-page button,
+  .attendance-page input {
+    font: inherit;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .page-eyebrow {
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 7px;
+  }
+  .page-header h1 {
+    margin: 0;
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .page-header p {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .refresh-btn,
+  .today-btn,
+  .retry-btn {
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 10px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: 650;
+    font-size: 13px;
+    color: #374151;
+    transition: 0.2s ease;
+  }
+  .refresh-btn:hover,
+  .today-btn:hover {
+    background: #f3f4f6;
+  }
+  .refresh-btn span {
+    font-size: 18px;
+    margin-right: 5px;
+  }
+
+  .dayoff-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 15px;
+    border: 1px solid #ddd6fe;
+    background: #f5f3ff;
+    color: #6d28d9;
+    border-radius: 10px;
+    font-weight: 750;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+  .dayoff-btn:hover {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+  }
+  .dayoff-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #b91c1c;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .date-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 16px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  .date-nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 10px;
+    font-size: 21px;
+    cursor: pointer;
+    color: #374151;
+  }
+  .date-nav-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .date-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .date-center label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 750;
+    letter-spacing: 0.7px;
+  }
+  #attendance-date {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-weight: 750;
+    font-size: 15px;
+    text-align: center;
+    cursor: pointer;
+  }
+  #date-description {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .today-btn {
+    margin-left: 5px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .summary-card {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 19px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.02);
+  }
+  .summary-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    font-weight: 800;
+  }
+  .icon-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+  .icon-green {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  .icon-orange {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+  .icon-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+  .icon-red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+  .summary-card > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .summary-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.5;
+  }
+  .summary-card strong {
+    margin: 4px 0;
+    font-size: 27px;
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+  }
+  .summary-card small {
+    color: #9ca3af;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .attendance-layout {
+    display: grid;
+    grid-template-columns: 255px minmax(0, 1fr);
+    align-items: start;
+    gap: 22px;
+  }
+  .filter-sidebar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 18px 12px 12px;
+    position: sticky;
+    top: 20px;
+  }
+  .sidebar-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 7px 17px;
+    border-bottom: 1px solid #f3f4f6;
+    margin-bottom: 10px;
+  }
+  .sidebar-heading h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .sidebar-heading p {
+    color: var(--muted);
+    font-size: 11px;
+    margin: 5px 0 0;
+  }
+  .sidebar-heading-icon {
+    font-size: 23px;
+    color: #9ca3af;
+  }
+  .filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .status-filter {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    text-align: left;
+    padding: 11px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: #4b5563;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .status-filter:hover {
+    background: #f9fafb;
+  }
+  .status-filter.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: #e0e7ff;
+    font-weight: 750;
+  }
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 650;
+  }
+  .filter-icon {
+    width: 23px;
+    height: 23px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 13px;
+  }
+  .status-filter.active .filter-icon {
+    background: #dfe5ff;
+    color: var(--primary);
+  }
+  .filter-count {
+    min-width: 25px;
+    padding: 4px 7px;
+    text-align: center;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #4b5563;
+    font-variant-numeric: tabular-nums;
+  }
+  .status-filter.active .filter-count {
+    background: white;
+    color: var(--primary);
+  }
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 8px 5px;
+    margin-top: 12px;
+    border-top: 1px solid #f3f4f6;
+    font-size: 10px;
+    color: #9ca3af;
+  }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+
+  .attendance-main {
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    overflow: hidden;
+  }
+  .results-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .results-heading h2 {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0;
+  }
+  .results-heading p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 5px 0 0;
+  }
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 220px;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+  }
+  .search-box > span {
+    font-size: 20px;
+    color: #9ca3af;
+  }
+  .search-box input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .search-box button {
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+  }
+  .search-box.has-value button {
+    display: block;
+  }
+  .view-switch {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 9px;
+    background: #f3f4f6;
+  }
+  .view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 11px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .view-btn.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+  .view-btn span {
+    font-size: 15px;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .employee-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .employee-table th {
+    background: #f9fafb;
+    padding: 13px 14px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 9px;
+    font-weight: 800;
+    border-bottom: 1px solid var(--border);
+  }
+  .employee-table td {
+    padding: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 11px;
+    color: #374151;
+    vertical-align: middle;
+  }
+  .employee-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .employee-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  .employee-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+  }
+  .employee-avatar {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .employee-name {
+    color: #111827;
+    font-size: 12px;
+    font-weight: 750;
+  }
+  .employee-meta {
+    margin-top: 4px;
+    color: #9ca3af;
+    font-size: 10px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+  .status-badge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .status-working {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .status-overtime {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+  .status-day_off {
+    background: #f5f3ff;
+    color: #6d28d9;
+  }
+  .status-absent {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .status-pending_day_off {
+    background: #fffbeb;
+    color: #b45309;
+  }
+  .status-checked_out {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+  .status-upcoming {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .progress-cell {
+    min-width: 120px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 10px;
+    color: #6b7280;
+  }
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e5e7eb;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: #4f46e5;
+    transition: width 0.25s ease;
+  }
+  .progress-fill.complete {
+    background: #059669;
+  }
+  .progress-fill.overtime {
+    background: #ea580c;
+  }
+
+  .employee-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 18px;
+  }
+  .employee-card {
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 16px;
+    background: #fff;
+    transition:
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .employee-card:hover {
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+  }
+  .employee-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 17px;
+  }
+  .employee-card-identity {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+  .employee-card-identity .employee-avatar {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+    border-radius: 13px;
+    font-size: 14px;
+  }
+  .employee-card-identity .employee-name {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .employee-card-identity .employee-meta {
+    overflow-wrap: anywhere;
+  }
+  .employee-card .status-badge {
+    flex-shrink: 0;
+  }
+  .employee-card-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 17px;
+  }
+  .employee-stat {
+    padding: 11px;
+    border: 1px solid #f3f4f6;
+    border-radius: 9px;
+    background: #fafbfc;
+    min-width: 0;
+  }
+  .employee-stat span {
+    display: block;
+    color: #9ca3af;
+    font-size: 10px;
+    margin-bottom: 5px;
+  }
+  .employee-stat strong {
+    display: block;
+    font-size: 13px;
+    color: #374151;
+    overflow-wrap: anywhere;
+  }
+  .employee-card-progress {
+    margin-top: 5px;
+  }
+  .employee-card-progress .progress-label {
+    font-size: 11px;
+  }
+  .employee-card-note {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 11px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .results-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 20px;
+    border-top: 1px solid var(--border);
+    color: #9ca3af;
+    font-size: 10px;
+  }
+  .state-message {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .state-message h3 {
+    margin: 10px 0 5px;
+    color: var(--text);
+    font-size: 16px;
+  }
+  .state-message p {
+    margin: 6px 0;
+    font-size: 12px;
+  }
+  .state-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    background: #f3f4f6;
+    border-radius: 50%;
+    color: #6b7280;
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .error-state .state-icon {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+  .retry-btn {
+    margin-top: 14px;
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .loading-spinner {
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 13px;
+    border: 3px solid #e5e7eb;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: attendance-spin 0.7s linear infinite;
+  }
+  @keyframes attendance-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  [hidden] {
+    display: none !important;
+  }
+
+  /* ===== Day-off modal ===== */
+  .dayoff-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(5px);
+    overflow-y: auto;
+  }
+  .dayoff-modal-backdrop.open {
+    display: flex;
+  }
+  .dayoff-modal {
+    width: min(1180px, 100%);
+    margin: auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
+    animation: dayoff-modal-in 0.2s ease;
+    overflow: hidden;
+    color: #172033;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    font-size: 14px;
+    --do-primary: #7f1d1d;
+    --do-primary-dark: #641717;
+    --do-purple: #4c1d95;
+    --do-bg: #f6f7fb;
+    --do-surface: #fff;
+    --do-text: #172033;
+    --do-muted: #778197;
+    --do-border: #e8ebf2;
+    --do-green: #15803d;
+    --do-red: #b91c1c;
+    --do-shadow: 0 8px 30px rgba(20, 28, 50, 0.055);
+    --do-radius: 16px;
+  }
+  @keyframes dayoff-modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.995);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .dayoff-modal *,
+  .dayoff-review-modal *,
+  .dayoff-toast * {
+    box-sizing: border-box;
+  }
+  .dayoff-modal button,
+  .dayoff-modal input,
+  .dayoff-modal textarea,
+  .dayoff-review-modal button,
+  .dayoff-review-modal input,
+  .dayoff-review-modal textarea {
+    font: inherit;
+  }
+  .dayoff-modal button,
+  .dayoff-review-modal button {
+    cursor: pointer;
+  }
+
+  .dayoff-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, #fdf2f2 0%, #faf5ff 100%);
+    border-bottom: 1px solid var(--do-border);
+  }
+  .dayoff-eyebrow {
+    color: var(--do-primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .dayoff-modal-header h2 {
+    margin: 0;
+    font-size: clamp(20px, 2.4vw, 26px);
+    letter-spacing: -0.6px;
+  }
+  .dayoff-subtitle {
+    color: var(--do-muted);
+    margin: 8px 0 0;
+    line-height: 1.6;
+    font-size: 12px;
+  }
+  .dayoff-subtitle strong {
+    color: var(--do-primary);
+    font-weight: 750;
+  }
+  .dayoff-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .dayoff-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 13px;
+    min-height: 38px;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--do-text);
+    font-weight: 700;
+    font-size: 12px;
+    transition: 0.18s ease;
+  }
+  .dayoff-refresh-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(20, 28, 50, 0.06);
+  }
+  .dayoff-refresh-btn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+  }
+  .dayoff-close-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    background: #fff;
+    color: #6b7280;
+    font-size: 22px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+  }
+  .dayoff-close-btn:hover {
+    background: #fef2f2;
+    color: var(--do-red);
+    border-color: #fecaca;
+  }
+
+  .dayoff-modal-body {
+    padding: 22px 24px 26px;
+    background: var(--do-bg);
+  }
+  .dayoff-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .dayoff-stat-card {
+    padding: 18px;
+    border: 1px solid var(--do-border);
+    background: var(--do-surface);
+    border-radius: 14px;
+    box-shadow: var(--do-shadow);
+    min-width: 0;
+  }
+  .dayoff-stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .dayoff-stat-label {
+    color: var(--do-muted);
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .dayoff-stat-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .dayoff-icon-pending {
+    background: #fff7ed;
+  }
+  .dayoff-icon-approved {
+    background: #f0fdf4;
+  }
+  .dayoff-icon-rejected {
+    background: #fef2f2;
+  }
+  .dayoff-icon-today {
+    background: #f5f3ff;
+  }
+  .dayoff-stat-value {
+    margin-top: 14px;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .dayoff-stat-foot {
+    margin-top: 9px;
+    color: var(--do-muted);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .dayoff-panel {
+    background: var(--do-surface);
+    border: 1px solid var(--do-border);
+    border-radius: var(--do-radius);
+    box-shadow: var(--do-shadow);
+    overflow: hidden;
+  }
+  .dayoff-panel-heading {
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--do-border);
+  }
+  .dayoff-panel-title {
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .dayoff-panel-subtitle {
+    color: var(--do-muted);
+    font-size: 11px;
+    margin-top: 5px;
+  }
+
+  .dayoff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .dayoff-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .dayoff-badge-pending {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+  .dayoff-badge-approved {
+    background: #f0fdf4;
+    color: #15803d;
+  }
+  .dayoff-badge-rejected {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .dayoff-toolbar {
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid var(--do-border);
+  }
+  .dayoff-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dayoff-filter-btn {
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--do-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .dayoff-filter-btn:hover {
+    background: #f8f8fb;
+  }
+  .dayoff-filter-btn.active {
+    color: var(--do-primary);
+    background: #fff1f1;
+    border-color: #fbd5d5;
+  }
+  .dayoff-filter-count {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 5px;
+    border-radius: 6px;
+    background: rgba(127, 29, 29, 0.08);
+    font-size: 9px;
+  }
+
+  .dayoff-search-box {
+    position: relative;
+    width: min(280px, 100%);
+  }
+  .dayoff-search-box input {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 34px;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    background: #fff;
+    outline: none;
+    font-size: 12px;
+  }
+  .dayoff-search-box input:focus,
+  .dayoff-date-filter-field input:focus,
+  .dayoff-field textarea:focus {
+    border-color: #c4a2a2;
+    box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.07);
+  }
+  .dayoff-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    color: var(--do-muted);
+    font-size: 16px;
+  }
+
+  .dayoff-date-filter-row {
+    padding: 16px 22px;
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #fcfcfe;
+    border-bottom: 1px solid var(--do-border);
+  }
+  .dayoff-date-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dayoff-date-filter-field label {
+    color: var(--do-muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+  }
+  .dayoff-date-filter-field input {
+    height: 38px;
+    min-width: 160px;
+    padding: 0 10px;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--do-text);
+    outline: none;
+    font-size: 12px;
+  }
+  .dayoff-date-filter-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .dayoff-date-filter-hint {
+    width: 100%;
+    color: var(--do-muted);
+    font-size: 10px;
+  }
+
+  .dayoff-btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    min-height: 38px;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--do-text);
+    font-weight: 700;
+    font-size: 12px;
+    transition: 0.18s ease;
+  }
+  .dayoff-btn:hover {
+    transform: translateY(-1px);
+  }
+  .dayoff-btn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+  }
+  .dayoff-btn-primary {
+    color: #fff;
+    background: var(--do-primary);
+    border-color: var(--do-primary);
+  }
+  .dayoff-btn-primary:hover {
+    background: var(--do-primary-dark);
+  }
+
+  .dayoff-table-scroll {
+    overflow-x: auto;
+  }
+  .dayoff-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .dayoff-table thead {
+    background: #fafbfe;
+  }
+  .dayoff-table th {
+    padding: 12px 18px;
+    color: #7d879a;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--do-border);
+  }
+  .dayoff-table td {
+    padding: 15px 18px;
+    border-bottom: 1px solid #f0f2f6;
+    vertical-align: middle;
+    font-size: 12px;
+    color: var(--do-text);
+  }
+  .dayoff-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .dayoff-table tbody tr:hover {
+    background: #fcfcfe;
+  }
+
+  .dayoff-employee {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dayoff-employee-avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    background: #f1f0fa;
+    color: var(--do-purple);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .dayoff-employee-name {
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .dayoff-employee-username {
+    margin-top: 4px;
+    color: var(--do-muted);
+    font-size: 10px;
+  }
+  .dayoff-date-main {
+    font-weight: 700;
+  }
+  .dayoff-date-sub {
+    color: var(--do-muted);
+    margin-top: 4px;
+    font-size: 10px;
+  }
+  .dayoff-reason {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #606b80;
+  }
+  .dayoff-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .dayoff-btn-small {
+    min-height: 30px;
+    padding: 6px 9px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+  .dayoff-btn-success {
+    color: var(--do-green);
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+  .dayoff-btn-danger {
+    color: var(--do-red);
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+  .dayoff-review-info {
+    color: var(--do-muted);
+    font-size: 10px;
+    white-space: normal;
+    min-width: 110px;
+    max-width: 170px;
+    line-height: 1.6;
+  }
+  .dayoff-review-info strong {
+    color: var(--do-text);
+  }
+  .dayoff-table-footer {
+    padding: 14px 22px;
+    border-top: 1px solid var(--do-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    color: var(--do-muted);
+    font-size: 11px;
+  }
+
+  .dayoff-loading,
+  .dayoff-empty-state,
+  .dayoff-error-state {
+    padding: 55px 20px;
+    text-align: center;
+    color: var(--do-muted);
+  }
+  .dayoff-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #eee;
+    border-top-color: var(--do-primary);
+    border-radius: 50%;
+    animation: dayoff-spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes dayoff-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .dayoff-empty-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+  .dayoff-empty-state strong,
+  .dayoff-error-state strong {
+    display: block;
+    color: var(--do-text);
+    margin-bottom: 6px;
+  }
+
+  /* Review modal */
+  .dayoff-review-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+  }
+  .dayoff-review-backdrop.open {
+    display: flex;
+  }
+  .dayoff-review-modal {
+    width: min(460px, 100%);
+    padding: 24px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+    animation: dayoff-review-in 0.18s ease;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+    --do-primary: #7f1d1d;
+    --do-border: #e8ebf2;
+    --do-muted: #778197;
+    --do-text: #172033;
+  }
+  @keyframes dayoff-review-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .dayoff-review-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .dayoff-review-heading h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+  .dayoff-review-heading p {
+    color: var(--do-muted);
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 7px 0 0;
+  }
+  .dayoff-review-close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 9px;
+    background: #f3f4f6;
+    font-size: 19px;
+    color: #6b7280;
+  }
+  .dayoff-request-preview {
+    background: #f8f9fc;
+    border: 1px solid var(--do-border);
+    padding: 12px;
+    border-radius: 11px;
+    margin-bottom: 18px;
+  }
+  .dayoff-preview-name {
+    font-weight: 800;
+    font-size: 13px;
+  }
+  .dayoff-preview-date {
+    color: var(--do-muted);
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  .dayoff-field {
+    margin-bottom: 18px;
+  }
+  .dayoff-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--do-text);
+  }
+  .dayoff-optional {
+    color: var(--do-muted);
+    font-weight: 400;
+  }
+  .dayoff-field textarea {
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    border: 1px solid var(--do-border);
+    border-radius: 10px;
+    padding: 11px;
+    outline: none;
+    font-size: 12px;
+  }
+  .dayoff-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  /* Toasts */
+  .dayoff-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(350px, calc(100% - 40px));
+  }
+  .dayoff-toast {
+    background: #fff;
+    border: 1px solid #e8ebf2;
+    border-left: 4px solid #15803d;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+    border-radius: 11px;
+    padding: 14px;
+    animation: dayoff-toast-in 0.2s ease;
+    line-height: 1.5;
+    font-size: 12px;
+    color: #172033;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
+  .dayoff-toast.error {
+    border-left-color: #b91c1c;
+  }
+  @keyframes dayoff-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 1250px) {
+    .summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .attendance-layout {
+      grid-template-columns: 225px minmax(0, 1fr);
+      gap: 15px;
+    }
+    .employee-card-grid {
+      grid-template-columns: 1fr;
+    }
+    .dayoff-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 850px) {
+    .attendance-page {
+      padding: 15px;
+    }
+    .attendance-layout {
+      grid-template-columns: 1fr;
+    }
+    .filter-sidebar {
+      position: static;
+    }
+    .filter-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sidebar-footer {
+      margin-top: 8px;
+    }
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .results-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .toolbar-actions {
+      width: 100%;
+    }
+    .search-box {
+      flex: 1;
+      width: auto;
+    }
+    .dayoff-modal-backdrop {
+      padding: 12px 8px;
+    }
+    .dayoff-modal-header {
+      padding: 18px;
+    }
+    .dayoff-modal-body {
+      padding: 16px;
+    }
+    .dayoff-toolbar {
+      padding: 14px 16px;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .dayoff-filters {
+      width: 100%;
+    }
+    .dayoff-filter-btn {
+      flex: 1;
+      text-align: center;
+    }
+    .dayoff-search-box {
+      width: 100%;
+    }
+    .dayoff-date-filter-row {
+      padding: 14px 16px;
+    }
+    .dayoff-date-filter-field {
+      flex: 1 1 100%;
+    }
+    .dayoff-date-filter-field input {
+      width: 100%;
+    }
+    .dayoff-date-filter-actions {
+      width: 100%;
+    }
+    .dayoff-date-filter-actions .dayoff-btn {
+      flex: 1;
+    }
+  }
+  @media (max-width: 520px) {
+    .attendance-page {
+      padding: 10px;
+    }
+    .page-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .page-header p {
+      line-height: 1.5;
+    }
+    .header-actions {
+      width: 100%;
+    }
+    .dayoff-btn,
+    .refresh-btn {
+      flex: 1;
+      justify-content: center;
+      padding: 9px;
+      white-space: nowrap;
+    }
+    .summary-grid {
+      gap: 8px;
+    }
+    .summary-card {
+      padding: 12px 10px;
+      gap: 9px;
+    }
+    .summary-icon {
+      width: 32px;
+      height: 32px;
+      flex-basis: 32px;
+      font-size: 15px;
+    }
+    .summary-card strong {
+      font-size: 22px;
+    }
+    .summary-card small {
+      display: none;
+    }
+    .filter-list {
+      grid-template-columns: 1fr;
+    }
+    .date-toolbar {
+      gap: 8px;
+      padding: 10px;
+    }
+    .date-nav-btn {
+      width: 34px;
+      height: 36px;
+    }
+    .today-btn {
+      padding: 8px;
+    }
+    .toolbar-actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .search-box {
+      width: 100%;
+      min-height: 38px;
+    }
+    .view-switch {
+      align-self: flex-start;
+    }
+    .employee-card-grid {
+      padding: 10px;
+    }
+    .employee-card {
+      padding: 12px;
+    }
+    .employee-card-header {
+      flex-direction: column;
+    }
+    .results-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .dayoff-header-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+    .dayoff-stats {
+      gap: 8px;
+    }
+    .dayoff-stat-card {
+      padding: 12px;
+    }
+    .dayoff-stat-value {
+      font-size: 22px;
+    }
+    .dayoff-table-footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .dayoff-table td,
+    .dayoff-table th {
+      padding: 10px 12px;
+    }
+    .dayoff-review-modal {
+      padding: 18px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+  /* ==================================================================
+     PART 1 – Attendance dashboard
+     ================================================================== */
+  (function () {
+    "use strict";
+
+    // Plain URL – no template tags.
+    const API_URL = "/api/v2/manager/attendance/";
+
+    const attendanceState = {
+      employees: [],
+      selectedDate: "",
+      filter: "all",
+      view: "list",
+      search: "",
+      loading: false,
+      lastUpdated: null,
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+
+    const elements = {
+      date: $("#attendance-date"),
+      dateDescription: $("#date-description"),
+      search: $("#employee-search"),
+      clearSearch: $("#clear-search"),
+      loading: $("#loading-state"),
+      error: $("#error-state"),
+      errorMessage: $("#error-message"),
+      empty: $("#empty-state"),
+      listView: $("#employee-list-view"),
+      cardView: $("#employee-card-view"),
+      tableBody: $("#employee-table-body"),
+      currentTitle: $("#current-filter-title"),
+      visibleCount: $("#visible-count"),
+      footerText: $("#results-footer-text"),
+      lastUpdated: $("#last-updated"),
+      listButton: $("#list-view-btn"),
+      cardButton: $("#card-view-btn"),
+      refreshButton: $("#refresh-btn"),
+      retryButton: $("#retry-btn"),
+    };
+
+    const categoryTitles = {
+      all: "All Employees",
+      working: "Currently Working",
+      overtime: "Overtime",
+      day_off: "Employees on Day Off",
+      absent: "Absent / Not Arrived",
+      pending_day_off: "Pending Day-Off Requests",
+      checked_out: "Checked Out",
+      upcoming: "Upcoming / Schedule Information",
+    };
+
+    function getCategory(employee) {
+      const status = String(employee.status || "").toLowerCase();
+      if (status === "overtime") return "overtime";
+      if (status === "working") return "working";
+      if (["approved_day_off", "scheduled_day_off"].includes(status))
+        return "day_off";
+      if (status === "pending_day_off") return "pending_day_off";
+      if (status === "checked_out") return "checked_out";
+      if (["absent", "not_arrived_yet"].includes(status)) return "absent";
+      if (["upcoming", "no_schedule"].includes(status)) return "upcoming";
+      return "upcoming";
+    }
+
+    function getStatusLabel(employee) {
+      const status = String(employee.status || "").toLowerCase();
+      const labels = {
+        working: "Working",
+        overtime: "Overtime",
+        approved_day_off: "Approved Day Off",
+        scheduled_day_off: "Scheduled Day Off",
+        pending_day_off: "Pending Day Off",
+        absent: "Absent",
+        not_arrived_yet: "Not Arrived Yet",
+        checked_out: "Checked Out",
+        upcoming: "Upcoming",
+        no_schedule: "No Schedule",
+      };
+      return labels[status] || status.replaceAll("_", " ") || "Unknown";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+    }
+    function displayValue(v, fallback = "—") {
+      return v === null || v === undefined || v === "" ? fallback : String(v);
+    }
+    function getEmployeeName(e) {
+      return e.name || e.full_name || e.username || "Unnamed employee";
+    }
+    function getInitials(e) {
+      const parts = getEmployeeName(e).trim().split(/\s+/).filter(Boolean);
+      return parts.length
+        ? parts
+            .slice(0, 2)
+            .map((p) => p.charAt(0))
+            .join("")
+            .toUpperCase()
+        : "??";
+    }
+    function formatRole(e) {
+      return String(e.role || "Employee")
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    function getProgress(e) {
+      const raw = Number(e.progress);
+      return Number.isFinite(raw) ? Math.min(100, Math.max(0, raw)) : 0;
+    }
+    function getProgressClass(e) {
+      if (getCategory(e) === "overtime") return "overtime";
+      if (getProgress(e) >= 100) return "complete";
+      return "";
+    }
+    function getWorked(e) {
+      return e.elapsed?.display || e.worked_display || e.working_time || "—";
+    }
+    function getRemaining(e) {
+      return e.remaining?.display || e.remaining_display || "—";
+    }
+    function getOvertime(e) {
+      return e.overtime?.display || e.overtime_display || "—";
+    }
+    function getCheckIn(e) {
+      return e.check_in_display || e.check_in || "—";
+    }
+    function getCheckOut(e) {
+      return e.check_out_display || e.check_out || "—";
+    }
+    function getTarget(e) {
+      if (e.target_display) return e.target_display;
+      const h = Number(e.target_hours);
+      return Number.isFinite(h) ? `${h}h` : "—";
+    }
+    function getEmployeeNote(e) {
+      const c = getCategory(e);
+      if (c === "day_off")
+        return e.day_off_reason
+          ? `Day-off reason: ${e.day_off_reason}`
+          : "Scheduled or approved day off.";
+      if (c === "pending_day_off")
+        return e.pending_reason
+          ? `Request reason: ${e.pending_reason}`
+          : "This day-off request is awaiting review.";
+      if (c === "absent")
+        return e.status === "not_arrived_yet"
+          ? "Expected to arrive, but check-in has not been recorded yet."
+          : "The scheduled start time has passed and no check-in was recorded.";
+      if (c === "upcoming")
+        return e.schedule_start
+          ? `Scheduled start: ${e.schedule_start}`
+          : "No schedule information is available.";
+      if (c === "overtime") return `Overtime: ${getOvertime(e)}`;
+      if (c === "working") return `Expected daily hours: ${getTarget(e)}`;
+      if (c === "checked_out")
+        return "The employee has completed their recorded attendance session.";
+      return "";
+    }
+
+    function getFilteredEmployees() {
+      const q = attendanceState.search.trim().toLowerCase();
+      return attendanceState.employees.filter((e) => {
+        const cat = getCategory(e);
+        if (attendanceState.filter !== "all" && cat !== attendanceState.filter)
+          return false;
+        if (!q) return true;
+        const text = [getEmployeeName(e), e.username, e.role, e.status, e.id]
+          .filter((v) => v !== null && v !== undefined)
+          .join(" ")
+          .toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    function updateCounts() {
+      const counts = {
+        all: attendanceState.employees.length,
+        working: 0,
+        overtime: 0,
+        day_off: 0,
+        absent: 0,
+        pending_day_off: 0,
+        checked_out: 0,
+        upcoming: 0,
+      };
+      attendanceState.employees.forEach((e) => counts[getCategory(e)]++);
+      Object.entries(counts).forEach(([c, n]) => {
+        const node = document.getElementById(`count-${c}`);
+        if (node) node.textContent = n;
+      });
+      $("#summary-all").textContent = counts.all;
+      $("#summary-working").textContent = counts.working;
+      $("#summary-overtime").textContent = counts.overtime;
+      $("#summary-day-off").textContent = counts.day_off;
+      $("#summary-absent").textContent = counts.absent;
+    }
+
+    function updateDateDescription(apiDate) {
+      const date = apiDate || attendanceState.selectedDate;
+      if (!date) return;
+      const today = new Date();
+      const localToday = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      let d =
+        date === localToday
+          ? "Today"
+          : date < localToday
+            ? "Past attendance"
+            : "Future schedule";
+      elements.dateDescription.textContent = d;
+      try {
+        const parsed = new Date(`${date}T12:00:00`);
+        if (!Number.isNaN(parsed.getTime())) {
+          elements.dateDescription.textContent +=
+            " · " +
+            parsed.toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "short",
+              day: "numeric",
+            });
+        }
+      } catch (_) {}
+    }
+
+    function setLoading(isLoading) {
+      attendanceState.loading = isLoading;
+      elements.loading.hidden = !isLoading;
+      if (isLoading) {
+        elements.error.hidden = true;
+        elements.empty.hidden = true;
+        elements.listView.hidden = true;
+        elements.cardView.hidden = true;
+      }
+    }
+
+    async function loadAttendance() {
+      setLoading(true);
+      try {
+        const url = new URL(API_URL, window.location.origin);
+        url.searchParams.set("date", attendanceState.selectedDate);
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          credentials: "same-origin",
+        });
+        if (!response.ok)
+          throw new Error(`The server returned HTTP ${response.status}.`);
+        const data = await response.json();
+        if (!Array.isArray(data.employees))
+          throw new Error(
+            "The API response does not contain an employees list.",
+          );
+        attendanceState.employees = data.employees;
+        if (data.date) {
+          attendanceState.selectedDate = String(data.date).slice(0, 10);
+          elements.date.value = attendanceState.selectedDate;
+        }
+        updateDateDescription(data.date);
+        updateCounts();
+        renderEmployees();
+        attendanceState.lastUpdated = new Date();
+        elements.lastUpdated.textContent =
+          "Updated " +
+          attendanceState.lastUpdated.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        elements.error.hidden = true;
+      } catch (error) {
+        elements.errorMessage.textContent =
+          error.message || "An unexpected error occurred.";
+        elements.error.hidden = false;
+        elements.empty.hidden = true;
+        elements.listView.hidden = true;
+        elements.cardView.hidden = true;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderEmployees() {
+      const list = getFilteredEmployees();
+      elements.currentTitle.textContent =
+        categoryTitles[attendanceState.filter] || "Employees";
+      elements.visibleCount.textContent = `${list.length} ${list.length === 1 ? "employee" : "employees"}`;
+      elements.footerText.textContent = `Showing ${list.length} of ${attendanceState.employees.length} employees`;
+      elements.empty.hidden = list.length !== 0;
+      elements.listView.hidden =
+        list.length === 0 || attendanceState.view !== "list";
+      elements.cardView.hidden =
+        list.length === 0 || attendanceState.view !== "cards";
+      if (list.length === 0) {
+        elements.tableBody.innerHTML = "";
+        elements.cardView.innerHTML = "";
+        return;
+      }
+      if (attendanceState.view === "list") renderList(list);
+      else renderCards(list);
+    }
+
+    function renderList(employees) {
+      elements.tableBody.innerHTML = employees
+        .map((e) => {
+          const cat = getCategory(e);
+          const progress = getProgress(e);
+          const pc = getProgressClass(e);
+          const sl = getStatusLabel(e);
+          return `
+          <tr>
+            <td><div class="employee-cell">
+              <div class="employee-avatar">${escapeHtml(getInitials(e))}</div>
+              <div>
+                <div class="employee-name">${escapeHtml(getEmployeeName(e))}</div>
+                <div class="employee-meta">${escapeHtml(formatRole(e))}${e.username ? ` · ${escapeHtml(e.username)}` : ""}</div>
+              </div>
+            </div></td>
+            <td><span class="status-badge status-${escapeHtml(cat)}">${escapeHtml(sl)}</span></td>
+            <td>${escapeHtml(displayValue(getCheckIn(e)))}</td>
+            <td>${escapeHtml(displayValue(getCheckOut(e)))}</td>
+            <td>${escapeHtml(displayValue(getWorked(e)))}</td>
+            <td>${escapeHtml(displayValue(getRemaining(e)))}</td>
+            <td><div class="progress-cell">
+              <div class="progress-label"><span>${progress}%</span><span>${escapeHtml(getTarget(e))}</span></div>
+              <div class="progress-track"><div class="progress-fill ${pc}" style="width:${progress}%"></div></div>
+            </div></td>
+          </tr>`;
+        })
+        .join("");
+    }
+
+    function renderCards(employees) {
+      elements.cardView.innerHTML = employees
+        .map((e) => {
+          const cat = getCategory(e);
+          const progress = getProgress(e);
+          const pc = getProgressClass(e);
+          const sl = getStatusLabel(e);
+          const note = getEmployeeNote(e);
+          return `
+          <article class="employee-card">
+            <div class="employee-card-header">
+              <div class="employee-card-identity">
+                <div class="employee-avatar">${escapeHtml(getInitials(e))}</div>
+                <div>
+                  <div class="employee-name">${escapeHtml(getEmployeeName(e))}</div>
+                  <div class="employee-meta">${escapeHtml(formatRole(e))}${e.username ? ` · ${escapeHtml(e.username)}` : ""}</div>
+                </div>
+              </div>
+              <span class="status-badge status-${escapeHtml(cat)}">${escapeHtml(sl)}</span>
+            </div>
+            <div class="employee-card-stats">
+              <div class="employee-stat"><span>Check In</span><strong>${escapeHtml(displayValue(getCheckIn(e)))}</strong></div>
+              <div class="employee-stat"><span>Check Out</span><strong>${escapeHtml(displayValue(getCheckOut(e)))}</strong></div>
+              <div class="employee-stat"><span>Worked</span><strong>${escapeHtml(displayValue(getWorked(e)))}</strong></div>
+              <div class="employee-stat"><span>Remaining</span><strong>${escapeHtml(displayValue(getRemaining(e)))}</strong></div>
+              <div class="employee-stat"><span>Daily Target</span><strong>${escapeHtml(getTarget(e))}</strong></div>
+              <div class="employee-stat"><span>Overtime</span><strong>${escapeHtml(displayValue(getOvertime(e)))}</strong></div>
+            </div>
+            <div class="employee-card-progress">
+              <div class="progress-label"><span>Daily working progress</span><strong>${progress}%</strong></div>
+              <div class="progress-track"><div class="progress-fill ${pc}" style="width:${progress}%"></div></div>
+            </div>
+            ${note ? `<div class="employee-card-note">${escapeHtml(note)}</div>` : ""}
+          </article>`;
+        })
+        .join("");
+    }
+
+    function selectFilter(filter) {
+      attendanceState.filter = filter;
+      document.querySelectorAll(".status-filter").forEach((btn) => {
+        const active = btn.dataset.filter === filter;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-pressed", String(active));
+      });
+      renderEmployees();
+    }
+
+    function selectView(view) {
+      attendanceState.view = view;
+      elements.listButton.classList.toggle("active", view === "list");
+      elements.cardButton.classList.toggle("active", view === "cards");
+      elements.listButton.setAttribute("aria-pressed", String(view === "list"));
+      elements.cardButton.setAttribute(
+        "aria-pressed",
+        String(view === "cards"),
+      );
+      renderEmployees();
+    }
+
+    function shiftDate(days) {
+      const cur = new Date(`${attendanceState.selectedDate}T12:00:00`);
+      cur.setDate(cur.getDate() + days);
+      attendanceState.selectedDate = [
+        cur.getFullYear(),
+        String(cur.getMonth() + 1).padStart(2, "0"),
+        String(cur.getDate()).padStart(2, "0"),
+      ].join("-");
+      elements.date.value = attendanceState.selectedDate;
+      updateDateDescription(attendanceState.selectedDate);
+      loadAttendance();
+      if (window.__dayoff && window.__dayoff.isOpen()) {
+        window.__dayoff.syncDateToAttendance(attendanceState.selectedDate);
+        window.__dayoff.load();
+      }
+    }
+
+    function setToday() {
+      const today = new Date();
+      attendanceState.selectedDate = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      elements.date.value = attendanceState.selectedDate;
+      updateDateDescription(attendanceState.selectedDate);
+      loadAttendance();
+      if (window.__dayoff && window.__dayoff.isOpen()) {
+        window.__dayoff.syncDateToAttendance(attendanceState.selectedDate);
+        window.__dayoff.load();
+      }
+    }
+
+    document
+      .querySelectorAll(".status-filter")
+      .forEach((btn) =>
+        btn.addEventListener("click", () => selectFilter(btn.dataset.filter)),
+      );
+    elements.listButton.addEventListener("click", () => selectView("list"));
+    elements.cardButton.addEventListener("click", () => selectView("cards"));
+    elements.search.addEventListener("input", () => {
+      attendanceState.search = elements.search.value;
+      $("#clear-search").parentElement.classList.toggle(
+        "has-value",
+        Boolean(attendanceState.search),
+      );
+      renderEmployees();
+    });
+    elements.clearSearch.addEventListener("click", () => {
+      elements.search.value = "";
+      attendanceState.search = "";
+      $("#clear-search").parentElement.classList.remove("has-value");
+      renderEmployees();
+      elements.search.focus();
+    });
+    elements.date.addEventListener("change", () => {
+      if (!elements.date.value) return;
+      attendanceState.selectedDate = elements.date.value;
+      updateDateDescription(attendanceState.selectedDate);
+      loadAttendance();
+      if (window.__dayoff && window.__dayoff.isOpen()) {
+        window.__dayoff.syncDateToAttendance(attendanceState.selectedDate);
+        window.__dayoff.load();
+      }
+    });
+    $("#previous-day").addEventListener("click", () => shiftDate(-1));
+    $("#next-day").addEventListener("click", () => shiftDate(1));
+    $("#today-btn").addEventListener("click", setToday);
+    elements.refreshButton.addEventListener("click", loadAttendance);
+    elements.retryButton.addEventListener("click", loadAttendance);
+
+    setToday();
+    window.setInterval(() => {
+      if (!document.hidden && !attendanceState.loading) loadAttendance();
+    }, 60000);
+
+    /* Public API for the day-off module */
+    window.__attendance = {
+      selectedDate: () => attendanceState.selectedDate,
+      reload: loadAttendance,
+    };
+  })();
+
+  /* ==================================================================
+     PART 2 – Day-off requests modal  (FIXED)
+     ================================================================== */
+  (function () {
+    "use strict";
+
+    const $ = (s) => document.querySelector(s);
+    const modal = $("#dayoffModal");
+    const reviewModal = $("#dayoffReviewModal");
+    const tbody = $("#dayoffRequestsTableBody");
+
+    // Plain URLs – no template tags.
+    const API = {
+      requests: "/api/v1/manager/day-off-requests/",
+      review: (id) =>
+        `/api/v1/manager/day-off-requests/${encodeURIComponent(id)}/review/`,
+    };
+
+    const state = {
+      requests: [],
+      summary: {
+        pending_count: 0,
+        approved_count: 0,
+        rejected_count: 0,
+        today_off_count: 0,
+      },
+      status: "ALL",
+      search: "",
+      dateFrom: "",
+      dateTo: "",
+      loading: false,
+      loadVersion: 0,
+      submitting: false,
+      reviewId: null,
+      reviewStatus: null,
+      open: false,
+    };
+
+    function escapeHTML(v) {
+      return String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+    }
+    function getCSRFToken() {
+      const input = document.querySelector('[name="csrfmiddlewaretoken"]');
+      if (input?.value) return input.value;
+      return document.querySelector('meta[name="csrf-token"]')?.content || "";
+    }
+    function formatDate(v) {
+      if (!v) return "Not specified";
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+      const d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(v);
+      if (Number.isNaN(d.getTime())) return v;
+      return new Intl.DateTimeFormat(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(d);
+    }
+    function formatDateTime(v) {
+      if (!v) return "";
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return "";
+      return new Intl.DateTimeFormat(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(d);
+    }
+    function initials(name) {
+      return (
+        String(name || "Employee")
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((p) => p.charAt(0).toUpperCase())
+          .join("") || "E"
+      );
+    }
+    function statusLabel(s) {
+      return (
+        { PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" }[s] ||
+        s ||
+        "Unknown"
+      );
+    }
+    function statusBadge(s) {
+      const n = String(s || "").toUpperCase();
+      const cls =
+        {
+          PENDING: "dayoff-badge-pending",
+          APPROVED: "dayoff-badge-approved",
+          REJECTED: "dayoff-badge-rejected",
+        }[n] || "dayoff-badge-pending";
+      return `<span class="dayoff-badge ${cls}">${escapeHTML(statusLabel(n))}</span>`;
+    }
+    function showToast(msg, type = "success") {
+      const t = document.createElement("div");
+      t.className = "dayoff-toast" + (type === "error" ? " error" : "");
+      t.textContent = msg;
+      $("#dayoffToastContainer").appendChild(t);
+      window.setTimeout(() => t.remove(), 4500);
+    }
+    function showTableMessage(msg, type = "empty") {
+      const icon = type === "error" ? "⚠" : "▤";
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="${type === "error" ? "dayoff-error-state" : "dayoff-empty-state"}">
+            <div class="dayoff-empty-icon">${icon}</div>
+            <strong>${type === "error" ? "Unable to load requests" : "No requests found"}</strong>
+            ${escapeHTML(msg)}
+          </div>
+        </td></tr>`;
+    }
+
+    async function parseResponse(response) {
+      const ct = response.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            "Your session may have expired or you do not have permission.",
+          );
+        }
+        throw new Error(
+          "The server returned a non-JSON response. Check your API URL and authentication.",
+        );
+      }
+      const data = await response.json();
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || `Request failed (${response.status}).`);
+      }
+      return data;
+    }
+
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, {
+        credentials: "same-origin",
+        ...options,
+        headers: {
+          Accept: "application/json",
+          ...(options.body ? { "Content-Type": "application/json" } : {}),
+          ...(options.method && options.method !== "GET"
+            ? { "X-CSRFToken": getCSRFToken() }
+            : {}),
+          ...(options.headers || {}),
+        },
+      });
+      return parseResponse(res);
+    }
+
+    /* ---- modal control ---- */
+    function openModal() {
+      state.open = true;
+      modal.classList.add("open");
+      document.body.style.overflow = "hidden";
+
+      // FIX: Do NOT auto-apply a single-day date filter here.
+      // The day-off dashboard must open showing ALL pending requests
+      // regardless of the attendance selected date. A date range is only
+      // applied when the user explicitly clicks "Apply dates".
+
+      // Prefill the date inputs for convenience (not applied to the API).
+      const selectedDate =
+        window.__attendance?.selectedDate?.() ||
+        $("#attendance-date")?.value ||
+        "";
+      if (selectedDate) {
+        if (!$("#dayoffDateFrom").value)
+          $("#dayoffDateFrom").value = selectedDate;
+        if (!$("#dayoffDateTo").value) $("#dayoffDateTo").value = selectedDate;
+        $("#dayoffTodayLabel").textContent = " · " + formatDate(selectedDate);
+      }
+
+      // Reset filters so we always open with the full pending queue visible.
+      state.dateFrom = "";
+      state.dateTo = "";
+      state.status = "ALL";
+      state.search = "";
+      $("#dayoffSearchInput").value = "";
+      document.querySelectorAll(".dayoff-filter-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.dayoffStatus === "ALL");
+      });
+
+      load();
+    }
+    function closeModal() {
+      state.open = false;
+      modal.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+    function syncDateToAttendance(selectedDate) {
+      if (!selectedDate) return;
+      // FIX: Only sync the input fields + label. Do NOT change
+      // state.dateFrom/dateTo, so the API keeps returning all requests.
+      if (!$("#dayoffDateFrom").value)
+        $("#dayoffDateFrom").value = selectedDate;
+      if (!$("#dayoffDateTo").value) $("#dayoffDateTo").value = selectedDate;
+      $("#dayoffTodayLabel").textContent = " · " + formatDate(selectedDate);
+    }
+
+    /* ---- data ---- */
+    async function load() {
+      // Each filter change starts a new request. Only the newest response is
+      // allowed to update the table, preventing a slower previous request
+      // from overriding the selected status/date range.
+      const requestVersion = ++state.loadVersion;
+      state.loading = true;
+      const btn = $("#dayoffRefreshButton");
+      btn.disabled = true;
+      $("#dayoffRefreshIcon").textContent = "…";
+      if (!state.requests.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="dayoff-loading"><div class="dayoff-loading-spinner"></div>Loading employee requests...</div></td></tr>`;
+      }
+      try {
+        const params = new URLSearchParams();
+
+        // Send the selected status and the applied date range together.
+        params.set("status", state.status || "ALL");
+        if (state.dateFrom) params.set("date_from", state.dateFrom);
+        if (state.dateTo) params.set("date_to", state.dateTo);
+
+        const qs = params.toString();
+        const url = API.requests + (qs ? `?${qs}` : "");
+        const data = await apiFetch(url);
+
+        // Ignore stale responses if the user changed filters while loading.
+        if (requestVersion !== state.loadVersion) return;
+
+        state.requests = Array.isArray(data.results) ? data.results : [];
+        state.summary = data.summary || state.summary;
+
+        if (data.today) {
+          $("#dayoffTodayLabel").textContent = " · " + formatDate(data.today);
+        }
+        renderSummary();
+        renderRequests();
+        $("#dayoffLastUpdated").textContent =
+          `Last updated ${new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date())}`;
+        updatePendingBadge();
+      } catch (err) {
+        if (requestVersion !== state.loadVersion) return;
+        showToast(err.message, "error");
+        if (!state.requests.length) showTableMessage(err.message, "error");
+      } finally {
+        // An older request must not reset the loading state for a newer one.
+        if (requestVersion === state.loadVersion) {
+          state.loading = false;
+          btn.disabled = false;
+          $("#dayoffRefreshIcon").textContent = "↻";
+        }
+      }
+    }
+
+    function renderSummary() {
+      const s = state.summary;
+      $("#dayoffPendingCount").textContent = s.pending_count ?? 0;
+      $("#dayoffApprovedCount").textContent = s.approved_count ?? 0;
+      $("#dayoffRejectedCount").textContent = s.rejected_count ?? 0;
+      $("#dayoffTodayOffCount").textContent = s.today_off_count ?? 0;
+      $("#dayoffPendingFilterCount").textContent = s.pending_count ?? 0;
+      const pending = Number(s.pending_count || 0);
+      const ind = $("#dayoffPendingIndicator");
+      ind.className =
+        "dayoff-badge " +
+        (pending > 0 ? "dayoff-badge-pending" : "dayoff-badge-approved");
+      ind.textContent = pending > 0 ? `${pending} PENDING` : "ALL REVIEWED";
+    }
+
+    function updatePendingBadge() {
+      const pending = Number(state.summary.pending_count || 0);
+      const b = $("#dayoff-pending-badge");
+      if (pending > 0) {
+        b.textContent = pending;
+        b.hidden = false;
+      } else b.hidden = true;
+    }
+
+    function getFiltered() {
+      const q = state.search.trim().toLowerCase();
+      return state.requests.filter((item) => {
+        const ok = state.status === "ALL" || item.status === state.status;
+        const text = [
+          item.employee_name,
+          item.username,
+          item.reason,
+          item.review_note,
+          item.reviewed_by,
+          item.date,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return ok && (!q || text.includes(q));
+      });
+    }
+
+    function renderRequests() {
+      const list = getFiltered();
+      $("#dayoffResultsCount").textContent =
+        `${list.length} request${list.length === 1 ? "" : "s"}`;
+      if (!list.length) {
+        showTableMessage(
+          state.search
+            ? "Try changing your search, date range, or status filter."
+            : "There are no requests matching the selected filters.",
+        );
+        return;
+      }
+      tbody.innerHTML = list
+        .map((item) => {
+          const id = escapeHTML(item.id);
+          const name = escapeHTML(
+            item.employee_name || item.username || "Employee",
+          );
+          const username = escapeHTML(item.username || "");
+          const reason = escapeHTML(item.reason || "No reason provided");
+          const date = escapeHTML(formatDate(item.date));
+          const st = String(item.status || "").toUpperCase();
+          const pending = st === "PENDING";
+
+          const details = item.reviewed_by
+            ? `<div class="dayoff-review-info">
+               <strong>${escapeHTML(item.reviewed_by)}</strong>
+               ${item.reviewed_at ? `<div>${escapeHTML(formatDateTime(item.reviewed_at))}</div>` : ""}
+               ${item.review_note ? `<div title="${escapeHTML(item.review_note)}">Note: ${escapeHTML(item.review_note)}</div>` : ""}
+             </div>`
+            : `<span class="dayoff-review-info">Not reviewed yet</span>`;
+
+          const actions = pending
+            ? `<div class="dayoff-actions">
+               <button class="dayoff-btn dayoff-btn-success dayoff-btn-small" data-dayoff-action="approve" data-id="${id}" type="button">✓ Approve</button>
+               <button class="dayoff-btn dayoff-btn-danger dayoff-btn-small" data-dayoff-action="reject" data-id="${id}" type="button">✕ Reject</button>
+             </div>`
+            : `<span class="dayoff-review-info">Decision recorded</span>`;
+
+          return `
+          <tr>
+            <td><div class="dayoff-employee">
+              <div class="dayoff-employee-avatar">${escapeHTML(initials(item.employee_name || item.username))}</div>
+              <div>
+                <div class="dayoff-employee-name">${name}</div>
+                <div class="dayoff-employee-username">@${username}</div>
+              </div>
+            </div></td>
+            <td><div class="dayoff-date-main">${date}</div><div class="dayoff-date-sub">Day off</div></td>
+            <td><div class="dayoff-reason" title="${reason}">${reason}</div></td>
+            <td>${statusBadge(st)}</td>
+            <td>${details}</td>
+            <td>${actions}</td>
+          </tr>`;
+        })
+        .join("");
+    }
+
+    /* ---- review modal ---- */
+    function openReview(id, decision) {
+      const item = state.requests.find((r) => String(r.id) === String(id));
+      if (!item || item.status !== "PENDING") {
+        showToast(
+          "This request is no longer pending. Refresh the dashboard.",
+          "error",
+        );
+        return;
+      }
+      state.reviewId = item.id;
+      state.reviewStatus = decision === "approve" ? "APPROVED" : "REJECTED";
+
+      $("#dayoffReviewModalTitle").textContent =
+        decision === "approve"
+          ? "Approve day-off request"
+          : "Reject day-off request";
+      $("#dayoffReviewModalDescription").textContent =
+        decision === "approve"
+          ? "Confirm that you want to approve this employee's request."
+          : "Confirm that you want to reject this employee's request.";
+      $("#dayoffPreviewEmployee").textContent =
+        item.employee_name || item.username;
+      $("#dayoffPreviewDate").textContent = formatDate(item.date);
+      $("#dayoffReviewRequestId").value = item.id;
+      $("#dayoffReviewNote").value = "";
+
+      const submit = $("#dayoffSubmitReviewButton");
+      submit.textContent =
+        decision === "approve" ? "✓ Approve request" : "✕ Reject request";
+      submit.className =
+        decision === "approve"
+          ? "dayoff-btn dayoff-btn-success"
+          : "dayoff-btn dayoff-btn-danger";
+      reviewModal.classList.add("open");
+      $("#dayoffReviewNote").focus();
+    }
+    function closeReview() {
+      if (state.submitting) return;
+      reviewModal.classList.remove("open");
+      state.reviewId = null;
+      state.reviewStatus = null;
+    }
+
+    async function submitReview(e) {
+      e.preventDefault();
+      if (state.submitting || !state.reviewId || !state.reviewStatus) return;
+      const id = state.reviewId;
+      const decision = state.reviewStatus;
+      const note = $("#dayoffReviewNote").value.trim();
+      const btn = $("#dayoffSubmitReviewButton");
+      state.submitting = true;
+      btn.disabled = true;
+      $("#dayoffCancelReviewButton").disabled = true;
+      $("#dayoffReviewCloseButton").disabled = true;
+      btn.textContent = "Saving decision...";
+      try {
+        const data = await apiFetch(API.review(id), {
+          method: "POST",
+          body: JSON.stringify({
+            status: decision,
+            action: decision.toLowerCase(),
+            review_note: note,
+          }),
+        });
+        reviewModal.classList.remove("open");
+        state.reviewId = null;
+        state.reviewStatus = null;
+        showToast(data.message || "Request reviewed successfully.");
+        await load();
+        if (window.__attendance?.reload) window.__attendance.reload();
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        state.submitting = false;
+        btn.disabled = false;
+        $("#dayoffCancelReviewButton").disabled = false;
+        $("#dayoffReviewCloseButton").disabled = false;
+        btn.textContent =
+          decision === "APPROVED" ? "✓ Approve request" : "✕ Reject request";
+      }
+    }
+
+    /* ---- events ---- */
+    $("#open-dayoff-btn").addEventListener("click", openModal);
+    $("#dayoffCloseButton").addEventListener("click", closeModal);
+    $("#dayoffRefreshButton").addEventListener("click", load);
+
+    document.querySelectorAll(".dayoff-filter-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.status = btn.dataset.dayoffStatus;
+        document
+          .querySelectorAll(".dayoff-filter-btn")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        load();
+      });
+    });
+
+    $("#dayoffSearchInput").addEventListener("input", (e) => {
+      state.search = e.target.value;
+      renderRequests();
+    });
+
+    $("#dayoffApplyDateFilter").addEventListener("click", () => {
+      const dateFrom = $("#dayoffDateFrom").value;
+      const dateTo = $("#dayoffDateTo").value;
+
+      if (dateFrom && dateTo && dateFrom > dateTo) {
+        showToast("The start date cannot be after the end date.", "error");
+        return;
+      }
+
+      state.dateFrom = dateFrom;
+      state.dateTo = dateTo;
+
+      load();
+    });
+
+    $("#dayoffClearDateFilter").addEventListener("click", () => {
+      $("#dayoffDateFrom").value = "";
+      $("#dayoffDateTo").value = "";
+      state.dateFrom = "";
+      state.dateTo = "";
+      load();
+    });
+
+    $("#dayoffDateFrom").addEventListener("change", () => {
+      const from = $("#dayoffDateFrom").value;
+      $("#dayoffDateTo").min = from || "";
+      if ($("#dayoffDateTo").value && from > $("#dayoffDateTo").value)
+        $("#dayoffDateTo").value = "";
+    });
+    $("#dayoffDateTo").addEventListener("change", () => {
+      const to = $("#dayoffDateTo").value;
+      $("#dayoffDateFrom").max = to || "";
+      if ($("#dayoffDateFrom").value && to < $("#dayoffDateFrom").value)
+        $("#dayoffDateFrom").value = "";
+    });
+
+    tbody.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-dayoff-action]");
+      if (!b) return;
+      openReview(b.dataset.id, b.dataset.dayoffAction);
+    });
+
+    $("#dayoffReviewForm").addEventListener("submit", submitReview);
+    $("#dayoffReviewCloseButton").addEventListener("click", closeReview);
+    $("#dayoffCancelReviewButton").addEventListener("click", closeReview);
+    reviewModal.addEventListener("click", (e) => {
+      if (e.target === reviewModal) closeReview();
+    });
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (reviewModal.classList.contains("open")) closeReview();
+        else if (modal.classList.contains("open")) closeModal();
+      }
+    });
+
+    /* ---- initial badge (quiet) ---- */
+    (async function initialBadge() {
+      try {
+        const data = await apiFetch(API.requests + "?limit=1");
+        if (data.summary) {
+          state.summary = data.summary;
+          updatePendingBadge();
+        }
+      } catch (_) {
+        /* ignore */
+      }
+    })();
+
+    /* Public API for the attendance module */
+    window.__dayoff = {
+      isOpen: () => state.open,
+      load,
+      syncDateToAttendance,
+    };
+  })();
+</script>
+{% endblock %}

@@ -42,8 +42,6 @@ from django.utils.dateparse import parse_date
 
 
 
-
-
 class WaiterMobileLoginAPIView(APIView):
     """Mobile login API for WAITER and MANAGER accounts."""
 
@@ -1506,7 +1504,6 @@ class PendingWaiterChangesView(APIView):
 
 
 
-
 class ManagerAttendanceAPI(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         # Only managers and admins can access this API.
@@ -1528,44 +1525,49 @@ class ManagerAttendanceAPI(LoginRequiredMixin, View):
 
         now = timezone.now()
 
-        users = User.objects.filter(
-                is_active=True,
-            ).exclude(
-                state="STOPPED"
-            ).order_by(
-                "full_name", "username"
-            )
+        users = (
+            User.objects.filter(is_active=True)
+            .exclude(state="STOPPED")
+            .order_by("full_name", "username")
+        )
 
-        attendance_records = Attendance.objects.filter(
-            check_in__lt=day_end,
-        ).filter(
-            Q(check_out__isnull=True)
-            | Q(check_out__gt=day_start)
-        ).select_related(
-            "user"
-        ).order_by("check_in")
+        attendance_records = (
+            Attendance.objects.filter(check_in__lt=day_end)
+            .filter(Q(check_out__isnull=True) | Q(check_out__gt=day_start))
+            .select_related("user")
+            .order_by("check_in")
+        )
 
         records_by_user = {}
-
         for record in attendance_records:
-            records_by_user.setdefault(
-                record.user_id, []
-            ).append(record)
+            records_by_user.setdefault(record.user_id, []).append(record)
+
+        # ------------------------------------------------------------------
+        # Approved day-off requests for TODAY (single query, reused below)
+        # ------------------------------------------------------------------
+        approved_day_offs = (
+            DayOffRequest.objects.filter(
+                date=today,
+                status=DayOffStatus.APPROVED,
+            )
+            .select_related("reviewed_by")
+        )
+
+        day_off_by_user = {r.user_id: r for r in approved_day_offs}
 
         employee_rows = []
 
         for user in users:
             records = records_by_user.get(user.id, [])
+            day_off_request = day_off_by_user.get(user.id)
+            has_day_off = day_off_request is not None
 
             today_seconds = 0
             active_record = None
             sessions = []
 
             for record in records:
-                session_start = max(
-                    record.check_in,
-                    day_start,
-                )
+                session_start = max(record.check_in, day_start)
 
                 session_end = min(
                     record.check_out or now,
@@ -1575,9 +1577,7 @@ class ManagerAttendanceAPI(LoginRequiredMixin, View):
 
                 if session_end > session_start:
                     today_seconds += int(
-                        (
-                            session_end - session_start
-                        ).total_seconds()
+                        (session_end - session_start).total_seconds()
                     )
 
                 if record.check_out is None:
@@ -1587,113 +1587,163 @@ class ManagerAttendanceAPI(LoginRequiredMixin, View):
                     0,
                     int(
                         (
-                            (record.check_out or now)
-                            - record.check_in
+                            (record.check_out or now) - record.check_in
                         ).total_seconds()
                     ),
                 )
 
-                sessions.append({
-                    "id": record.id,
-                    "check_in": timezone.localtime(
-                        record.check_in
-                    ).isoformat(),
-                    "check_out": (
-                        timezone.localtime(
-                            record.check_out
-                        ).isoformat()
-                        if record.check_out else None
-                    ),
-                    "is_working": record.check_out is None,
-                    "duration_seconds": duration_seconds,
-                    "duration_hours": round(
-                        duration_seconds / 3600, 2
-                    ),
-                })
+                sessions.append(
+                    {
+                        "id": record.id,
+                        "check_in": timezone.localtime(
+                            record.check_in
+                        ).isoformat(),
+                        "check_out": (
+                            timezone.localtime(
+                                record.check_out
+                            ).isoformat()
+                            if record.check_out
+                            else None
+                        ),
+                        "is_working": record.check_out is None,
+                        "duration_seconds": duration_seconds,
+                        "duration_hours": round(duration_seconds / 3600, 2),
+                    }
+                )
 
-            today_hours, today_remainder = divmod(
-                today_seconds, 3600
-            )
+            today_hours, today_remainder = divmod(today_seconds, 3600)
             today_minutes = today_remainder // 60
 
             target_hours = float(user.daily_working_hours)
             target_seconds = int(target_hours * 3600)
 
-            progress = min(
-                100,
-                round(today_seconds / target_seconds * 100)
-                if target_seconds > 0 else 0,
-            )
+            # If the user is on an approved day off, they are NOT considered
+            # "working" and their daily target is treated as satisfied.
+            if has_day_off:
+                is_working = False
+                active_record = None
 
-            shift_seconds = 0
+                progress_percentage = 100
+                progress_completed = True
+                remaining_seconds = 0
+            else:
+                is_working = active_record is not None
 
-            if active_record:
-                shift_seconds = max(
+                progress_percentage = (
+                    min(
+                        100,
+                        round(today_seconds / target_seconds * 100),
+                    )
+                    if target_seconds > 0
+                    else 0
+                )
+                progress_completed = (
+                    target_seconds > 0
+                    and today_seconds >= target_seconds
+                )
+                remaining_seconds = max(
                     0,
-                    int(
-                        (
-                            now - active_record.check_in
-                        ).total_seconds()
-                    ),
+                    target_seconds - today_seconds,
                 )
 
-            shift_hours, shift_remainder = divmod(
-                shift_seconds, 3600
-            )
+            shift_seconds = 0
+            if active_record is not None:
+                shift_seconds = max(
+                    0,
+                    int((now - active_record.check_in).total_seconds()),
+                )
+
+            shift_hours, shift_remainder = divmod(shift_seconds, 3600)
             shift_minutes = shift_remainder // 60
 
-            employee_rows.append({
-                "user_id": user.id,
-                "username": user.username,
-                "full_name": user.full_name,
-                "role": user.role,
-                "role_display": user.get_role_display(),
-                "state": user.state,
-                "is_working": active_record is not None,
+            employee_rows.append(
+                {
+                    "user_id": user.id,
+                    "username": user.username,
+                    "full_name": user.full_name,
+                    "role": user.role,
+                    "role_display": user.get_role_display(),
+                    "state": user.state,
 
-                "current_check_in": (
-                    timezone.localtime(
-                        active_record.check_in
-                    ).isoformat()
-                    if active_record else None 
-                ),
+                    "is_working": is_working,
+                    "on_day_off": has_day_off,
 
-                "today": {
-                    "date": today.isoformat(),
-                    "total_seconds": today_seconds,
-                    "hours": today_hours,
-                    "minutes": today_minutes,
-                },
-
-                "daily_target": {
-                    "hours": target_hours,
-                    "seconds": target_seconds,
-                },
-
-                "progress": {
-                    "percentage": progress,
-                    "completed": (
-                        target_seconds > 0
-                        and today_seconds >= target_seconds
+                    # Structured day-off payload so the front end can
+                    # render reason / reviewer / timestamp.
+                    "day_off": (
+                        {
+                            "id": day_off_request.id,
+                            "status": day_off_request.status,
+                            "reason": day_off_request.reason or "",
+                            "review_note": day_off_request.review_note or "",
+                            "reviewed_by": (
+                                (
+                                    day_off_request.reviewed_by.full_name
+                                    or day_off_request.reviewed_by.username
+                                )
+                                if day_off_request.reviewed_by
+                                else None
+                            ),
+                            "reviewed_at": (
+                                timezone.localtime(
+                                    day_off_request.reviewed_at
+                                ).isoformat()
+                                if day_off_request.reviewed_at
+                                else None
+                            ),
+                        }
+                        if has_day_off
+                        else None
                     ),
-                    "remaining_seconds": max(
-                        0,
-                        target_seconds - today_seconds,
+
+                    "current_check_in": (
+                        timezone.localtime(
+                            active_record.check_in
+                        ).isoformat()
+                        if active_record
+                        else None
                     ),
-                },
 
-                "current_shift": {
-                    "seconds": shift_seconds,
-                    "hours": shift_hours,
-                    "minutes": shift_minutes,
-                },
+                    "today": {
+                        "date": today.isoformat(),
+                        "total_seconds": today_seconds,
+                        "hours": today_hours,
+                        "minutes": today_minutes,
+                    },
 
-                "sessions": sessions,
-            })
+                    "daily_target": {
+                        "hours": target_hours,
+                        "seconds": target_seconds,
+                    },
+
+                    "progress": {
+                        "percentage": progress_percentage,
+                        "completed": progress_completed,
+                        "remaining_seconds": remaining_seconds,
+                    },
+
+                    "current_shift": {
+                        "seconds": shift_seconds,
+                        "hours": shift_hours,
+                        "minutes": shift_minutes,
+                    },
+
+                    "sessions": sessions,
+                }
+            )
 
         working_count = sum(
-            1 for employee in employee_rows
-            if employee["is_working"]
+            1 for employee in employee_rows if employee["is_working"]
+        )
+
+        day_off_count = sum(
+            1 for employee in employee_rows if employee["on_day_off"]
+        )
+
+        not_working_count = sum(
+            1
+            for employee in employee_rows
+            if not employee["is_working"] and not employee["on_day_off"]
         )
 
         total_today_seconds = sum(
@@ -1702,32 +1752,31 @@ class ManagerAttendanceAPI(LoginRequiredMixin, View):
         )
 
         completed_count = sum(
-            1 for employee in employee_rows
+            1
+            for employee in employee_rows
             if employee["progress"]["completed"]
         )
 
-        return JsonResponse({
-            "success": True,
-            "date": today.isoformat(),
-            "timezone": timezone.get_current_timezone_name(),
-            "generated_at": timezone.localtime(now).isoformat(),
-
-            "summary": {
-                "employee_count": len(employee_rows),
-                "working_count": working_count,
-                "not_working_count": (
-                    len(employee_rows) - working_count
-                ),
-                "completed_count": completed_count,
-                "total_today_seconds": total_today_seconds,
-                "total_today_hours": round(
-                    total_today_seconds / 3600, 2
-                ),
-            },
-
-            "employees": employee_rows,
-        })
-
+        return JsonResponse(
+            {
+                "success": True,
+                "date": today.isoformat(),
+                "timezone": timezone.get_current_timezone_name(),
+                "generated_at": timezone.localtime(now).isoformat(),
+                "summary": {
+                    "employee_count": len(employee_rows),
+                    "working_count": working_count,
+                    "not_working_count": not_working_count,
+                    "day_off_count": day_off_count,
+                    "completed_count": completed_count,
+                    "total_today_seconds": total_today_seconds,
+                    "total_today_hours": round(
+                        total_today_seconds / 3600, 2
+                    ),
+                },
+                "employees": employee_rows,
+            }
+        )
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -1766,10 +1815,11 @@ def attendance_check_in(request, user_id):
             ).isoformat(),
         }, status=400)
 
-    attendance = Attendance.objects.create(
-        user=user,
-        check_in=timezone.now(),
-    )
+    with transaction.atomic():
+        attendance = Attendance.objects.create(user=user, check_in=timezone.now())
+        user.check_in_user()
+    
+    
 
     return JsonResponse({
         "success": True,
@@ -1781,14 +1831,6 @@ def attendance_check_in(request, user_id):
     })
 
 
-
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from django.views.decorators.http import require_POST
-
-from orders.models import Order, OrderStatus
 
 
 ACTIVE_ORDER_STATUSES = (
@@ -1857,7 +1899,11 @@ def attendance_check_out(request, user_id):
 
     # Allow checkout when no active orders remain.
     attendance.check_out = timezone.now()
-    attendance.save(update_fields=["check_out"])
+
+    with transaction.atomic():
+            
+        attendance.save(update_fields=["check_out"])
+        user.check_out_user()
 
     return JsonResponse({
         "success": True,
@@ -2382,15 +2428,6 @@ def employee_attendance_day_api(request, user_id):
         "sessions": session_data,
     })
 #phone 
-import calendar
-from datetime import date, datetime, time, timedelta
-
-from django.utils import timezone
-from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 
 
@@ -2638,7 +2675,7 @@ class EmployeeAttendanceDayAPI(AttendanceBaseAPIView):
 def current_user_profile(request):
      """ GET /api/v1/auth/me/ Returns the latest user profile and working state. """ 
      user = request.user
-     return Response({ "id": user.pk, "username": user.username, "email": user.email, "role": user.role, "state": user.state, })
+     return Response({ "id": user.pk, "username": user.username, "email": user.email, "role": user.role, "state": user.state, "worktime":user.daily_working_hours })
 
 
 
@@ -2797,3 +2834,6 @@ class EmployeeDayOffRequestsAPI(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+

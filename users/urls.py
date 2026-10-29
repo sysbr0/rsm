@@ -37,6 +37,13 @@ urlpatterns = [
         day_off_dashboard,
         name="day_off_dashboard",
     ),
+
+        path(
+        "attendance/",
+        manager_attendance_dashboard,
+        name="manager_attendance_dashboard",
+    ),
+
   
 
 ]

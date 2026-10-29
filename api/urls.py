@@ -17,32 +17,17 @@ from users.views import *
 
 
 urlpatterns = [
-    path(
-        "v1/auth/admin-login/",
+    path("v1/auth/admin-login/",
         WaiterMobileLoginAPIView.as_view(),
         name="WaiterMobileLoginAPIView",
     ),
     path("v1/auth/me/", current_user_profile, name="current_user_profile"),
-        path(
-        "v1/manager/tables/",
-        tables_dashboard_api,
-        name="tables-dashboard-api",
-    ),
-    path(
-            "v1/tables/<int:table_id>/",
-            WaiterTableDetailView.as_view(),
-            name="api-waiter-table-detail",
-        ),
-    path(
-        "v1/tables/<int:table_id>/orders/",
-        WaiterCreateOrderView.as_view(),
-        name="api-waiter-order-create",
-    ),
-      path(
-            "v1/tables/<int:table_id>/orders/items/<int:item_id>/",
-            WaiterUpdateItemView.as_view(),
-            name="api-waiter-item-update",
-        ),
+
+    path("v1/manager/tables/",tables_dashboard_api, name="tables-dashboard-api", ),
+    path("v1/tables/<int:table_id>/", WaiterTableDetailView.as_view(),name="api-waiter-table-detail", ),
+    path( "v1/tables/<int:table_id>/orders/", WaiterCreateOrderView.as_view(),  name="api-waiter-order-create", ),
+    path("v1/tables/<int:table_id>/orders/items/<int:item_id>/",
+            WaiterUpdateItemView.as_view(),name="api-waiter-item-update",  ),
         path(
             "v1/tables/<int:table_id>/orders/print/",
             WaiterPrintPendingView.as_view(),
@@ -81,7 +66,7 @@ urlpatterns = [
     name="pending-waiter-changes",
 ),
     path(
-        "working-waiters/",
+        "v1/working-waiters/",
         WorkingWaitersAPIView.as_view(),
         name="working-waiters",
     ),
@@ -139,6 +124,10 @@ urlpatterns = [
         review_day_off_request_api,
         name="review_day_off_request_api",
     ),
+    path(
+    "v1/manager/day-off-requests/<int:request_id>/review/",
+    review_day_off_request,
+),
 
         path(
         "v1/employee/day-off-requests/",
@@ -146,6 +135,8 @@ urlpatterns = [
         name="employee-day-off-requests",
     ),
 
+#frm the user
+    path("v2/manager/attendance/",manager_attendance_api, name="manager_attendance_api", ),
    
     ]
 

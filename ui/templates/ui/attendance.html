@@ -1,1521 +1,1128 @@
-{% extends "ui/admin_base.html" %} {% load static %} {% block content %}
-
-    <style>
-      :root {
-        --bg: #f5f6fa;
-        --surface: #ffffff;
-        --text: #172033;
-        --muted: #727b8e;
-        --border: #e5e8ef;
-        --primary: #4f46e5;
-        --primary-light: #eef2ff;
-        --green: #15803d;
-        --green-bg: #dcfce7;
-        --red: #b91c1c;
-        --red-bg: #fee2e2;
-        --orange: #c2410c;
-        --orange-bg: #ffedd5;
-        --purple: #6d28d9;
-        --purple-bg: #ede9fe;
-        --radius: 14px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
-          sans-serif;
-      }
-
-      button,
-      input,
-      select {
-        font: inherit;
-      }
-
-      button {
-        cursor: pointer;
-      }
-
-      .page {
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 28px;
-      }
-
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        flex-wrap: wrap;
-        margin-bottom: 24px;
-      }
-
-      .page-title {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: -0.7px;
-      }
-
-      .subtitle {
-        color: var(--muted);
-        margin-top: 8px;
-        font-size: 14px;
-      }
-
-      .top-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 11px 16px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: white;
-        color: var(--text);
-        font-weight: 700;
-        font-size: 13px;
-        transition: 0.15s ease;
-      }
-
-      .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px #1720330d;
-      }
-
-      .btn-primary {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-      }
-
-      .btn-primary:hover {
-        background: #4338ca;
-      }
-
-      .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-
-      .summary-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 21px;
-        min-width: 0;
-        box-shadow: 0 2px 8px #17203305;
-      }
-
-      .summary-label {
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .summary-value {
-        margin-top: 12px;
-        font-size: 30px;
-        font-weight: 800;
-        letter-spacing: -0.8px;
-      }
-
-      .summary-note {
-        color: var(--muted);
-        margin-top: 6px;
-        font-size: 12px;
-      }
-
-      .summary-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 19px;
-        margin-bottom: 17px;
-        background: var(--primary-light);
-      }
-
-      .summary-card:nth-child(2) .summary-icon {
-        background: var(--green-bg);
-      }
-
-      .summary-card:nth-child(3) .summary-icon {
-        background: var(--orange-bg);
-      }
-
-      .summary-card:nth-child(4) .summary-icon {
-        background: var(--purple-bg);
-      }
-
-      .panel {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: 0 2px 8px #17203305;
-      }
-
-      .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-        padding: 21px 22px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .panel-title {
-        margin: 0;
-        font-size: 17px;
-        font-weight: 800;
-      }
-
-      .employee-count {
-        margin-left: 7px;
-        padding: 4px 9px;
-        background: var(--primary-light);
-        color: var(--primary);
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 800;
-      }
-
-      .filters {
-        display: grid;
-        grid-template-columns:
-          minmax(220px, 1.5fr)
-          repeat(2, minmax(150px, 0.7fr));
-        gap: 12px;
-        padding: 18px 22px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .input {
-        width: 100%;
-        min-width: 0;
-        padding: 11px 13px;
-        border: 1px solid var(--border);
-        border-radius: 9px;
-        outline: none;
-        background: white;
-        color: var(--text);
-        font-size: 13px;
-      }
-
-      .input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px #4f46e51a;
-      }
-
-      .table-wrapper {
-        width: 100%;
-        overflow-x: auto;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 1050px;
-      }
-
-      thead {
-        background: #f9fafc;
-      }
-
-      th {
-        text-align: left;
-        padding: 14px 18px;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-      }
-
-      td {
-        padding: 17px 18px;
-        border-top: 1px solid #edf0f5;
-        vertical-align: middle;
-        font-size: 13px;
-      }
-
-      tbody tr:hover {
-        background: #fafbff;
-      }
-
-      .employee {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        min-width: 190px;
-      }
-
-      .avatar {
-        width: 39px;
-        height: 39px;
-        flex: 0 0 39px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--primary-light);
-        color: var(--primary);
-        font-weight: 800;
-        font-size: 13px;
-      }
-
-      .employee-name {
-        font-weight: 800;
-        font-size: 13px;
-        margin-bottom: 4px;
-      }
-
-      .employee-username {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 9px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .badge-working {
-        color: var(--green);
-        background: var(--green-bg);
-      }
-
-      .badge-off {
-        color: var(--muted);
-        background: #eef0f4;
-      }
-
-      .badge-role {
-        color: var(--purple);
-        background: var(--purple-bg);
-      }
-
-      .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-      }
-
-      .time-main {
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .time-sub {
-        margin-top: 5px;
-        font-size: 11px;
-        color: var(--muted);
-        white-space: nowrap;
-      }
-
-      .progress-cell {
-        min-width: 175px;
-      }
-
-      .progress-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-
-      .progress-number {
-        font-weight: 800;
-      }
-
-      .progress-target {
-        color: var(--muted);
-        font-size: 11px;
-      }
-
-      .progress-track {
-        height: 7px;
-        border-radius: 20px;
-        background: #edf0f5;
-        overflow: hidden;
-      }
-
-      .progress-fill {
-        height: 100%;
-        width: 0;
-        border-radius: 20px;
-        background: var(--primary);
-        transition: width 0.25s ease;
-      }
-
-      .progress-fill.complete {
-        background: #16a34a;
-      }
-
-      .progress-caption {
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 11px;
-      }
-
-      .details-btn {
-        border: 1px solid var(--border);
-        background: white;
-        border-radius: 8px;
-        padding: 8px 10px;
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--text);
-        white-space: nowrap;
-      }
-
-      .details-btn:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-      }
-
-      .attendance-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-        min-width: 115px;
-      }
-
-      .attendance-action-btn {
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 8px 10px;
-        font-size: 12px;
-        font-weight: 800;
-        white-space: nowrap;
-        background: white;
-        color: var(--text);
-      }
-
-      .attendance-action-btn.check-in {
-        color: #166534;
-        border-color: #bbf7d0;
-        background: #f0fdf4;
-      }
-
-      .attendance-action-btn.check-out {
-        color: #991b1b;
-        border-color: #fecaca;
-        background: #fef2f2;
-      }
-
-      .attendance-action-btn:disabled {
-        opacity: 0.55;
-        cursor: wait;
-      }
-
-      .attendance-action-btn:hover:not(:disabled) {
-        filter: brightness(0.97);
-      }
-
-      .details-row td {
-        padding: 0;
-        background: #fafbff;
-      }
-
-      .details-content {
-        padding: 22px;
-      }
-
-      .details-heading {
-        margin: 0 0 14px;
-        font-size: 13px;
-        font-weight: 800;
-      }
-
-      .sessions-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .session-card {
-        padding: 15px;
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 11px;
-      }
-
-      .session-label {
-        color: var(--muted);
-        font-size: 11px;
-        margin-bottom: 7px;
-      }
-
-      .session-value {
-        font-weight: 800;
-        font-size: 13px;
-      }
-
-      .session-meta {
-        color: var(--muted);
-        margin-top: 7px;
-        font-size: 11px;
-        line-height: 1.6;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 55px 20px;
-        color: var(--muted);
-      }
-
-      .empty-icon {
-        font-size: 35px;
-        margin-bottom: 12px;
-      }
-
-      .empty-title {
-        color: var(--text);
-        font-weight: 800;
-        margin-bottom: 7px;
-      }
-
-      .footer {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 16px 22px;
-        border-top: 1px solid var(--border);
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .connection-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-      }
-
-      .connection-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #16a34a;
-      }
-
-      .connection-dot.error {
-        background: #dc2626;
-      }
-
-      .error-box {
-        margin: 18px 22px;
-        padding: 14px;
-        border: 1px solid #fecaca;
-        border-radius: 10px;
-        background: #fef2f2;
-        color: #991b1b;
-        font-size: 13px;
-        display: none;
-      }
-
-      .loading {
-        padding: 45px 20px;
-        text-align: center;
-        color: var(--muted);
-      }
-
-      .spinner {
-        display: inline-block;
-        width: 22px;
-        height: 22px;
-        border: 3px solid #e5e7eb;
-        border-top-color: var(--primary);
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-        margin-bottom: 12px;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      @media (max-width: 1000px) {
-        .summary-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .page {
-          padding: 18px;
-        }
-      }
-
-      @media (max-width: 650px) {
-        .page {
-          padding: 12px;
-        }
-
-        .page-title {
-          font-size: 23px;
-        }
-
-        .summary-grid {
-          gap: 10px;
-        }
-
-        .summary-card {
-          padding: 15px;
-        }
-
-        .summary-value {
-          font-size: 25px;
-        }
-
-        .filters {
-          grid-template-columns: 1fr;
-          padding: 14px;
-        }
-
-        .panel-header {
-          padding: 16px;
-        }
-
-        .sessions-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="page">
-      <header class="topbar">
-        <div>
-          <h1 class="page-title">Attendance Dashboard</h1>
-          <div class="subtitle">
-            Monitor employee attendance, shifts, and daily working hours.
-          </div>
-          <div class="subtitle" id="todayLabel">Loading date...</div>
-        </div>
-
-        <div class="top-actions">
-          <button class="btn" id="refreshBtn" type="button">↻ Refresh</button>
-          <button class="btn btn-primary" id="exportBtn" type="button">
-            ↓ Export CSV
-          </button>
-        </div>
-      </header>
-
-      <section class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-icon">👥</div>
-          <div class="summary-label">Total Employees</div>
-          <div class="summary-value" id="totalEmployees">—</div>
-          <div class="summary-note">Active non-admin users</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-icon">✓</div>
-          <div class="summary-label">Currently Working</div>
-          <div class="summary-value" id="workingEmployees">—</div>
-          <div class="summary-note">Employees currently checked in</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-icon">◷</div>
-          <div class="summary-label">Not Working</div>
-          <div class="summary-value" id="notWorkingEmployees">—</div>
-          <div class="summary-note">Employees without an active session</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-icon">★</div>
-          <div class="summary-label">Daily Target Completed</div>
-          <div class="summary-value" id="completedEmployees">—</div>
-          <div class="summary-note">Employees who reached today's target</div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">
-            Employee Attendance
-            <span class="employee-count" id="visibleCount">0</span>
-          </h2>
-          <div class="subtitle" id="lastUpdated">Not updated yet</div>
-        </div>
-
-        <div class="filters">
-          <input
-            id="searchInput"
-            class="input"
-            type="search"
-            placeholder="Search name or username..."
-            autocomplete="off"
-          />
-
-          <select id="statusFilter" class="input">
-            <option value="all">All attendance statuses</option>
-            <option value="working">Currently working</option>
-            <option value="off">Not working</option>
-          </select>
-
-          <select id="roleFilter" class="input">
-            <option value="all">All roles</option>
-            <option value="MANAGER">Manager</option>
-            <option value="WAITER">Waiter</option>
-            <option value="CASHIER">Cashier</option>
-            <option value="KITCHEN">Kitchen</option>
-            <option value="EMPLOYEE">Employee</option>
-          </select>
-        </div>
-
-        <div class="error-box" id="errorBox"></div>
-
-        <div id="loadingState" class="loading">
-          <div class="spinner"></div>
-          <div>Loading attendance data...</div>
-        </div>
-
-        <div class="table-wrapper" id="tableWrapper" hidden>
-          <table>
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Check-in</th>
-                <th>Current Shift</th>
-                <th>Today's Hours</th>
-                <th>Daily Progress</th>
-                <th>Sessions</th>
-                <th>Attendance Actions</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceBody"></tbody>
-          </table>
-
-          <div class="empty-state" id="emptyState" hidden>
-            <div class="empty-icon">🔎</div>
-            <div class="empty-title">No employees found</div>
-            <div>Try changing your search or filters.</div>
-          </div>
-        </div>
-
-        <div class="footer">
-          <div class="connection-status">
-            <span class="connection-dot" id="connectionDot"></span>
-            <span id="connectionText">Connecting to API...</span>
-          </div>
-          <div>Automatic refresh every 30 seconds</div>
-        </div>
-      </section>
+{% extends "ui/admin_base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --text: #172033;
+    --muted: #727b8e;
+    --border: #e5e8ef;
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --green: #15803d;
+    --green-bg: #dcfce7;
+    --red: #b91c1c;
+    --red-bg: #fee2e2;
+    --orange: #c2410c;
+    --orange-bg: #ffedd5;
+    --purple: #6d28d9;
+    --purple-bg: #ede9fe;
+    --blue: #1d4ed8;
+    --blue-bg: #dbeafe;
+    --slate: #475569;
+    --slate-bg: #e2e8f0;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  button, input, select { font: inherit; }
+  button { cursor: pointer; }
+
+  .page { max-width: 1600px; margin: 0 auto; padding: 28px; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+  }
+
+  .page-title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.7px; }
+  .subtitle { color: var(--muted); margin-top: 8px; font-size: 14px; }
+  .top-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 11px 16px; border: 1px solid var(--border);
+    border-radius: 10px; background: white; color: var(--text);
+    font-weight: 700; font-size: 13px; transition: 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px #1720330d; }
+  .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-primary:hover { background: #4338ca; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 21px; min-width: 0;
+    box-shadow: 0 2px 8px #17203305;
+  }
+
+  .summary-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .summary-value {
+    margin-top: 12px; font-size: 30px; font-weight: 800; letter-spacing: -0.8px;
+  }
+  .summary-note { color: var(--muted); margin-top: 6px; font-size: 12px; }
+
+  .summary-icon {
+    width: 38px; height: 38px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; margin-bottom: 17px; background: var(--primary-light);
+  }
+  .summary-card:nth-child(2) .summary-icon { background: var(--green-bg); }
+  .summary-card:nth-child(3) .summary-icon { background: var(--orange-bg); }
+  .summary-card:nth-child(4) .summary-icon { background: var(--blue-bg); }
+  .summary-card:nth-child(5) .summary-icon { background: var(--purple-bg); }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 2px 8px #17203305;
+  }
+
+  .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 15px; flex-wrap: wrap; padding: 21px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title { margin: 0; font-size: 17px; font-weight: 800; }
+
+  .employee-count {
+    margin-left: 7px; padding: 4px 9px;
+    background: var(--primary-light); color: var(--primary);
+    border-radius: 20px; font-size: 12px; font-weight: 800;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.5fr) repeat(2, minmax(150px, 0.7fr));
+    gap: 12px; padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .input {
+    width: 100%; min-width: 0; padding: 11px 13px;
+    border: 1px solid var(--border); border-radius: 9px;
+    outline: none; background: white; color: var(--text); font-size: 13px;
+  }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #4f46e51a; }
+
+  .table-wrapper { width: 100%; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 1150px; }
+  thead { background: #f9fafc; }
+
+  th {
+    text-align: left; padding: 14px 18px; color: var(--muted);
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; white-space: nowrap;
+  }
+
+  td {
+    padding: 17px 18px; border-top: 1px solid #edf0f5;
+    vertical-align: middle; font-size: 13px;
+  }
+  tbody tr:hover { background: #fafbff; }
+
+  .employee {
+    display: flex; align-items: center; gap: 11px; min-width: 190px;
+  }
+
+  .avatar {
+    width: 39px; height: 39px; flex: 0 0 39px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary-light); color: var(--primary);
+    font-weight: 800; font-size: 13px;
+  }
+
+  .employee-name { font-weight: 800; font-size: 13px; margin-bottom: 4px; }
+  .employee-username { color: var(--muted); font-size: 12px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 800; white-space: nowrap;
+  }
+
+  .badge-working { color: var(--green); background: var(--green-bg); }
+  .badge-completed { color: var(--blue); background: var(--blue-bg); }
+  .badge-notstarted { color: var(--slate); background: var(--slate-bg); }
+  .badge-dayoff { color: #1e40af; background: var(--blue-bg); }
+  .badge-role { color: var(--purple); background: var(--purple-bg); }
+  .badge-state { color: #0f172a; background: #e0f2fe; }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .time-main { font-weight: 800; white-space: nowrap; }
+  .time-sub {
+    margin-top: 5px; font-size: 11px; color: var(--muted); white-space: nowrap;
+  }
+
+  .progress-cell { min-width: 175px; }
+  .progress-top {
+    display: flex; justify-content: space-between; gap: 10px;
+    align-items: center; margin-bottom: 8px;
+  }
+  .progress-number { font-weight: 800; }
+  .progress-target { color: var(--muted); font-size: 11px; }
+
+  .progress-track {
+    height: 7px; border-radius: 20px; background: #edf0f5; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0; border-radius: 20px;
+    background: var(--primary); transition: width 0.25s ease;
+  }
+  .progress-fill.complete { background: #16a34a; }
+  .progress-caption {
+    margin-top: 6px; color: var(--muted); font-size: 11px;
+  }
+
+  .details-btn {
+    border: 1px solid var(--border); background: white;
+    border-radius: 8px; padding: 8px 10px; font-size: 12px;
+    font-weight: 700; color: var(--text); white-space: nowrap;
+    text-decoration: none; display: inline-block;
+  }
+  .details-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+  .attendance-actions {
+    display: flex; flex-direction: column; gap: 7px; min-width: 115px;
+  }
+
+  .attendance-action-btn {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12px; font-weight: 800;
+    white-space: nowrap; background: white; color: var(--text);
+  }
+  .attendance-action-btn.check-in {
+    color: #166534; border-color: #bbf7d0; background: #f0fdf4;
+  }
+  .attendance-action-btn.check-out {
+    color: #991b1b; border-color: #fecaca; background: #fef2f2;
+  }
+  .attendance-action-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .attendance-action-btn:hover:not(:disabled) { filter: brightness(0.97); }
+
+  .empty-state {
+    text-align: center; padding: 55px 20px; color: var(--muted);
+  }
+  .empty-icon { font-size: 35px; margin-bottom: 12px; }
+  .empty-title { color: var(--text); font-weight: 800; margin-bottom: 7px; }
+
+  .footer {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 16px 22px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 12px;
+  }
+
+  .connection-status {
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; }
+  .connection-dot.error { background: #dc2626; }
+
+  .error-box {
+    margin: 18px 22px; padding: 14px;
+    border: 1px solid #fecaca; border-radius: 10px;
+    background: #fef2f2; color: #991b1b; font-size: 13px;
+    display: none;
+  }
+
+  .loading { padding: 45px 20px; text-align: center; color: var(--muted); }
+  .spinner {
+    display: inline-block; width: 22px; height: 22px;
+    border: 3px solid #e5e7eb; border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 1100px) {
+    .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 1000px) {
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .page { padding: 18px; }
+  }
+
+  @media (max-width: 650px) {
+    .page { padding: 12px; }
+    .page-title { font-size: 23px; }
+    .summary-grid { gap: 10px; }
+    .summary-card { padding: 15px; }
+    .summary-value { font-size: 25px; }
+    .filters { grid-template-columns: 1fr; padding: 14px; }
+    .panel-header { padding: 16px; }
+  }
+</style>
+</head>
+
+<body>
+<div class="page">
+  <header class="topbar">
+    <div>
+      <h1 class="page-title">Attendance Dashboard</h1>
+      <div class="subtitle">
+        Monitor employee attendance, shifts, and daily working hours.
+      </div>
+      <div class="subtitle" id="todayLabel">Loading date...</div>
     </div>
 
-    <script>
-      (() => {
-        "use strict";
+    <div class="top-actions">
+      <button class="btn" id="refreshBtn" type="button">↻ Refresh</button>
+      <button class="btn btn-primary" id="exportBtn" type="button">↓ Export CSV</button>
+    </div>
+  </header>
 
-        // Must match the URL configured in urls.py.
-        const API_URL = "/api/v1/attendance/";
-        const REFRESH_INTERVAL = 30000;
+  <section class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon">👥</div>
+      <div class="summary-label">Total Employees</div>
+      <div class="summary-value" id="totalEmployees">—</div>
+      <div class="summary-note">Active non-admin users</div>
+    </div>
 
-        let employees = [];
-        let summary = {};
-        let expandedEmployees = new Set();
-        let refreshTimer = null;
-        let requestInProgress = false;
-        let lastGeneratedAt = null;
+    <div class="summary-card">
+      <div class="summary-icon">▶</div>
+      <div class="summary-label">Currently Working</div>
+      <div class="summary-value" id="workingEmployees">—</div>
+      <div class="summary-note">Employees currently checked in</div>
+    </div>
 
-        const $ = (id) => document.getElementById(id);
+    <div class="summary-card">
+      <div class="summary-icon">⏸</div>
+      <div class="summary-label">Not Started</div>
+      <div class="summary-value" id="notStartedEmployees">—</div>
+      <div class="summary-note">No check-in today</div>
+    </div>
 
-        const elements = {
-          total: $("totalEmployees"),
-          working: $("workingEmployees"),
-          notWorking: $("notWorkingEmployees"),
-          completed: $("completedEmployees"),
-          visibleCount: $("visibleCount"),
-          todayLabel: $("todayLabel"),
-          lastUpdated: $("lastUpdated"),
-          body: $("attendanceBody"),
-          tableWrapper: $("tableWrapper"),
-          loading: $("loadingState"),
-          empty: $("emptyState"),
-          error: $("errorBox"),
-          connectionDot: $("connectionDot"),
-          connectionText: $("connectionText"),
-          search: $("searchInput"),
-          status: $("statusFilter"),
-          role: $("roleFilter"),
-        };
+    <div class="summary-card">
+      <div class="summary-icon">🌴</div>
+      <div class="summary-label">On Day Off</div>
+      <div class="summary-value" id="dayOffEmployees">—</div>
+      <div class="summary-note">Approved day-off requests today</div>
+    </div>
 
-        function escapeHtml(value) {
-          return String(value ?? "").replace(
-            /[&<>"']/g,
-            (character) =>
-              ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#039;",
-              })[character],
-          );
-        }
+    <div class="summary-card">
+      <div class="summary-icon">★</div>
+      <div class="summary-label">Completed</div>
+      <div class="summary-value" id="completedEmployees">—</div>
+      <div class="summary-note">Reached target and checked out</div>
+    </div>
+  </section>
 
-        function formatDate(dateValue) {
-          if (!dateValue) return "—";
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        Employee Attendance
+        <span class="employee-count" id="visibleCount">0</span>
+      </h2>
+      <div class="subtitle" id="lastUpdated">Not updated yet</div>
+    </div>
 
-          const date = new Date(dateValue);
+    <div class="filters">
+      <input
+        id="searchInput"
+        class="input"
+        type="search"
+        placeholder="Search name or username..."
+        autocomplete="off"
+      />
 
-          if (Number.isNaN(date.getTime())) return "—";
+      <select id="statusFilter" class="input">
+        <option value="all">All statuses</option>
+        <option value="working">Working</option>
+        <option value="completed">Completed</option>
+        <option value="notstarted">Not started</option>
+        <option value="dayoff">On day off</option>
+      </select>
 
-          return new Intl.DateTimeFormat(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-          }).format(date);
-        }
+      <select id="roleFilter" class="input">
+        <option value="all">All roles</option>
+        <option value="MANAGER">Manager</option>
+        <option value="WAITER">Waiter</option>
+        <option value="CASHIER">Cashier</option>
+        <option value="KITCHEN">Kitchen</option>
+        <option value="EMPLOYEE">Employee</option>
+      </select>
+    </div>
 
-        function formatDateTime(dateValue) {
-          if (!dateValue) return "—";
+    <div class="error-box" id="errorBox"></div>
 
-          const date = new Date(dateValue);
+    <div id="loadingState" class="loading">
+      <div class="spinner"></div>
+      <div>Loading attendance data...</div>
+    </div>
 
-          if (Number.isNaN(date.getTime())) return "—";
+    <div
+      class="table-wrapper"
+      id="tableWrapper"
+      data-attendance-url="{% url 'employee_attendance_page' 0 %}"
+      hidden
+    >
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Role</th>
+            <th>State</th>
+            <th>Status</th>
+            <th>Check-in</th>
+            <th>Current Shift</th>
+            <th>Today's Hours</th>
+            <th>Daily Progress</th>
+            <th>Attendance Actions</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceBody"></tbody>
+      </table>
 
-          return new Intl.DateTimeFormat(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }).format(date);
-        }
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-icon">🔎</div>
+        <div class="empty-title">No employees found</div>
+        <div>Try changing your search or filters.</div>
+      </div>
+    </div>
 
-        function formatClock(dateValue) {
-          if (!dateValue) return "—";
+    <div class="footer">
+      <div class="connection-status">
+        <span class="connection-dot" id="connectionDot"></span>
+        <span id="connectionText">Connecting to API...</span>
+      </div>
+      <div>Automatic refresh every 30 seconds</div>
+    </div>
+  </section>
+</div>
 
-          const date = new Date(dateValue);
+<script>
+(() => {
+  "use strict";
 
-          if (Number.isNaN(date.getTime())) return "—";
+  const API_URL = "/api/v1/attendance/";
+  const REFRESH_INTERVAL = 30000;
 
-          return new Intl.DateTimeFormat(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }).format(date);
-        }
+  const ATTENDANCE_BASE = document
+    .getElementById("tableWrapper")
+    .dataset.attendanceUrl.replace(/0\/?$/, "");
 
-        function formatDuration(totalSeconds) {
-          const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
-          const hours = Math.floor(seconds / 3600);
-          const minutes = Math.floor((seconds % 3600) / 60);
+  let employees = [];
+  let summary = {};
+  let refreshTimer = null;
+  let requestInProgress = false;
 
-          return `${hours}h ${minutes}m`;
-        }
+  const $ = (id) => document.getElementById(id);
 
-        function formatHours(hours) {
-          return `${(Number(hours) || 0).toFixed(2)} h`;
-        }
+  const elements = {
+    total: $("totalEmployees"),
+    working: $("workingEmployees"),
+    notStarted: $("notStartedEmployees"),
+    dayOff: $("dayOffEmployees"),
+    completed: $("completedEmployees"),
+    visibleCount: $("visibleCount"),
+    todayLabel: $("todayLabel"),
+    lastUpdated: $("lastUpdated"),
+    body: $("attendanceBody"),
+    tableWrapper: $("tableWrapper"),
+    loading: $("loadingState"),
+    empty: $("emptyState"),
+    error: $("errorBox"),
+    connectionDot: $("connectionDot"),
+    connectionText: $("connectionText"),
+    search: $("searchInput"),
+    status: $("statusFilter"),
+    role: $("roleFilter"),
+  };
 
-        function getInitials(employee) {
-          const fullName = String(employee.full_name || "").trim();
+  function escapeHtml(value) {
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      (character) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        })[character],
+    );
+  }
 
-          if (fullName) {
-            return fullName
-              .split(/\s+/)
-              .slice(0, 2)
-              .map((part) => part[0] || "")
-              .join("")
-              .toUpperCase();
+  function formatDate(dateValue) {
+    if (!dateValue) return "—";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric", month: "short", day: "2-digit",
+    }).format(date);
+  }
+
+  function formatDateTime(dateValue) {
+    if (!dateValue) return "—";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    }).format(date);
+  }
+
+  function formatClock(dateValue) {
+    if (!dateValue) return "—";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    }).format(date);
+  }
+
+  function formatDuration(totalSeconds) {
+    const seconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  }
+
+  function formatHours(hours) {
+    return `${(Number(hours) || 0).toFixed(2)} h`;
+  }
+
+  function getInitials(employee) {
+    const fullName = String(employee.full_name || "").trim();
+    if (fullName) {
+      return fullName
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0] || "")
+        .join("")
+        .toUpperCase();
+    }
+    return String(employee.username || "?")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  function getEmployeeName(employee) {
+    return employee.full_name || employee.username || "Unnamed employee";
+  }
+
+  function getRole(employee) {
+    return employee.role_display || employee.role || "Unknown";
+  }
+
+  // A "stale" session means the employee checked in on a previous day
+  // and never checked out. We never treat such a session as active today.
+  function isStaleSession(employee) {
+    if (!employee.is_working || !employee.current_check_in) return false;
+
+    const checkIn = new Date(employee.current_check_in);
+    if (Number.isNaN(checkIn.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return checkIn.getTime() < today.getTime();
+  }
+
+  // Compute today's worked seconds for an employee.
+  // Only the portion of each session that overlaps [today 00:00, now] is counted.
+  function getTodaySeconds(employee) {
+    if (employee.on_day_off) return 0;
+
+    const now = Date.now();
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const midnightMs = startOfToday.getTime();
+
+    const sessions = Array.isArray(employee.sessions) ? employee.sessions : [];
+    let totalSeconds = 0;
+
+    for (const session of sessions) {
+      const checkInMs = session.check_in
+        ? new Date(session.check_in).getTime()
+        : NaN;
+      if (Number.isNaN(checkInMs)) continue;
+
+      const effectiveStart = Math.max(checkInMs, midnightMs);
+      if (effectiveStart >= now) continue;
+
+      let endMs;
+      if (session.is_working || !session.check_out) {
+        endMs = now;
+      } else {
+        const coMs = new Date(session.check_out).getTime();
+        endMs = Number.isNaN(coMs) ? now : coMs;
+      }
+
+      if (endMs > effectiveStart) {
+        totalSeconds += Math.floor((endMs - effectiveStart) / 1000);
+      }
+    }
+
+    return totalSeconds;
+  }
+
+  function getCurrentShiftSeconds(employee) {
+    if (!employee.current_check_in || isStaleSession(employee)) {
+      return Number(employee.current_shift?.seconds) || 0;
+    }
+
+    const checkIn = new Date(employee.current_check_in).getTime();
+    if (Number.isNaN(checkIn)) {
+      return Number(employee.current_shift?.seconds) || 0;
+    }
+
+    return Math.max(0, Math.floor((Date.now() - checkIn) / 1000));
+  }
+
+  /**
+   * Derive the single, unambiguous status for an employee today:
+   *   "dayoff"     — approved day-off
+   *   "working"    — active check-in started today
+   *   "completed"  — checked out and reached daily target
+   *   "notstarted" — no active session today (including stale sessions from yesterday)
+   */
+  function getEmployeeStatus(employee) {
+    if (employee.on_day_off) return "dayoff";
+
+    const stale = isStaleSession(employee);
+    if (employee.is_working && !stale) return "working";
+
+    const targetSeconds = Number(employee.daily_target?.seconds) || 0;
+    const todaySeconds = getTodaySeconds(employee);
+
+    const hasSessionToday =
+      Array.isArray(employee.sessions) &&
+      employee.sessions.some((s) => {
+        if (!s.check_in) return false;
+        const t = new Date(s.check_in);
+        if (Number.isNaN(t.getTime())) return false;
+        const midnight = new Date();
+        midnight.setHours(0, 0, 0, 0);
+        return t.getTime() >= midnight.getTime();
+      });
+
+    const completed =
+      hasSessionToday && targetSeconds > 0 && todaySeconds >= targetSeconds;
+
+    if (completed) return "completed";
+    return "notstarted";
+  }
+
+  function setConnection(connected, message) {
+    elements.connectionDot.classList.toggle("error", !connected);
+    elements.connectionText.textContent = message;
+  }
+
+  function showError(message) {
+    elements.error.textContent = message;
+    elements.error.style.display = "block";
+  }
+
+  function clearError() {
+    elements.error.textContent = "";
+    elements.error.style.display = "none";
+  }
+
+  function updateSummary() {
+    elements.total.textContent = summary.employee_count ?? employees.length;
+    elements.working.textContent = summary.working_count ?? 0;
+    elements.notStarted.textContent = summary.not_started_count ?? 0;
+    elements.dayOff.textContent = summary.day_off_count ?? 0;
+    elements.completed.textContent = summary.completed_count ?? 0;
+  }
+
+  function updatePageDate(data) {
+    const dateValue = data.date
+      ? new Date(`${data.date}T12:00:00`)
+      : new Date();
+
+    elements.todayLabel.textContent = `Date: ${new Intl.DateTimeFormat(
+      undefined,
+      { weekday: "long", year: "numeric", month: "long", day: "numeric" },
+    ).format(dateValue)} · Timezone: ${data.timezone || "server timezone"}`;
+  }
+
+  function getFilteredEmployees() {
+    const search = elements.search.value.trim().toLowerCase();
+    const status = elements.status.value;
+    const role = elements.role.value;
+
+    return employees.filter((employee) => {
+      const name = String(employee.full_name || "").toLowerCase();
+      const username = String(employee.username || "").toLowerCase();
+
+      const matchesSearch =
+        !search || name.includes(search) || username.includes(search);
+
+      const employeeStatus = getEmployeeStatus(employee);
+
+      const matchesStatus =
+        status === "all" || status === employeeStatus;
+
+      const matchesRole = role === "all" || employee.role === role;
+
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }
+
+  function renderEmployee(employee) {
+    const userId = String(employee.user_id);
+    const status = getEmployeeStatus(employee);
+
+    const targetSeconds = Number(employee.daily_target?.seconds) || 0;
+    const todaySeconds = getTodaySeconds(employee);
+
+    const percentage =
+      status === "dayoff" || status === "completed"
+        ? 100
+        : targetSeconds > 0
+          ? Math.min(100, Math.round((todaySeconds / targetSeconds) * 100))
+          : 0;
+
+    const completed = status === "dayoff" || status === "completed";
+
+    const currentShiftSeconds =
+      status === "working" ? getCurrentShiftSeconds(employee) : 0;
+
+    const checkIn =
+      status === "working" && employee.current_check_in
+        ? formatClock(employee.current_check_in)
+        : "—";
+
+    const targetHours = Number(employee.daily_target?.hours) || 0;
+
+    const todayHours = Math.floor(todaySeconds / 3600);
+    const todayMinutes = Math.floor((todaySeconds % 3600) / 60);
+
+    let progressCaption;
+    if (status === "dayoff") {
+      progressCaption = employee.day_off?.reason
+        ? `Day off — ${employee.day_off.reason}`
+        : "Approved day off";
+    } else if (targetSeconds <= 0) {
+      progressCaption = "No daily target set";
+    } else if (completed) {
+      progressCaption = "Daily target completed";
+    } else if (status === "notstarted") {
+      progressCaption = "Not started yet";
+    } else {
+      progressCaption = `${formatDuration(targetSeconds - todaySeconds)} remaining`;
+    }
+
+    // Status badge
+    let statusBadge;
+    switch (status) {
+      case "dayoff":
+        statusBadge = `<span class="badge badge-dayoff" title="${escapeHtml(
+          employee.day_off?.reason || "Approved day off",
+        )}">🌴 Day Off</span>`;
+        break;
+      case "working":
+        statusBadge = `<span class="badge badge-working"><span class="dot"></span> Working</span>`;
+        break;
+      case "completed":
+        statusBadge = `<span class="badge badge-completed">✓ Completed</span>`;
+        break;
+      default:
+        statusBadge = `<span class="badge badge-notstarted">⏸ Not started</span>`;
+    }
+
+    // Attendance actions
+    let actionButtons;
+    if (status === "dayoff") {
+      actionButtons = `<button class="attendance-action-btn" type="button" disabled title="Approved day off — no check-in required">Day Off</button>`;
+    } else if (status === "working") {
+      actionButtons = `<button class="attendance-action-btn check-out" type="button"
+                        data-attendance-action="check-out"
+                        data-user-id="${escapeHtml(userId)}">Check Out</button>`;
+    } else if (status === "completed") {
+      actionButtons = `<button class="attendance-action-btn" type="button" disabled title="Daily target already reached">Completed</button>`;
+    } else {
+      actionButtons = `<button class="attendance-action-btn check-in" type="button"
+                        data-attendance-action="check-in"
+                        data-user-id="${escapeHtml(userId)}">Check In</button>`;
+    }
+
+    const viewHref = `${ATTENDANCE_BASE}${encodeURIComponent(userId)}/`;
+
+    return `
+      <tr>
+        <td>
+          <div class="employee">
+            <div class="avatar">${escapeHtml(getInitials(employee))}</div>
+            <div>
+              <div class="employee-name">${escapeHtml(getEmployeeName(employee))}</div>
+              <div class="employee-username">@${escapeHtml(employee.username || "unknown")}</div>
+            </div>
+          </div>
+        </td>
+
+        <td>
+          <span class="badge badge-role">${escapeHtml(getRole(employee))}</span>
+        </td>
+
+        <td>
+          ${
+            employee.state
+              ? `<span class="badge badge-state">${escapeHtml(employee.state)}</span>`
+              : `<span class="time-sub">—</span>`
           }
+        </td>
 
-          return String(employee.username || "?")
-            .slice(0, 2)
-            .toUpperCase();
-        }
+        <td>${statusBadge}</td>
 
-        function getEmployeeName(employee) {
-          return employee.full_name || employee.username || "Unnamed employee";
-        }
-
-        function getRole(employee) {
-          return employee.role_display || employee.role || "Unknown";
-        }
-
-        function setConnection(connected, message) {
-          elements.connectionDot.classList.toggle("error", !connected);
-          elements.connectionText.textContent = message;
-        }
-
-        function showError(message) {
-          elements.error.textContent = message;
-          elements.error.style.display = "block";
-        }
-
-        function clearError() {
-          elements.error.textContent = "";
-          elements.error.style.display = "none";
-        }
-
-        function updateSummary() {
-          elements.total.textContent =
-            summary.employee_count ?? employees.length;
-          elements.working.textContent = summary.working_count ?? 0;
-          elements.notWorking.textContent = summary.not_working_count ?? 0;
-          elements.completed.textContent = summary.completed_count ?? 0;
-        }
-
-        function updatePageDate(data) {
-          const dateValue = data.date
-            ? new Date(`${data.date}T12:00:00`)
-            : new Date();
-
-          elements.todayLabel.textContent = `Date: ${new Intl.DateTimeFormat(
-            undefined,
-            {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            },
-          ).format(
-            dateValue,
-          )} · Timezone: ${data.timezone || "server timezone"}`;
-        }
-
-        function getFilteredEmployees() {
-          const search = elements.search.value.trim().toLowerCase();
-          const status = elements.status.value;
-          const role = elements.role.value;
-
-          return employees.filter((employee) => {
-            const name = String(employee.full_name || "").toLowerCase();
-            const username = String(employee.username || "").toLowerCase();
-
-            const matchesSearch =
-              !search || name.includes(search) || username.includes(search);
-
-            const matchesStatus =
-              status === "all" ||
-              (status === "working" && employee.is_working) ||
-              (status === "off" && !employee.is_working);
-
-            const matchesRole = role === "all" || employee.role === role;
-
-            return matchesSearch && matchesStatus && matchesRole;
-          });
-        }
-
-        function getCurrentShiftSeconds(employee) {
-          if (!employee.current_check_in) {
-            return Number(employee.current_shift?.seconds) || 0;
-          }
-
-          const checkIn = new Date(employee.current_check_in).getTime();
-
-          if (Number.isNaN(checkIn)) {
-            return Number(employee.current_shift?.seconds) || 0;
-          }
-
-          return Math.max(0, Math.floor((Date.now() - checkIn) / 1000));
-        }
-
-        function getTodaySeconds(employee) {
-          let seconds = Number(employee.today?.total_seconds) || 0;
-
-          /*
-           * Keep today's total moving while an employee is checked in.
-           * The server refreshes the underlying value every 30 seconds.
-           * If the shift started before midnight, only count elapsed time
-           * since today's midnight here.
-           */
-          if (employee.is_working && employee.current_check_in) {
-            const checkIn = new Date(employee.current_check_in);
-            const now = new Date();
-
-            if (!Number.isNaN(checkIn.getTime())) {
-              const midnight = new Date(now);
-              midnight.setHours(0, 0, 0, 0);
-
-              const start = Math.max(checkIn.getTime(), midnight.getTime());
-
-              const generatedAt = lastGeneratedAt
-                ? new Date(lastGeneratedAt).getTime()
-                : Date.now();
-
-              /*
-               * Add only the time elapsed since the latest API snapshot,
-               * avoiding double-counting the server-provided total.
-               */
-              const snapshotStart = Math.max(start, generatedAt);
-
-              seconds += Math.max(
-                0,
-                Math.floor((Date.now() - snapshotStart) / 1000),
-              );
+        <td>
+          <div class="time-main">${escapeHtml(checkIn)}</div>
+          <div class="time-sub">
+            ${
+              status === "working"
+                ? "Checked in " + escapeHtml(formatDate(employee.current_check_in))
+                : status === "dayoff"
+                  ? "Day off"
+                  : status === "completed"
+                    ? "Session ended"
+                    : "No active shift"
             }
-          }
+          </div>
+        </td>
 
-          return seconds;
+        <td>
+          <div class="time-main" ${
+            status === "working" ? `data-shift-timer="${escapeHtml(userId)}"` : ""
+          }>
+            ${status === "working" ? escapeHtml(formatDuration(currentShiftSeconds)) : "—"}
+          </div>
+          <div class="time-sub">
+            ${status === "working" ? "Current shift" : "No active shift"}
+          </div>
+        </td>
+
+        <td>
+          <div class="time-main" data-today-timer="${escapeHtml(userId)}">
+            ${todayHours}h ${todayMinutes}m
+          </div>
+          <div class="time-sub">Target: ${escapeHtml(formatHours(targetHours))}</div>
+        </td>
+
+        <td class="progress-cell">
+          <div class="progress-top">
+            <span class="progress-number">${percentage}%</span>
+            <span class="progress-target">${escapeHtml(formatHours(targetHours))}</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill ${completed ? "complete" : ""}"
+                 style="width:${percentage}%"></div>
+          </div>
+          <div class="progress-caption">${escapeHtml(progressCaption)}</div>
+        </td>
+
+        <td>
+          <div class="attendance-actions">${actionButtons}</div>
+        </td>
+
+        <td>
+          <a class="details-btn" href="${escapeHtml(viewHref)}"
+             target="_blank" rel="noopener">View ↗</a>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderTable() {
+    const filtered = getFilteredEmployees();
+    elements.visibleCount.textContent = filtered.length;
+    elements.tableWrapper.hidden = false;
+    elements.empty.hidden = filtered.length > 0;
+    elements.body.innerHTML = filtered.map(renderEmployee).join("");
+    updateTimers();
+  }
+
+  function updateTimers() {
+    const filtered = getFilteredEmployees();
+
+    for (const employee of filtered) {
+      const userId = String(employee.user_id);
+      const status = getEmployeeStatus(employee);
+
+      if (status === "working") {
+        const shiftTimer = document.querySelector(
+          `[data-shift-timer="${CSS.escape(userId)}"]`,
+        );
+        if (shiftTimer) {
+          shiftTimer.textContent = formatDuration(getCurrentShiftSeconds(employee));
         }
+      }
 
-        function renderEmployee(employee) {
-          const userId = String(employee.user_id);
-          const expanded = expandedEmployees.has(userId);
+      const todayTimer = document.querySelector(
+        `[data-today-timer="${CSS.escape(userId)}"]`,
+      );
+      if (todayTimer) {
+        const seconds = getTodaySeconds(employee);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        todayTimer.textContent = `${hours}h ${minutes}m`;
+      }
+    }
+  }
 
-          const targetSeconds = Number(employee.daily_target?.seconds) || 0;
-          const todaySeconds = getTodaySeconds(employee);
-          const percentage =
-            targetSeconds > 0
-              ? Math.min(100, Math.round((todaySeconds / targetSeconds) * 100))
-              : 0;
+  async function loadAttendance(showLoading = false) {
+    if (requestInProgress) return;
+    requestInProgress = true;
 
-          const completed = targetSeconds > 0 && todaySeconds >= targetSeconds;
-          const isWorking = Boolean(employee.is_working);
+    if (showLoading && employees.length === 0) {
+      elements.loading.hidden = false;
+      elements.tableWrapper.hidden = true;
+    }
 
-          const currentShiftSeconds = isWorking
-            ? getCurrentShiftSeconds(employee)
+    clearError();
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "GET",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        cache: "no-store",
+      });
+
+      if (response.redirected) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          "Access denied. Sign in with an authorized manager or admin account.",
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(`API request failed: HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || "The API did not return success.");
+      }
+
+      employees = Array.isArray(data.employees) ? data.employees : [];
+      summary = data.summary || {};
+
+      updateSummary();
+      updatePageDate(data);
+      renderTable();
+
+      elements.lastUpdated.textContent = `Last updated: ${formatClock(
+        data.generated_at || new Date(),
+      )}`;
+      elements.loading.hidden = true;
+      elements.tableWrapper.hidden = false;
+
+      setConnection(true, "Connected to attendance API");
+    } catch (error) {
+      console.error("Attendance API error:", error);
+      setConnection(false, "API connection failed");
+      showError(
+        error.message ||
+          "Unable to load attendance. Check your API URL and login status.",
+      );
+      elements.loading.hidden = true;
+      if (employees.length === 0) {
+        elements.tableWrapper.hidden = true;
+      }
+    } finally {
+      requestInProgress = false;
+    }
+  }
+
+  function csvEscape(value) {
+    return `"${String(value ?? "").replace(/"/g, '""')}"`;
+  }
+
+  function exportCSV() {
+    const filtered = getFilteredEmployees();
+
+    if (!filtered.length) {
+      alert("There are no employees to export.");
+      return;
+    }
+
+    const headers = [
+      "User ID",
+      "Username",
+      "Full Name",
+      "Role",
+      "State",
+      "Status",
+      "On Day Off",
+      "Day Off Reason",
+      "Check In",
+      "Current Shift Hours",
+      "Today Worked Hours",
+      "Daily Target Hours",
+      "Progress Percentage",
+      "Sessions Count",
+    ];
+
+    const rows = filtered.map((employee) => {
+      const todaySeconds = getTodaySeconds(employee);
+      const targetSeconds = Number(employee.daily_target?.seconds) || 0;
+      const status = getEmployeeStatus(employee);
+
+      const progress =
+        status === "dayoff" || status === "completed"
+          ? 100
+          : targetSeconds > 0
+            ? Math.min(100, Math.round((todaySeconds / targetSeconds) * 100))
             : 0;
 
-          const checkIn = employee.current_check_in
-            ? formatClock(employee.current_check_in)
-            : "—";
-
-          const targetHours = Number(employee.daily_target?.hours) || 0;
-
-          const todayHours = Math.floor(todaySeconds / 3600);
-          const todayMinutes = Math.floor((todaySeconds % 3600) / 60);
-
-          const progressCaption =
-            targetSeconds <= 0
-              ? "No daily target set"
-              : completed
-                ? "Daily target completed"
-                : `${formatDuration(targetSeconds - todaySeconds)} remaining`;
-
-          const sessions = Array.isArray(employee.sessions)
-            ? employee.sessions
-            : [];
-
-          const sessionCards = sessions.length
-            ? sessions
-                .map((session) => {
-                  const sessionDuration = session.is_working
-                    ? getCurrentShiftSeconds(employee)
-                    : Number(session.duration_seconds) || 0;
-
-                  return `
-                    <div class="session-card">
-                        <div class="session-label">Session #${escapeHtml(session.id)}</div>
-                        <div class="session-value">
-                            ${escapeHtml(formatDateTime(session.check_in))}
-                        </div>
-                        <div class="session-meta">
-                            Check-out:
-                            ${escapeHtml(
-                              session.check_out
-                                ? formatDateTime(session.check_out)
-                                : "Still working",
-                            )}
-                            <br>
-                            Duration: ${escapeHtml(formatDuration(sessionDuration))}
-                            <br>
-                            Status:
-                            ${session.is_working ? "Active" : "Completed"}
-                        </div>
-                    </div>
-                `;
-                })
-                .join("")
-            : `
-                <div class="session-card">
-                    <div class="session-label">Today's sessions</div>
-                    <div class="session-value">No attendance records</div>
-                </div>
-            `;
-
-          return `
-            <tr>
-                <td>
-                    <div class="employee">
-                        <div class="avatar">${escapeHtml(getInitials(employee))}</div>
-                        <div>
-                            <div class="employee-name">
-                                ${escapeHtml(getEmployeeName(employee))}
-                            </div>
-                            <div class="employee-username">
-                                @${escapeHtml(employee.username || "unknown")}
-                            </div>
-                        </div>
-                    </div>
-                </td>
-
-                <td>
-                    <span class="badge badge-role">
-                        ${escapeHtml(getRole(employee))}
-                    </span>
-                </td>
-
-                <td>
-                    ${
-                      isWorking
-                        ? `<span class="badge badge-working">
-                                   <span class="dot"></span> Working
-                               </span>`
-                        : `<span class="badge badge-off">Not working</span>`
-                    }
-                </td>
-
-                <td>
-                    <div class="time-main">${escapeHtml(checkIn)}</div>
-                    <div class="time-sub">
-                        ${
-                          isWorking
-                            ? "Checked in " +
-                              escapeHtml(formatDate(employee.current_check_in))
-                            : "No active shift"
-                        }
-                    </div>
-                </td>
-
-                <td>
-                    <div class="time-main" ${
-                      isWorking
-                        ? `data-shift-timer="${escapeHtml(userId)}"`
-                        : ""
-                    }>
-                        ${
-                          isWorking
-                            ? escapeHtml(formatDuration(currentShiftSeconds))
-                            : "—"
-                        }
-                    </div>
-                    <div class="time-sub">
-                        ${isWorking ? "Current shift" : "No active shift"}
-                    </div>
-                </td>
-
-                <td>
-                    <div class="time-main"
-                         data-today-timer="${escapeHtml(userId)}">
-                        ${todayHours}h ${todayMinutes}m
-                    </div>
-                    <div class="time-sub">
-                        Target: ${escapeHtml(formatHours(targetHours))}
-                    </div>
-                </td>
-
-                <td class="progress-cell">
-                    <div class="progress-top">
-                        <span class="progress-number">${percentage}%</span>
-                        <span class="progress-target">
-                            ${escapeHtml(formatHours(targetHours))}
-                        </span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill ${completed ? "complete" : ""}"
-                             style="width:${percentage}%"></div>
-                    </div>
-                    <div class="progress-caption">
-                        ${escapeHtml(progressCaption)}
-                    </div>
-                </td>
-
-                <td>
-                    <button
-                        class="details-btn"
-                        type="button"
-                        data-toggle-details="${escapeHtml(userId)}"
-                        aria-expanded="${expanded ? "true" : "false"}">
-                        ${expanded ? "Hide sessions ↑" : `View sessions (${sessions.length}) ↓`}
-                    </button>
-                </td>
-                <td>
-                    <div class="attendance-actions">
-                        ${
-                          isWorking
-                            ? `<button class="attendance-action-btn check-out"
-                                       type="button"
-                                       data-attendance-action="check-out"
-                                       data-user-id="${escapeHtml(userId)}">Check Out</button>`
-                            : `<button class="attendance-action-btn check-in"
-                                       type="button"
-                                       data-attendance-action="check-in"
-                                       data-user-id="${escapeHtml(userId)}">Check In</button>`
-                        }
-                    </div>
-                </td>
-            </tr>
-
-            ${
-              expanded
-                ? `<tr class="details-row">
-                           <td colspan="9>
-                               <div class="details-content">
-                                   <h3 class="details-heading">
-                                       Attendance sessions — ${escapeHtml(getEmployeeName(employee))}
-                                   </h3>
-                                   <div class="sessions-grid">
-                                       ${sessionCards}
-                                   </div>
-                               </div>
-                           </td>
-                       </tr>`
-                : ""
-            }
-        `;
-        }
-
-        function renderTable() {
-          const filtered = getFilteredEmployees();
-
-          elements.visibleCount.textContent = filtered.length;
-          elements.tableWrapper.hidden = false;
-          elements.empty.hidden = filtered.length > 0;
-
-          elements.body.innerHTML = filtered.map(renderEmployee).join("");
-
-          updateTimers();
-        }
-
-        function updateTimers() {
-          const filtered = getFilteredEmployees();
-
-          for (const employee of filtered) {
-            const userId = String(employee.user_id);
-
-            if (employee.is_working) {
-              const shiftTimer = document.querySelector(
-                `[data-shift-timer="${CSS.escape(userId)}"]`,
-              );
-
-              if (shiftTimer) {
-                shiftTimer.textContent = formatDuration(
-                  getCurrentShiftSeconds(employee),
-                );
-              }
-            }
-
-            const todayTimer = document.querySelector(
-              `[data-today-timer="${CSS.escape(userId)}"]`,
-            );
-
-            if (todayTimer) {
-              const seconds = getTodaySeconds(employee);
-              const hours = Math.floor(seconds / 3600);
-              const minutes = Math.floor((seconds % 3600) / 60);
-
-              todayTimer.textContent = `${hours}h ${minutes}m`;
-            }
-          }
-        }
-
-        async function loadAttendance(showLoading = false) {
-          if (requestInProgress) return;
-
-          requestInProgress = true;
-
-          if (showLoading && employees.length === 0) {
-            elements.loading.hidden = false;
-            elements.tableWrapper.hidden = true;
-          }
-
-          clearError();
-
-          try {
-            const response = await fetch(API_URL, {
-              method: "GET",
-              credentials: "same-origin",
-              headers: {
-                Accept: "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              cache: "no-store",
-            });
-
-            if (response.redirected) {
-              throw new Error("Authentication required. Please sign in again.");
-            }
-
-            if (response.status === 401 || response.status === 403) {
-              throw new Error(
-                "Access denied. Sign in with an authorized manager or admin account.",
-              );
-            }
-
-            if (!response.ok) {
-              throw new Error(`API request failed: HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.success) {
-              throw new Error(
-                data.message || "The API did not return success.",
-              );
-            }
-
-            employees = Array.isArray(data.employees) ? data.employees : [];
-
-            summary = data.summary || {};
-            lastGeneratedAt = data.generated_at || new Date().toISOString();
-
-            updateSummary();
-            updatePageDate(data);
-            renderTable();
-
-            elements.lastUpdated.textContent = `Last updated: ${formatClock(data.generated_at || new Date())}`;
-
-            elements.loading.hidden = true;
-            elements.tableWrapper.hidden = false;
-
-            setConnection(true, "Connected to attendance API");
-          } catch (error) {
-            console.error("Attendance API error:", error);
-
-            setConnection(false, "API connection failed");
-            showError(
-              error.message ||
-                "Unable to load attendance. Check your API URL and login status.",
-            );
-
-            elements.loading.hidden = true;
-
-            if (employees.length === 0) {
-              elements.tableWrapper.hidden = true;
-            }
-          } finally {
-            requestInProgress = false;
-          }
-        }
-
-        function csvEscape(value) {
-          const text = String(value ?? "");
-          return `"${text.replace(/"/g, '""')}"`;
-        }
-
-        function exportCSV() {
-          const filtered = getFilteredEmployees();
-
-          if (!filtered.length) {
-            alert("There are no employees to export.");
-            return;
-          }
-
-          const headers = [
-            "User ID",
-            "Username",
-            "Full Name",
-            "Role",
-            "State",
-            "Currently Working",
-            "Current Check In",
-            "Current Shift Hours",
-            "Today Worked Hours",
-            "Daily Target Hours",
-            "Progress Percentage",
-            "Target Completed",
-            "Remaining Seconds",
-            "Sessions Count",
-          ];
-
-          const rows = filtered.map((employee) => {
-            const todaySeconds = getTodaySeconds(employee);
-            const targetSeconds = Number(employee.daily_target?.seconds) || 0;
-
-            const progress =
-              targetSeconds > 0
-                ? Math.min(
-                    100,
-                    Math.round((todaySeconds / targetSeconds) * 100),
-                  )
-                : 0;
-
-            return [
-              employee.user_id,
-              employee.username,
-              employee.full_name,
-              getRole(employee),
-              employee.state,
-              employee.is_working ? "Yes" : "No",
-              employee.current_check_in
-                ? formatDateTime(employee.current_check_in)
-                : "",
-              employee.is_working
-                ? (getCurrentShiftSeconds(employee) / 3600).toFixed(2)
-                : "0.00",
-              (todaySeconds / 3600).toFixed(2),
-              Number(employee.daily_target?.hours || 0).toFixed(2),
-              progress,
-              targetSeconds > 0 && todaySeconds >= targetSeconds ? "Yes" : "No",
-              Math.max(0, targetSeconds - todaySeconds),
-              Array.isArray(employee.sessions) ? employee.sessions.length : 0,
-            ];
-          });
-
-          const csv = [
-            headers.map(csvEscape).join(","),
-            ...rows.map((row) => row.map(csvEscape).join(",")),
-          ].join("\r\n");
-
-          const blob = new Blob(["\uFEFF" + csv], {
-            type: "text/csv;charset=utf-8;",
-          });
-
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-
-          link.href = url;
-          link.download = `attendance-${new Date().toISOString().slice(0, 10)}.csv`;
-
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-
-          URL.revokeObjectURL(url);
-        }
-
-        elements.search.addEventListener("input", renderTable);
-        elements.status.addEventListener("change", renderTable);
-        elements.role.addEventListener("change", renderTable);
-
-        function getCsrfToken() {
-          const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
-          return match ? decodeURIComponent(match[1]) : "";
-        }
-
-        async function performAttendanceAction(button) {
-          const action = button.dataset.attendanceAction;
-          const userId = button.dataset.userId;
-          if (!action || !userId) return;
-
-          const employee = employees.find(
-            (item) => String(item.user_id) === String(userId),
-          );
-          const employeeName = employee
-            ? getEmployeeName(employee)
-            : `employee #${userId}`;
-          const verb = action === "check-in" ? "check in" : "check out";
-
-          if (!confirm(`Are you sure you want to ${verb} ${employeeName}?`))
-            return;
-
-          // Implement these POST endpoints in Django (manager/admin permission required).
-          const endpoint =
-            action === "check-in"
-              ? `/api/v1/attendance/${encodeURIComponent(userId)}/check-in/`
-              : `/api/v1/attendance/${encodeURIComponent(userId)}/check-out/`;
-
-          const oldText = button.textContent;
-          button.disabled = true;
-          button.textContent =
-            action === "check-in" ? "Checking in..." : "Checking out...";
-
-          try {
-            const response = await fetch(endpoint, {
-              method: "POST",
-              credentials: "same-origin",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCsrfToken(),
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: JSON.stringify({}),
-            });
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok || data.success === false) {
-              throw new Error(
-                data.message || `Request failed (HTTP ${response.status}).`,
-              );
-            }
-
-            alert(
-              data.message ||
-                `${employeeName} checked ${action === "check-in" ? "in" : "out"} successfully.`,
-            );
-            await loadAttendance(false);
-          } catch (error) {
-            console.error("Attendance action error:", error);
-            alert(error.message || "Could not update attendance.");
-          } finally {
-            button.disabled = false;
-            button.textContent = oldText;
-          }
-        }
-
-        elements.body.addEventListener("click", (event) => {
-          const actionButton = event.target.closest("[data-attendance-action]");
-          if (actionButton) {
-            performAttendanceAction(actionButton);
-            return;
-          }
-
-          const button = event.target.closest("[data-toggle-details]");
-          if (!button) return;
-
-          const userId = button.dataset.toggleDetails;
-
-          if (expandedEmployees.has(userId)) {
-            expandedEmployees.delete(userId);
-          } else {
-            expandedEmployees.add(userId);
-          }
-
-          renderTable();
-        });
-
-        $("refreshBtn").addEventListener("click", () => {
-          loadAttendance(true);
-        });
-
-        $("exportBtn").addEventListener("click", exportCSV);
-
-        loadAttendance(true);
-
-        refreshTimer = setInterval(() => {
-          loadAttendance(false);
-        }, REFRESH_INTERVAL);
-
-        setInterval(updateTimers, 1000);
-
-        window.addEventListener("beforeunload", () => {
-          if (refreshTimer) {
-            clearInterval(refreshTimer);
-          }
-        });
-      })();
-    </script>
-  </body>
+      return [
+        employee.user_id,
+        employee.username,
+        employee.full_name,
+        getRole(employee),
+        employee.state || "",
+        status,
+        employee.on_day_off ? "Yes" : "No",
+        employee.day_off?.reason || "",
+        status === "working" && employee.current_check_in
+          ? formatDateTime(employee.current_check_in)
+          : "",
+        status === "working"
+          ? (getCurrentShiftSeconds(employee) / 3600).toFixed(2)
+          : "0.00",
+        (todaySeconds / 3600).toFixed(2),
+        Number(employee.daily_target?.hours || 0).toFixed(2),
+        progress,
+        Array.isArray(employee.sessions) ? employee.sessions.length : 0,
+      ];
+    });
+
+    const csv = [
+      headers.map(csvEscape).join(","),
+      ...rows.map((row) => row.map(csvEscape).join(",")),
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `attendance-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  elements.search.addEventListener("input", renderTable);
+  elements.status.addEventListener("change", renderTable);
+  elements.role.addEventListener("change", renderTable);
+
+  function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : "";
+  }
+
+  async function performAttendanceAction(button) {
+    const action = button.dataset.attendanceAction;
+    const userId = button.dataset.userId;
+    if (!action || !userId) return;
+
+    const employee = employees.find(
+      (item) => String(item.user_id) === String(userId),
+    );
+    const employeeName = employee
+      ? getEmployeeName(employee)
+      : `employee #${userId}`;
+    const verb = action === "check-in" ? "check in" : "check out";
+
+    if (!confirm(`Are you sure you want to ${verb} ${employeeName}?`)) return;
+
+    const endpoint =
+      action === "check-in"
+        ? `/api/v1/attendance/${encodeURIComponent(userId)}/check-in/`
+        : `/api/v1/attendance/${encodeURIComponent(userId)}/check-out/`;
+
+    const oldText = button.textContent;
+    button.disabled = true;
+    button.textContent =
+      action === "check-in" ? "Checking in..." : "Checking out...";
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken(),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(
+          data.message || `Request failed (HTTP ${response.status}).`,
+        );
+      }
+
+      alert(
+        data.message ||
+          `${employeeName} checked ${action === "check-in" ? "in" : "out"} successfully.`,
+      );
+      await loadAttendance(false);
+    } catch (error) {
+      console.error("Attendance action error:", error);
+      alert(error.message || "Could not update attendance.");
+    } finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+
+  elements.body.addEventListener("click", (event) => {
+    const actionButton = event.target.closest("[data-attendance-action]");
+    if (actionButton) {
+      performAttendanceAction(actionButton);
+    }
+  });
+
+  $("refreshBtn").addEventListener("click", () => loadAttendance(true));
+  $("exportBtn").addEventListener("click", exportCSV);
+
+  loadAttendance(true);
+
+  refreshTimer = setInterval(() => loadAttendance(false), REFRESH_INTERVAL);
+  setInterval(updateTimers, 1000);
+
+  window.addEventListener("beforeunload", () => {
+    if (refreshTimer) clearInterval(refreshTimer);
+  });
+})();
+</script>
+</body>
 {% endblock %}

@@ -1948,6 +1948,18 @@
             </div>
             <span class="nav-arrow mat">chevron_right</span>
           </a>
+
+          <a
+            class="nav-link {% if admin_page == 'orders' %}active{% endif %}"
+            href="/users/attendance/"
+          >
+            <span class="nav-ico"><span class="mat">group</span></span>
+            <div class="nav-main">
+              <span class="nav-label">Users</span>
+              <span class="nav-subtitle">Active and completed users</span>
+            </div>
+            <span class="nav-arrow mat">chevron_right</span>
+          </a>
         </div>
       </div>
 
@@ -2976,7 +2988,7 @@
       (function () {
         "use strict";
 
-        const REFRESH_INTERVAL = 60000; // 60 seconds
+        const REFRESH_INTERVAL = 2400000; // 60 seconds
         const STORAGE_KEY = "chatWasOpen";
 
         // Skip refresh in these cases (opt-out for testing / special pages)
